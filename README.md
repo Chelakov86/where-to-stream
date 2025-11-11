@@ -5,6 +5,7 @@ A Next.js application to find where movies and TV shows are streaming.
 ## Project Setup
 
 This project has been initialized with:
+
 - **Next.js 16** (App Router)
 - **React 18** & **TypeScript 5.9**
 - **TailwindCSS 3** with dark theme configuration
@@ -81,6 +82,7 @@ The project uses a custom dark theme configured in `tailwind.config.ts`:
 ## Testing
 
 Tests are configured using:
+
 - **Jest** with jsdom environment
 - **React Testing Library** for component testing
 - **@testing-library/jest-dom** for additional matchers
@@ -90,6 +92,7 @@ Example test file is located at `__tests__/page.test.tsx`.
 ## Next Steps
 
 This is the initial setup. Follow the TDD prompts in `blueprint.md` to implement:
+
 1. Configuration module with TMDB API integration
 2. Backend API routes
 3. Frontend components (search, results, details)

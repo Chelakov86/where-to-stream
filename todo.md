@@ -45,7 +45,7 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 - [x] Linting & formatting
   - [x] ESLint configured (Next.js recommended rules)
-  - [ ] Prettier configured (and integrated with ESLint if desired)
+  - [x] Prettier configured (and integrated with ESLint if desired)
   - [x] Add `lint` script to `package.json`
 
 - [x] Jest & React Testing Library setup
@@ -64,18 +64,18 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ### 2.1 `config.ts`
 
-- [ ] Create `config.ts`
-  - [ ] Export `TMDB_BASE_URL`
-  - [ ] Export `PREFERRED_COUNTRIES = ["DE", "GB", "US", "CA"]` (as readonly tuple)
-  - [ ] Export `CACHE_TTL_SECONDS` (default generic TTL)
-  - [ ] Implement `getTmdbApiKey()` reading from `process.env.TMDB_API_KEY`
-  - [ ] Throw clear error if `TMDB_API_KEY` missing
+- [x] Create `config.ts`
+  - [x] Export `TMDB_BASE_URL`
+  - [x] Export `PREFERRED_COUNTRIES = ["DE", "GB", "US", "CA"]` (as readonly tuple)
+  - [x] Export `CACHE_TTL_SECONDS` (default generic TTL)
+  - [x] Implement `getTmdbApiKey()` reading from `process.env.TMDB_API_KEY`
+  - [x] Throw clear error if `TMDB_API_KEY` missing
 
-- [ ] Tests for `config.ts`
-  - [ ] `PREFERRED_COUNTRIES` order is exactly `DE, GB, US, CA`
-  - [ ] `getTmdbApiKey()` throws when env var missing
-  - [ ] `getTmdbApiKey()` returns correct value when env var is set
-  - [ ] `CACHE_TTL_SECONDS` has expected default
+- [x] Tests for `config.ts`
+  - [x] `PREFERRED_COUNTRIES` order is exactly `DE, GB, US, CA`
+  - [x] `getTmdbApiKey()` throws when env var missing
+  - [x] `getTmdbApiKey()` returns correct value when env var is set
+  - [x] `CACHE_TTL_SECONDS` has expected default
 
 ---
 

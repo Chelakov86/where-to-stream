@@ -1,4 +1,5 @@
 # WhereToStream – Developer Specification (MVP)
+
 _Last updated: 2025-11-11_
 
 ## 1. Product Overview
@@ -7,8 +8,8 @@ _Last updated: 2025-11-11_
 **Type:** Web application (desktop-focused, fully responsive)  
 **Goal:** Let users search movies/series and see where they’re currently available to stream, focusing on:
 
-- Netflix availability  
-- Free/ad-supported streaming services  
+- Netflix availability
+- Free/ad-supported streaming services
 - Availability by country, prioritising a fixed preferred list: **DE, UK, US, CA**
 
 **Data sources (MVP):**
@@ -81,12 +82,12 @@ _Last updated: 2025-11-11_
 
 Each result row shows:
 
-- Poster thumbnail.  
-- Original title.  
-- Release year.  
-- Type (Movie / Series).  
-- TMDB rating (0–10).  
-- 1–3 genre tags.  
+- Poster thumbnail.
+- Original title.
+- Release year.
+- Type (Movie / Series).
+- TMDB rating (0–10).
+- 1–3 genre tags.
 - Clickable area to expand inline details.
 
 ---
@@ -95,33 +96,33 @@ Each result row shows:
 
 **Metadata (required):**
 
-- Large poster image.  
-- Original title.  
-- Release year.  
-- Type (Movie or Series).  
-- Genres.  
-- Overview/description.  
+- Large poster image.
+- Original title.
+- Release year.
+- Type (Movie or Series).
+- Genres.
+- Overview/description.
 - TMDB rating.
 
 **Availability table (required):**
 
-- Data: TMDB watch providers for chosen type+id.  
+- Data: TMDB watch providers for chosen type+id.
 - Group countries:
-  - **Preferred:** DE, GB/UK, US, CA (always shown).  
+  - **Preferred:** DE, GB/UK, US, CA (always shown).
   - **Other:** all remaining countries with any providers.
 
 **Per country row:**
 
-- Country name + flag.  
-- **Netflix availability:** `true`/`false` based on provider list.  
-- **Free/ad-supported services:** providers in `free`/`ads` categories.  
+- Country name + flag.
+- **Netflix availability:** `true`/`false` based on provider list.
+- **Free/ad-supported services:** providers in `free`/`ads` categories.
 - “Watch” link if TMDB provides a provider link.
 
 **No availability:**
 
-- If providers exist only in non-preferred countries:  
-  - Show preferred countries (with “Not available” rows) and an “Other countries” block.  
-- If no providers anywhere:  
+- If providers exist only in non-preferred countries:
+  - Show preferred countries (with “Not available” rows) and an “Other countries” block.
+- If no providers anywhere:
   - Show **“No streaming availability found”**.
 
 ---
@@ -131,12 +132,12 @@ Each result row shows:
 **Preferred list (fixed for MVP):**
 
 ```ts
-const PREFERRED_COUNTRIES = ["DE", "GB", "US", "CA"];
+const PREFERRED_COUNTRIES = ['DE', 'GB', 'US', 'CA'];
 ```
 
 **Logic:**
 
-- For each title, always render preferred countries first (even if empty).  
+- For each title, always render preferred countries first (even if empty).
 - Add other countries with availability as **“Other countries”** below, sorted alphabetically.
 
 ---
@@ -147,10 +148,10 @@ const PREFERRED_COUNTRIES = ["DE", "GB", "US", "CA"];
 
 Use TMDB for:
 
-- Search: `/search/movie`, `/search/tv`  
-- Details: `/movie/{id}`, `/tv/{id}`  
-- Genres: `/genre/movie/list`, `/genre/tv/list`  
-- Watch providers: `/movie/{id}/watch/providers`, `/tv/{id}/watch/providers`  
+- Search: `/search/movie`, `/search/tv`
+- Details: `/movie/{id}`, `/tv/{id}`
+- Genres: `/genre/movie/list`, `/genre/tv/list`
+- Watch providers: `/movie/{id}/watch/providers`, `/tv/{id}/watch/providers`
 
 ### 5.2 Internal API (Next.js)
 
@@ -160,18 +161,18 @@ Backend endpoints:
 
 **Query params:**
 
-- `query` (required)  
-- `type` (`movie` | `tv` | `all`)  
-- `yearFrom`, `yearTo` (optional)  
-- `language` (optional)  
-- `genreIds` (optional, comma-separated)  
-- `minRating` (optional)  
-- `page` (default 1)  
+- `query` (required)
+- `type` (`movie` | `tv` | `all`)
+- `yearFrom`, `yearTo` (optional)
+- `language` (optional)
+- `genreIds` (optional, comma-separated)
+- `minRating` (optional)
+- `page` (default 1)
 - `mode` (`autocomplete` | `full`, default `full`)
 
 **Response:**
 
-- `page`, `totalPages`, `totalResults`  
+- `page`, `totalPages`, `totalResults`
 - `results[]` with normalized fields:
 
 ```json
@@ -191,7 +192,7 @@ Backend endpoints:
 
 #### `GET /api/title/:type/:id`
 
-- `type`: `movie` | `tv`  
+- `type`: `movie` | `tv`
 
 **Response:**
 
@@ -247,9 +248,7 @@ Returns cached TMDB genre lists:
     { "id": 28, "name": "Action" },
     { "id": 18, "name": "Drama" }
   ],
-  "tv": [
-    { "id": 10759, "name": "Action & Adventure" }
-  ]
+  "tv": [{ "id": 10759, "name": "Action & Adventure" }]
 }
 ```
 
@@ -275,16 +274,16 @@ Returns cached TMDB genre lists:
   - `Footer` – disclaimer and credits.
 
 - **Styling:**
-  - TailwindCSS (or similar utility-first CSS).  
+  - TailwindCSS (or similar utility-first CSS).
   - Dark theme, gradient background, neon blue accent, warm secondary accent.
 
 ### 6.3 Backend
 
-- **Implementation:** Next.js Route Handlers or API routes under `/api`.  
+- **Implementation:** Next.js Route Handlers or API routes under `/api`.
 - **Modules:**
-  - `tmdbClient`: HTTP client for TMDB (base URL + API key).  
-  - `availabilityMapper`: maps TMDB watch provider payload to internal availability schema.  
-  - `cache`: generic caching layer (in-memory Map with TTL).  
+  - `tmdbClient`: HTTP client for TMDB (base URL + API key).
+  - `availabilityMapper`: maps TMDB watch provider payload to internal availability schema.
+  - `cache`: generic caching layer (in-memory Map with TTL).
   - `config`: constants (preferred countries, TTL, TMDB base URL).
 
 ### 6.4 Configuration & Secrets
@@ -293,8 +292,8 @@ Returns cached TMDB genre lists:
   - `TMDB_API_KEY=<key>`
 
 - `config.ts`:
-  - `TMDB_BASE_URL`  
-  - `PREFERRED_COUNTRIES`  
+  - `TMDB_BASE_URL`
+  - `PREFERRED_COUNTRIES`
   - `CACHE_TTL_SECONDS`
 
 ---
@@ -311,20 +310,20 @@ Returns cached TMDB genre lists:
 
 **Implementation (MVP):**
 
-- In-memory cache (e.g. `Map<string, { value: any; expiresAt: number }>`).  
+- In-memory cache (e.g. `Map<string, { value: any; expiresAt: number }>`).
 - TTL: configurable, e.g. 12–24 hours.
 
 **Key patterns:**
 
-- `search::<hash>` (hash over query+filters+page).  
-- `title::<type>::<id>`  
-- `providers::<type>::<id>`  
+- `search::<hash>` (hash over query+filters+page).
+- `title::<type>::<id>`
+- `providers::<type>::<id>`
 - `genres`
 
 On cache miss:
 
-1. Fetch from TMDB.  
-2. Store in cache with `expiresAt`.  
+1. Fetch from TMDB.
+2. Store in cache with `expiresAt`.
 3. Return to client.
 
 On cache hit (not expired):
@@ -337,34 +336,33 @@ On cache hit (not expired):
 
 ### 8.1 Error Types
 
-- Network/timeout errors to TMDB.  
-- TMDB 4xx/5xx responses.  
-- Rate limit responses (e.g. 429/409).  
-- Invalid query parameters.  
+- Network/timeout errors to TMDB.
+- TMDB 4xx/5xx responses.
+- Rate limit responses (e.g. 429/409).
+- Invalid query parameters.
 - Internal server exceptions.
 
 ### 8.2 Backend Handling
 
-- Wrap TMDB calls in `try/catch`.  
+- Wrap TMDB calls in `try/catch`.
 - Map TMDB errors to HTTP responses:
-
-  - TMDB 4xx → HTTP 400 to client (include code & message).  
-  - TMDB 429/409 → HTTP 429 or 503 with friendly text.  
+  - TMDB 4xx → HTTP 400 to client (include code & message).
+  - TMDB 429/409 → HTTP 429 or 503 with friendly text.
   - TMDB 5xx → HTTP 502/503.
 
-- **Technical logging only:**  
-  - Log to console: timestamp, endpoint, TMDB URL, status code, error message, duration (for slow calls).  
+- **Technical logging only:**
+  - Log to console: timestamp, endpoint, TMDB URL, status code, error message, duration (for slow calls).
   - Do not log user-identifiable data.
 
 ### 8.3 Frontend Handling
 
-- Global error state for API failures:  
+- Global error state for API failures:
   - “We’re having trouble fetching data right now. Please try again later.”
 
-- Search-specific:  
+- Search-specific:
   - If no results: “No titles found. Please check the spelling or try a different title.”
 
-- Availability-specific:  
+- Availability-specific:
   - If no providers: “No streaming availability found”.
 
 ---
@@ -377,18 +375,18 @@ On cache hit (not expired):
 
 ### 9.2 Visual Style
 
-- **Theme:** Dark, cinema-like.  
-- **Background:** Near-black with subtle blue/purple gradient.  
-- **Primary accent:** Neon blue/cyan (CTAs, primary controls).  
-- **Secondary accent:** Warm orange/pink (ratings, status badges).  
+- **Theme:** Dark, cinema-like.
+- **Background:** Near-black with subtle blue/purple gradient.
+- **Primary accent:** Neon blue/cyan (CTAs, primary controls).
+- **Secondary accent:** Warm orange/pink (ratings, status badges).
 - **Typography:** Modern sans-serif (e.g. Inter or Roboto).
 
 ### 9.3 Layout
 
-- **Header:** Logo + “WhereToStream”.  
+- **Header:** Logo + “WhereToStream”.
 - **Main content:**
-  - Centered search card (title + filters).  
-  - Paginated results list beneath.  
+  - Centered search card (title + filters).
+  - Paginated results list beneath.
   - Inline expandable details panels under each result row.
 
 - **Mobile:** Stacked layout, same features, responsive sizing.
@@ -396,8 +394,7 @@ On cache hit (not expired):
 ### 9.4 Footer
 
 - Minimal text:
-
-  - “This product uses the TMDB API but is not endorsed or certified by TMDB.”  
+  - “This product uses the TMDB API but is not endorsed or certified by TMDB.”
   - “Streaming availability is based on public data sources and may be incomplete or out of date.”
 
 ---
@@ -427,7 +424,6 @@ On cache hit (not expired):
 ### 10.2 Integration Tests (Backend)
 
 - API-level tests (e.g. with supertest):
-
   - `GET /api/search`:
     - Valid queries return normalized results.
     - Filters applied correctly.
@@ -484,5 +480,5 @@ On cache hit (not expired):
 
 **Definition of Done (MVP):**
 
-- All flows above work on localhost with a real TMDB API key.  
+- All flows above work on localhost with a real TMDB API key.
 - Search, filters, pagination, inline details, availability logic, dark UI, caching, and basic error handling are implemented and covered by unit/integration tests and manual QA.

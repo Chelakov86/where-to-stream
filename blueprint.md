@@ -2,7 +2,7 @@
 
 This file contains:
 
-1. A **high-level, step-by-step architecture and implementation blueprint** for the WhereToStream MVP.  
+1. A **high-level, step-by-step architecture and implementation blueprint** for the WhereToStream MVP.
 2. A **series of self-contained prompts** for a code-generation LLM, designed for test-driven, incremental implementation.
 
 ---
@@ -673,7 +673,7 @@ TDD instructions:
 
 ### Prompt 7 – Availability Mapper for Watch Providers
 
-```text
+````text
 You are implementing the streaming availability mapping for "WhereToStream". Use strict TDD.
 
 Task:
@@ -725,7 +725,7 @@ TDD instructions:
 2. Implement Jest tests for `mapAvailability`.
 3. Implement `availabilityMapper.ts` to satisfy tests.
 4. Show full module and tests.
-```
+````
 
 ---
 

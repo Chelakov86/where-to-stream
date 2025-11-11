@@ -1,8 +1,8 @@
-const nextJest = require('next/jest')
+const nextJest = require('next/jest');
 
 const createJestConfig = nextJest({
   dir: './',
-})
+});
 
 const config = {
   coverageProvider: 'v8',
@@ -15,6 +15,6 @@ const config = {
   testEnvironmentOptions: {
     customExportConditions: [''],
   },
-}
+};
 
-module.exports = createJestConfig(config)
+module.exports = createJestConfig(config);

@@ -6,5 +6,5 @@ export default function HomePage() {
         Find where your favorite movies and TV shows are streaming
       </p>
     </main>
-  )
+  );
 }
