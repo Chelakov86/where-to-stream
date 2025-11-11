@@ -83,19 +83,19 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ### 3.1 Low-level HTTP Helper
 
-- [ ] Implement `tmdbGet<T>` helper
-  - [ ] Build URL with `TMDB_BASE_URL` + `path`
-  - [ ] Accept query params and append to URL
-  - [ ] Attach TMDB API key (e.g. `Authorization: Bearer <token>` or `api_key` param)
-  - [ ] Handle non-2xx responses:
-    - [ ] Create `TmdbError` class (with `status`, `statusText`, optional body snippet)
-    - [ ] Throw `TmdbError` on non-2xx
+- [x] Implement `tmdbGet<T>` helper
+  - [x] Build URL with `TMDB_BASE_URL` + `path`
+  - [x] Accept query params and append to URL
+  - [x] Attach TMDB API key (e.g. `Authorization: Bearer <token>` or `api_key` param)
+  - [x] Handle non-2xx responses:
+    - [x] Create `TmdbError` class (with `status`, `statusText`, optional body snippet)
+    - [x] Throw `TmdbError` on non-2xx
 
-- [ ] Tests for HTTP helper
-  - [ ] Correct URL building with path
-  - [ ] Correct handling of query params
-  - [ ] Correct header / key usage
-  - [ ] Non-2xx response throws `TmdbError` with expected status
+- [x] Tests for HTTP helper
+  - [x] Correct URL building with path
+  - [x] Correct handling of query params
+  - [x] Correct header / key usage
+  - [x] Non-2xx response throws `TmdbError` with expected status
 
 ### 3.2 Domain Methods & Types
 
