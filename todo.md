@@ -257,38 +257,38 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ### 7.2 TMDB Integration & Normalization
 
-- [ ] Connect TMDB client to `/api/search`
-  - [ ] For `type = movie` → call `searchMovies` with mapped params
-  - [ ] For `type = tv` → call `searchTv`
-  - [ ] For `type = all` → call both, merge results
+- [x] Connect TMDB client to `/api/search`
+  - [x] For `type = movie` → call `searchMovies` with mapped params
+  - [x] For `type = tv` → call `searchTv`
+  - [x] For `type = all` → call both, merge results
 
-- [ ] Create normalized result model:
-  - [ ] `NormalizedSearchResult` (id, type, title, year, posterUrl, rating, genres, overview, popularity)
-  - [ ] `SearchResponse` with `page`, `totalPages`, `totalResults`, `results`
+- [x] Create normalized result model:
+  - [x] `NormalizedSearchResult` (id, type, title, year, posterUrl, rating, genres, overview, popularity)
+  - [x] `SearchResponse` with `page`, `totalPages`, `totalResults`, `results`
 
-- [ ] Normalization rules
-  - [ ] Movies:
-    - [ ] `title` from `title`
-    - [ ] `year` from `release_date`
-  - [ ] TV:
-    - [ ] `title` from `name`
-    - [ ] `year` from `first_air_date`
-  - [ ] Construct full `posterUrl` via helper if `poster_path` present
-  - [ ] Merge movie + TV results and sort by popularity for `type = all`
+- [x] Normalization rules
+  - [x] Movies:
+    - [x] `title` from `title`
+    - [x] `year` from `release_date`
+  - [x] TV:
+    - [x] `title` from `name`
+    - [x] `year` from `first_air_date`
+  - [x] Construct full `posterUrl` via helper if `poster_path` present
+  - [x] Merge movie + TV results and sort by popularity for `type = all`
 
-- [ ] Mode handling
-  - [ ] `mode = full` → full normalized data
-  - [ ] `mode = autocomplete` → minimal fields (id, type, title, year, posterUrl, popularity) but use same structure
+- [x] Mode handling
+  - [x] `mode = full` → full normalized data
+  - [x] `mode = autocomplete` → minimal fields (id, type, title, year, posterUrl, popularity) but use same structure
 
-- [ ] Error handling
-  - [ ] TMDB errors → 502/503 JSON error
+- [x] Error handling
+  - [x] TMDB errors → 502/503 JSON error
 
-- [ ] Tests (mock TMDB client)
-  - [ ] Movie-only search scenario
-  - [ ] TV-only search scenario
-  - [ ] Combined `type = all` merging and sorting by popularity
-  - [ ] Autocomplete mode returns minimal yet valid structure
-  - [ ] TMDB error → appropriate HTTP and JSON
+- [x] Tests (mock TMDB client)
+  - [x] Movie-only search scenario
+  - [x] TV-only search scenario
+  - [x] Combined `type = all` merging and sorting by popularity
+  - [x] Autocomplete mode returns minimal yet valid structure
+  - [x] TMDB error → appropriate HTTP and JSON
 
 ---
 
