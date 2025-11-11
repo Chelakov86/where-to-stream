@@ -211,18 +211,18 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 6. API – `/api/genres`
 
-- [ ] Implement `app/api/genres/route.ts`
-  - [ ] `GET` handler that:
-    - [ ] Calls `getMovieGenres()`
-    - [ ] Calls `getTvGenres()`
-    - [ ] Returns JSON: `{ movie: [...], tv: [...] }`
+- [x] Implement `app/api/genres/route.ts`
+  - [x] `GET` handler that:
+    - [x] Calls `getMovieGenres()`
+    - [x] Calls `getTvGenres()`
+    - [x] Returns JSON: `{ movie: [...], tv: [...] }`
 
-- [ ] Error handling
-  - [ ] If TMDB fails → return 502/503-style error JSON with a brief message
+- [x] Error handling
+  - [x] If TMDB fails → return 502/503-style error JSON with a brief message
 
-- [ ] Tests (mock TMDB client)
-  - [ ] Successful response with expected structure
-  - [ ] Error response when TMDB calls throw
+- [x] Tests (mock TMDB client)
+  - [x] Successful response with expected structure
+  - [x] Error response when TMDB calls throw
 
 ---
 

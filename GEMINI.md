@@ -18,6 +18,10 @@ The application is structured as a standard Next.js project.
 *   Configuration is managed in `app/config.ts`, which includes retrieving the TMDB API key from environment variables.
 *   Tests are located in the `__tests__/` directory.
 
+# API Routes
+
+*   **`/api/genres`**: A `GET` route that returns a combined list of movie and TV show genres from the TMDB API. This route utilizes internal caching for efficient data retrieval and includes error handling for TMDB API failures.
+
 # Building and Running
 
 **1. Install Dependencies:**
@@ -66,3 +70,4 @@ npm start
     npm run lint
     ```
 *   **Testing:** The project uses Jest and React Testing Library for testing. Tests are located in the `__tests__` directory and follow the `*.test.ts` or `*.test.tsx` naming convention.
+*   **Regression Testing:** After each implementation step, run all tests to ensure no existing functionality has been broken.
