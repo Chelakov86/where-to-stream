@@ -230,30 +230,30 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ### 7.1 Parameter Parsing & Validation
 
-- [ ] Implement `app/api/search/route.ts`
-  - [ ] Parse query params:
-    - [ ] `query` (required, trimmed)
-    - [ ] `type` in {"movie","tv","all"} (default "all")
-    - [ ] `yearFrom`, `yearTo` as integers (optional)
-    - [ ] `language` as string (optional)
-    - [ ] `genreIds` as comma-separated list of integers → `number[]`
-    - [ ] `minRating` as float (optional)
-    - [ ] `page` as integer (default 1)
-    - [ ] `mode` in {"autocomplete","full"} (default "full")
+- [x] Implement `app/api/search/route.ts`
+  - [x] Parse query params:
+    - [x] `query` (required, trimmed)
+    - [x] `type` in {"movie","tv","all"} (default "all")
+    - [x] `yearFrom`, `yearTo` as integers (optional)
+    - [x] `language` as string (optional)
+    - [x] `genreIds` as comma-separated list of integers → `number[]`
+    - [x] `minRating` as float (optional)
+    - [x] `page` as integer (default 1)
+    - [x] `mode` in {"autocomplete","full"} (default "full")
 
-- [ ] Validation
-  - [ ] If `query` missing or empty → 400 error JSON
-  - [ ] Normalize to internal `SearchParams` object
+- [x] Validation
+  - [x] If `query` missing or empty → 400 error JSON
+  - [x] Normalize to internal `SearchParams` object
 
-- [ ] Temporary response
-  - [ ] Initially return `{ params: normalizedSearchParams }` (for tests)
+- [x] Temporary response
+  - [x] Initially return `{ params: normalizedSearchParams }` (for tests)
 
-- [ ] Tests for parsing/validation
-  - [ ] Valid minimal request
-  - [ ] Defaults for `type`, `page`, `mode`
-  - [ ] Correct `genreIds` parsing
-  - [ ] Handling of invalid `type` or `mode` (choose and implement: normalize to default or 400)
-  - [ ] Query missing/empty → 400
+- [x] Tests for parsing/validation
+  - [x] Valid minimal request
+  - [x] Defaults for `type`, `page`, `mode`
+  - [x] Correct `genreIds` parsing
+  - [x] Handling of invalid `type` or `mode` (choose and implement: normalize to default or 400)
+  - [x] Query missing/empty → 400
 
 ### 7.2 TMDB Integration & Normalization
 
