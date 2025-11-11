@@ -129,19 +129,19 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ### 4.1 Cache Core
 
-- [ ] Implement `cache.ts`
-  - [ ] `setCache<T>(key, value, ttlSeconds)`
-  - [ ] `getCache<T>(key)`
-  - [ ] Internal `Map<string, { value; expiresAt }>` storage
-  - [ ] Expiry logic:
-    - [ ] Remove & return `undefined` when expired
-    - [ ] Return stored value if not expired
+- [x] Implement `cache.ts`
+  - [x] `setCache<T>(key, value, ttlSeconds)`
+  - [x] `getCache<T>(key)`
+  - [x] Internal `Map<string, { value; expiresAt }>` storage
+  - [x] Expiry logic:
+    - [x] Remove & return `undefined` when expired
+    - [x] Return stored value if not expired
 
-- [ ] Tests for cache
-  - [ ] Retrieve value before expiry
-  - [ ] Retrieve value after expiry returns `undefined` and removes entry
-  - [ ] Overwriting key updates value & expiry
-  - [ ] Works with different value types
+- [x] Tests for cache
+  - [x] Retrieve value before expiry
+  - [x] Retrieve value after expiry returns `undefined` and removes entry
+  - [x] Overwriting key updates value & expiry
+  - [x] Works with different value types
 
 ### 4.2 Cache Integration into TMDB Methods
 
