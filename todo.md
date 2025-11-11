@@ -294,41 +294,41 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 8. API – `/api/title/:type/:id`
 
-- [ ] Implement `app/api/title/[type]/[id]/route.ts`
-  - [ ] Extract `type` and `id` from path
-  - [ ] Validate `type` in {"movie","tv"}
-  - [ ] Validate `id` is positive integer
+- [x] Implement `app/api/title/[type]/[id]/route.ts`
+  - [x] Extract `type` and `id` from path
+  - [x] Validate `type` in {"movie","tv"}
+  - [x] Validate `id` is positive integer
 
-- [ ] TMDB integration
-  - [ ] For `movie`:
-    - [ ] Call `getMovieDetails(id)`
-    - [ ] Call `getMovieWatchProviders(id)`
-  - [ ] For `tv`:
-    - [ ] Call `getTvDetails(id)`
-    - [ ] Call `getTvWatchProviders(id)`
+- [x] TMDB integration
+  - [x] For `movie`:
+    - [x] Call `getMovieDetails(id)`
+    - [x] Call `getMovieWatchProviders(id)`
+  - [x] For `tv`:
+    - [x] Call `getTvDetails(id)`
+    - [x] Call `getTvWatchProviders(id)`
 
-- [ ] Normalized title model
-  - [ ] `NormalizedTitle` including:
-    - [ ] id, type
-    - [ ] title, originalTitle
-    - [ ] year
-    - [ ] genres (objects with `id`, `name`)
-    - [ ] overview
-    - [ ] rating
-    - [ ] posterUrl
-    - [ ] runtime (if available)
-    - [ ] `availability` from `mapAvailability`
+- [x] Normalized title model
+  - [x] `NormalizedTitle` including:
+    - [x] id, type
+    - [x] title, originalTitle
+    - [x] year
+    - [x] genres (objects with `id`, `name`)
+    - [x] overview
+    - [x] rating
+    - [x] posterUrl
+    - [x] runtime (if available)
+    - [x] `availability` from `mapAvailability`
 
-- [ ] Error handling
-  - [ ] Invalid type or id → 400 JSON error
-  - [ ] TMDB error → 502/503 JSON error
+- [x] Error handling
+  - [x] Invalid type or id → 400 JSON error
+  - [x] TMDB error → 502/503 JSON error
 
-- [ ] Tests (mock TMDB client + `availabilityMapper`)
-  - [ ] Movie details success path
-  - [ ] TV details success path
-  - [ ] Invalid type
-  - [ ] Invalid id
-  - [ ] TMDB / mapper error → correct HTTP code & JSON
+- [x] Tests (mock TMDB client + `availabilityMapper`)
+  - [x] Movie details success path
+  - [x] TV details success path
+  - [x] Invalid type
+  - [x] Invalid id
+  - [x] TMDB / mapper error → correct HTTP code & JSON
 
 ---
 
@@ -501,7 +501,7 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 - [ ] Implement state management
   - [ ] `genres`
-  - [ ] `searchParams`
+  [ ] `searchParams`
   - [ ] `results`, `page`, `totalPages`
   - [ ] `autocompleteItems`, `isAutocompleteOpen`
   - [ ] `selectedTitle` (id + type)
