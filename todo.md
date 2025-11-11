@@ -177,35 +177,35 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ### 5.1 Mapping Logic
 
-- [ ] Create `availabilityMapper.ts`
-  - [ ] Define internal types:
-    - [ ] `CountryAvailability`
-    - [ ] `AvailabilityResult` (preferredCountries, otherCountries)
-  - [ ] Implement `mapAvailability(tmdbProviders)`
+- [x] Create `availabilityMapper.ts`
+  - [x] Define internal types:
+    - [x] `CountryAvailability`
+    - [x] `AvailabilityResult` (preferredCountries, otherCountries)
+  - [x] Implement `mapAvailability(tmdbProviders)`
 
-- [ ] Country mapping
-  - [ ] Use `PREFERRED_COUNTRIES = ["DE", "GB", "US", "CA"]`
-  - [ ] Define simple map from country code → display name
-  - [ ] Fallback to code if name unknown
+- [x] Country mapping
+  - [x] Use `PREFERRED_COUNTRIES = ["DE", "GB", "US", "CA"]`
+  - [x] Define simple map from country code → display name
+  - [x] Fallback to code if name unknown
 
-- [ ] Detection logic
-  - [ ] Always include all preferred countries in result (even if no providers)
-  - [ ] `hasNetflix` true if Netflix present in `flatrate`, `ads`, or `free`
-  - [ ] `freeOrAdsProviders` = union of provider names from `free` and `ads` lists
-    - [ ] Ensure unique names
-    - [ ] Optionally sort alphabetically
-  - [ ] `watchLink` from country’s `link` (if present)
+- [x] Detection logic
+  - [x] Always include all preferred countries in result (even if no providers)
+  - [x] `hasNetflix` true if Netflix present in `flatrate`, `ads`, or `free`
+  - [x] `freeOrAdsProviders` = union of provider names from `free` and `ads` lists
+    - [x] Ensure unique names
+    - [x] Optionally sort alphabetically
+  - [x] `watchLink` from country’s `link` (if present)
 
-- [ ] Other countries
-  - [ ] Include any non-preferred country that has at least one provider
-  - [ ] Sort `otherCountries` by `countryName`
+- [x] Other countries
+  - [x] Include any non-preferred country that has at least one provider
+  - [x] Sort `otherCountries` by `countryName`
 
 ### 5.2 Tests
 
-- [ ] Test: full data with Netflix + free/ads providers + links
-- [ ] Test: preferred country with no TMDB entry (appears with `hasNetflix = false`, empty providers)
-- [ ] Test: non-preferred countries present with providers
-- [ ] Test: no availability anywhere (preferred present but no providers; otherCountries empty)
+- [x] Test: full data with Netflix + free/ads providers + links
+- [x] Test: preferred country with no TMDB entry (appears with `hasNetflix = false`, empty providers)
+- [x] Test: non-preferred countries present with providers
+- [x] Test: no availability anywhere (preferred present but no providers; otherCountries empty)
 
 ---
 
