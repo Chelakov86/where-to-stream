@@ -99,29 +99,29 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ### 3.2 Domain Methods & Types
 
-- [ ] Define minimal TMDB types
-  - [ ] Search response type (`results`, `page`, `total_pages`, `total_results`)
-  - [ ] Movie search item (id, title, release_date, poster_path, vote_average, genre_ids, popularity)
-  - [ ] TV search item (id, name, first_air_date, poster_path, vote_average, genre_ids, popularity)
-  - [ ] Movie details type
-  - [ ] TV details type
-  - [ ] Genre list type (`genres: { id; name }[]`)
-  - [ ] Watch providers response type
+- [x] Define minimal TMDB types
+  - [x] Search response type (`results`, `page`, `total_pages`, `total_results`)
+  - [x] Movie search item (id, title, release_date, poster_path, vote_average, genre_ids, popularity)
+  - [x] TV search item (id, name, first_air_date, poster_path, vote_average, genre_ids, popularity)
+  - [x] Movie details type
+  - [x] TV details type
+  - [x] Genre list type (`genres: { id; name }[]`)
+  - [x] Watch providers response type
 
-- [ ] Implement domain methods
-  - [ ] `searchMovies(params)`
-  - [ ] `searchTv(params)`
-  - [ ] `getMovieDetails(id)`
-  - [ ] `getTvDetails(id)`
-  - [ ] `getMovieWatchProviders(id)`
-  - [ ] `getTvWatchProviders(id)`
-  - [ ] `getMovieGenres()`
-  - [ ] `getTvGenres()`
+- [x] Implement domain methods
+  - [x] `searchMovies(params)`
+  - [x] `searchTv(params)`
+  - [x] `getMovieDetails(id)`
+  - [x] `getTvDetails(id)`
+  - [x] `getMovieWatchProviders(id)`
+  - [x] `getTvWatchProviders(id)`
+  - [x] `getMovieGenres()`
+  - [x] `getTvGenres()`
 
-- [ ] Tests for domain methods (mock `tmdbGet`)
-  - [ ] Each method calls correct TMDB path
-  - [ ] Query params mapped correctly from input params
-  - [ ] `id` is used correctly in path for detail/provider calls
+- [x] Tests for domain methods (mock `tmdbGet`)
+  - [x] Each method calls correct TMDB path
+  - [x] Query params mapped correctly from input params
+  - [x] `id` is used correctly in path for detail/provider calls
 
 ---
 
