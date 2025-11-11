@@ -7,15 +7,15 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 0. Housekeeping & Repo Setup
 
-- [ ] **Create / verify project repository**
-  - [ ] Initialize git repository
-  - [ ] Add `.gitignore` (Node, Next.js, OS-specific files)
-  - [ ] Set up basic `README.md` (project summary, tech stack, how to run)
+- [x] **Create / verify project repository**
+  - [x] Initialize git repository
+  - [x] Add `.gitignore` (Node, Next.js, OS-specific files)
+  - [x] Set up basic `README.md` (project summary, tech stack, how to run)
   - [ ] Configure default branch & protections (if using remote)
 
-- [ ] **Decide on tooling**
-  - [ ] Package manager chosen (npm / yarn / pnpm)
-  - [ ] Node version defined (e.g. via `.nvmrc` or engines in `package.json`)
+- [x] **Decide on tooling**
+  - [x] Package manager chosen (npm / yarn / pnpm)
+  - [x] Node version defined (e.g. via `.nvmrc` or engines in `package.json`)
 
 ---
 
@@ -23,40 +23,40 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ### 1.1 Next.js App + TypeScript
 
-- [ ] Ensure project is a **Next.js App Router** project with TypeScript
-  - [ ] `app/` directory present
-  - [ ] `tsconfig.json` configured with strict mode
-  - [ ] `app/page.tsx` exists and renders a placeholder page
+- [x] Ensure project is a **Next.js App Router** project with TypeScript
+  - [x] `app/` directory present
+  - [x] `tsconfig.json` configured with strict mode
+  - [x] `app/page.tsx` exists and renders a placeholder page
 
 ### 1.2 TailwindCSS & Global Styles
 
-- [ ] Install and configure TailwindCSS
-  - [ ] `tailwind.config.js` or `tailwind.config.cjs` created
-  - [ ] `postcss.config.js` configured
-  - [ ] Tailwind directives added to global stylesheet (e.g. `globals.css`)
+- [x] Install and configure TailwindCSS
+  - [x] `tailwind.config.js` or `tailwind.config.cjs` created
+  - [x] `postcss.config.js` configured
+  - [x] Tailwind directives added to global stylesheet (e.g. `globals.css`)
 
-- [ ] Dark theme base
-  - [ ] Body background set to dark (e.g. `bg-slate-950`)
-  - [ ] Base text set to light color
-  - [ ] Basic typography (font family, sizes) configured
-  - [ ] Add a few utility classes or Tailwind config for accent colors (e.g. streaming-neon blue)
+- [x] Dark theme base
+  - [x] Body background set to dark (e.g. `bg-slate-950`)
+  - [x] Base text set to light color
+  - [x] Basic typography (font family, sizes) configured
+  - [x] Add a few utility classes or Tailwind config for accent colors (e.g. streaming-neon blue)
 
 ### 1.3 Linting, Formatting, Testing Skeleton
 
-- [ ] Linting & formatting
-  - [ ] ESLint configured (Next.js recommended rules)
+- [x] Linting & formatting
+  - [x] ESLint configured (Next.js recommended rules)
   - [ ] Prettier configured (and integrated with ESLint if desired)
-  - [ ] Add `lint` script to `package.json`
+  - [x] Add `lint` script to `package.json`
 
-- [ ] Jest & React Testing Library setup
-  - [ ] Install Jest, Testing Library, and required environment packages
-  - [ ] Jest config file created (`jest.config.*`)
-  - [ ] Testing setup file for RTL (e.g. `jest.setup.ts`)
-  - [ ] Add `test` script to `package.json`
+- [x] Jest & React Testing Library setup
+  - [x] Install Jest, Testing Library, and required environment packages
+  - [x] Jest config file created (`jest.config.*`)
+  - [x] Testing setup file for RTL (e.g. `jest.setup.ts`)
+  - [x] Add `test` script to `package.json`
 
-- [ ] Sanity tests
-  - [ ] Simple test for root page rendering
-  - [ ] Verify tests run and pass
+- [x] Sanity tests
+  - [x] Simple test for root page rendering
+  - [x] Verify tests run and pass
 
 ---
 
