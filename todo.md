@@ -145,31 +145,31 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ### 4.2 Cache Integration into TMDB Methods
 
-- [ ] Decide TTLs
-  - [ ] Long TTL for genres (e.g. 24h)
-  - [ ] Moderate TTL for searches, details, providers (e.g. 12h or as desired)
+- [x] Decide TTLs
+  - [x] Long TTL for genres (e.g. 24h)
+  - [x] Moderate TTL for searches, details, providers (e.g. 12h or as desired)
 
-- [ ] Implement cache keys
-  - [ ] `genres:movie`
-  - [ ] `genres:tv`
-  - [ ] `search:movie:<hash>`
-  - [ ] `search:tv:<hash>`
-  - [ ] `title:movie:<id>`
-  - [ ] `title:tv:<id>`
-  - [ ] `providers:movie:<id>`
-  - [ ] `providers:tv:<id>`
+- [x] Implement cache keys
+  - [x] `genres:movie`
+  - [x] `genres:tv`
+  - [x] `search:movie:<hash>`
+  - [x] `search:tv:<hash>`
+  - [x] `title:movie:<id>`
+  - [x] `title:tv:<id>`
+  - [x] `providers:movie:<id>`
+  - [x] `providers:tv:<id>`
 
-- [ ] Implement stable param hashing for search
-  - [ ] Serialize params consistently (e.g. sorted JSON)
-  - [ ] Hash or use the serialized string as-is
+- [x] Implement stable param hashing for search
+  - [x] Serialize params consistently (e.g. sorted JSON)
+  - [x] Hash or use the serialized string as-is
 
-- [ ] Wrap TMDB methods with cache
-  - [ ] Check cache → return if present
-  - [ ] Otherwise fetch → store → return
+- [x] Wrap TMDB methods with cache
+  - [x] Check cache → return if present
+  - [x] Otherwise fetch → store → return
 
-- [ ] Tests (mock TMDB calls)
-  - [ ] Subsequent calls with same params use cached value
-  - [ ] Different params produce different cache keys / no cache collision
+- [x] Tests (mock TMDB calls)
+  - [x] Subsequent calls with same params use cached value
+  - [x] Different params produce different cache keys / no cache collision
 
 ---
 

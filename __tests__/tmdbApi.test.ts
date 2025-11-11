@@ -21,14 +21,28 @@ import {
   TmdbWatchProvidersResponse,
   TmdbGenreList,
 } from '@/app/tmdbTypes';
+import * as cache from '@/app/cache';
 
 // Mock the tmdbClient module
 jest.mock('@/app/tmdbClient', () => ({
   tmdbGet: jest.fn(),
 }));
 
+// Mock the cache module
+jest.mock('@/app/cache', () => ({
+  getCache: jest.fn(),
+  setCache: jest.fn(),
+  clearCache: jest.fn(),
+}));
+
 describe('tmdbApi', () => {
   const mockTmdbGet = tmdbGet as jest.MockedFunction<typeof tmdbGet>;
+  const mockGetCache = cache.getCache as jest.MockedFunction<
+    typeof cache.getCache
+  >;
+  const mockSetCache = cache.setCache as jest.MockedFunction<
+    typeof cache.setCache
+  >;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -429,6 +443,186 @@ describe('tmdbApi', () => {
 
       expect(mockTmdbGet).toHaveBeenCalledWith('/genre/tv/list');
       expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('caching', () => {
+    beforeEach(() => {
+      // Reset mocks before each test in this block
+      mockGetCache.mockClear();
+      mockSetCache.mockClear();
+      mockTmdbGet.mockClear();
+    });
+
+    describe('getMovieGenres', () => {
+      it('should cache results and return from cache on second call', async () => {
+        const mockResponse: TmdbGenreList = { genres: [{ id: 28, name: 'Action' }] };
+        mockTmdbGet.mockResolvedValue(mockResponse);
+        mockGetCache.mockReturnValue(undefined);
+
+        // First call
+        await getMovieGenres();
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+        expect(mockSetCache).toHaveBeenCalledWith('genres:movie', mockResponse, 86400);
+
+        // Second call
+        mockGetCache.mockReturnValue(mockResponse);
+        await getMovieGenres();
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1); // Should not be called again
+      });
+    });
+
+    describe('getTvGenres', () => {
+      it('should cache results and return from cache on second call', async () => {
+        const mockResponse: TmdbGenreList = { genres: [{ id: 18, name: 'Drama' }] };
+        mockTmdbGet.mockResolvedValue(mockResponse);
+        mockGetCache.mockReturnValue(undefined);
+
+        // First call
+        await getTvGenres();
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+        expect(mockSetCache).toHaveBeenCalledWith('genres:tv', mockResponse, 86400);
+
+        // Second call
+        mockGetCache.mockReturnValue(mockResponse);
+        await getTvGenres();
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('searchMovies', () => {
+      it('should cache search results and return from cache on subsequent identical calls', async () => {
+        const params = { query: 'Inception', year: 2010 };
+        const mockResponse: TmdbSearchResponse = { page: 1, results: [], total_pages: 1, total_results: 0 };
+        mockTmdbGet.mockResolvedValue(mockResponse);
+        mockGetCache.mockReturnValue(undefined);
+
+        // First call
+        await searchMovies(params);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+        const cacheKey = `search:movie:${JSON.stringify(params)}`;
+        expect(mockSetCache).toHaveBeenCalledWith(cacheKey, mockResponse, 43200);
+
+        // Second call
+        mockGetCache.mockReturnValue(mockResponse);
+        await searchMovies(params);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+      });
+
+      it('should not use cache for different search parameters', async () => {
+        const params1 = { query: 'Inception' };
+        const params2 = { query: 'Interstellar' };
+        const mockResponse1: TmdbSearchResponse = { page: 1, results: [{ id: 27205 }], total_pages: 1, total_results: 1 } as any;
+        const mockResponse2: TmdbSearchResponse = { page: 1, results: [{ id: 157336 }], total_pages: 1, total_results: 1 } as any;
+
+        // First call
+        mockGetCache.mockReturnValue(undefined);
+        mockTmdbGet.mockResolvedValueOnce(mockResponse1);
+        await searchMovies(params1);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+        const cacheKey1 = `search:movie:${JSON.stringify(params1)}`;
+        expect(mockSetCache).toHaveBeenCalledWith(cacheKey1, mockResponse1, 43200);
+
+        // Second call with different params
+        mockGetCache.mockReturnValue(undefined);
+        mockTmdbGet.mockResolvedValueOnce(mockResponse2);
+        await searchMovies(params2);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(2);
+        const cacheKey2 = `search:movie:${JSON.stringify(params2)}`;
+        expect(mockSetCache).toHaveBeenCalledWith(cacheKey2, mockResponse2, 43200);
+      });
+    });
+
+    describe('searchTv', () => {
+        it('should cache search results and return from cache on subsequent identical calls', async () => {
+          const params = { query: 'Breaking Bad', firstAirDateYear: 2008 };
+          const mockResponse: TmdbSearchResponse = { page: 1, results: [], total_pages: 1, total_results: 0 };
+          mockTmdbGet.mockResolvedValue(mockResponse);
+          mockGetCache.mockReturnValue(undefined);
+  
+          // First call
+          await searchTv(params);
+          expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+          const cacheKey = `search:tv:${JSON.stringify(params)}`;
+          expect(mockSetCache).toHaveBeenCalledWith(cacheKey, mockResponse, 43200);
+  
+          // Second call
+          mockGetCache.mockReturnValue(mockResponse);
+          await searchTv(params);
+          expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+        });
+      });
+
+    describe('getMovieDetails', () => {
+      it('should cache details and return from cache on second call', async () => {
+        const mockResponse: TmdbMovieDetails = { id: 550 } as any;
+        mockTmdbGet.mockResolvedValue(mockResponse);
+        mockGetCache.mockReturnValue(undefined);
+
+        // First call
+        await getMovieDetails(550);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+        expect(mockSetCache).toHaveBeenCalledWith('title:movie:550', mockResponse, 43200);
+
+        // Second call
+        mockGetCache.mockReturnValue(mockResponse);
+        await getMovieDetails(550);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('getTvDetails', () => {
+      it('should cache details and return from cache on second call', async () => {
+        const mockResponse: TmdbTvDetails = { id: 1396 } as any;
+        mockTmdbGet.mockResolvedValue(mockResponse);
+        mockGetCache.mockReturnValue(undefined);
+
+        // First call
+        await getTvDetails(1396);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+        expect(mockSetCache).toHaveBeenCalledWith('title:tv:1396', mockResponse, 43200);
+
+        // Second call
+        mockGetCache.mockReturnValue(mockResponse);
+        await getTvDetails(1396);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('getMovieWatchProviders', () => {
+      it('should cache providers and return from cache on second call', async () => {
+        const mockResponse: TmdbWatchProvidersResponse = { id: 550, results: {} };
+        mockTmdbGet.mockResolvedValue(mockResponse);
+        mockGetCache.mockReturnValue(undefined);
+
+        // First call
+        await getMovieWatchProviders(550);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+        expect(mockSetCache).toHaveBeenCalledWith('providers:movie:550', mockResponse, 43200);
+
+        // Second call
+        mockGetCache.mockReturnValue(mockResponse);
+        await getMovieWatchProviders(550);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('getTvWatchProviders', () => {
+      it('should cache providers and return from cache on second call', async () => {
+        const mockResponse: TmdbWatchProvidersResponse = { id: 1396, results: {} };
+        mockTmdbGet.mockResolvedValue(mockResponse);
+        mockGetCache.mockReturnValue(undefined);
+
+        // First call
+        await getTvWatchProviders(1396);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+        expect(mockSetCache).toHaveBeenCalledWith('providers:tv:1396', mockResponse, 43200);
+
+        // Second call
+        mockGetCache.mockReturnValue(mockResponse);
+        await getTvWatchProviders(1396);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+      });
     });
   });
 });

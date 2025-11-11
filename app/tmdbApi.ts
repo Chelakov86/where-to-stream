@@ -1,6 +1,6 @@
 /**
  * TMDB API - Domain-specific methods for movies, TV shows, genres, and watch providers.
- * 
+ *
  * This module provides high-level functions that wrap the low-level tmdbGet helper
  * with proper typing and endpoint paths for common TMDB operations.
  */
@@ -13,6 +13,8 @@ import {
   TmdbWatchProvidersResponse,
   TmdbGenreList,
 } from './tmdbTypes';
+import { getCache, setCache } from './cache';
+import { CACHE_TTL_SECONDS } from './config';
 
 /**
  * Search parameters for movie search
@@ -40,23 +42,29 @@ export interface SearchTvParams {
 
 /**
  * Search for movies by query with optional filters.
- * 
+ *
  * @param params - Search parameters including query and optional filters
  * @returns Promise resolving to search results with pagination info
- * 
+ *
  * @example
  * ```typescript
- * const results = await searchMovies({ 
- *   query: 'Inception', 
+ * const results = await searchMovies({
+ *   query: 'Inception',
  *   year: 2010,
- *   voteAverageGte: 7.5 
+ *   voteAverageGte: 7.5
  * });
  * ```
  */
 export async function searchMovies(
   params: SearchMoviesParams
 ): Promise<TmdbSearchResponse> {
-  return tmdbGet<TmdbSearchResponse>('/search/movie', {
+  const cacheKey = `search:movie:${JSON.stringify(params)}`;
+  const cached = getCache<TmdbSearchResponse>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbSearchResponse>('/search/movie', {
     query: params.query,
     page: params.page,
     year: params.year,
@@ -64,17 +72,20 @@ export async function searchMovies(
     with_genres: params.withGenres,
     'vote_average.gte': params.voteAverageGte,
   });
+
+  setCache(cacheKey, data, CACHE_TTL_SECONDS);
+  return data;
 }
 
 /**
  * Search for TV shows by query with optional filters.
- * 
+ *
  * @param params - Search parameters including query and optional filters
  * @returns Promise resolving to search results with pagination info
- * 
+ *
  * @example
  * ```typescript
- * const results = await searchTv({ 
+ * const results = await searchTv({
  *   query: 'Breaking Bad',
  *   firstAirDateYear: 2008
  * });
@@ -83,7 +94,13 @@ export async function searchMovies(
 export async function searchTv(
   params: SearchTvParams
 ): Promise<TmdbSearchResponse> {
-  return tmdbGet<TmdbSearchResponse>('/search/tv', {
+  const cacheKey = `search:tv:${JSON.stringify(params)}`;
+  const cached = getCache<TmdbSearchResponse>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbSearchResponse>('/search/tv', {
     query: params.query,
     page: params.page,
     first_air_date_year: params.firstAirDateYear,
@@ -91,14 +108,17 @@ export async function searchTv(
     with_genres: params.withGenres,
     'vote_average.gte': params.voteAverageGte,
   });
+
+  setCache(cacheKey, data, CACHE_TTL_SECONDS);
+  return data;
 }
 
 /**
  * Get detailed information for a specific movie.
- * 
+ *
  * @param id - The TMDB movie ID
  * @returns Promise resolving to movie details
- * 
+ *
  * @example
  * ```typescript
  * const movie = await getMovieDetails(550);
@@ -106,15 +126,23 @@ export async function searchTv(
  * ```
  */
 export async function getMovieDetails(id: number): Promise<TmdbMovieDetails> {
-  return tmdbGet<TmdbMovieDetails>(`/movie/${id}`);
+  const cacheKey = `title:movie:${id}`;
+  const cached = getCache<TmdbMovieDetails>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbMovieDetails>(`/movie/${id}`);
+  setCache(cacheKey, data, CACHE_TTL_SECONDS);
+  return data;
 }
 
 /**
  * Get detailed information for a specific TV show.
- * 
+ *
  * @param id - The TMDB TV show ID
  * @returns Promise resolving to TV show details
- * 
+ *
  * @example
  * ```typescript
  * const show = await getTvDetails(1396);
@@ -122,16 +150,24 @@ export async function getMovieDetails(id: number): Promise<TmdbMovieDetails> {
  * ```
  */
 export async function getTvDetails(id: number): Promise<TmdbTvDetails> {
-  return tmdbGet<TmdbTvDetails>(`/tv/${id}`);
+  const cacheKey = `title:tv:${id}`;
+  const cached = getCache<TmdbTvDetails>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbTvDetails>(`/tv/${id}`);
+  setCache(cacheKey, data, CACHE_TTL_SECONDS);
+  return data;
 }
 
 /**
  * Get watch provider information for a specific movie.
  * Returns availability across different streaming platforms by country.
- * 
+ *
  * @param id - The TMDB movie ID
  * @returns Promise resolving to watch providers by country
- * 
+ *
  * @example
  * ```typescript
  * const providers = await getMovieWatchProviders(550);
@@ -141,16 +177,26 @@ export async function getTvDetails(id: number): Promise<TmdbTvDetails> {
 export async function getMovieWatchProviders(
   id: number
 ): Promise<TmdbWatchProvidersResponse> {
-  return tmdbGet<TmdbWatchProvidersResponse>(`/movie/${id}/watch/providers`);
+  const cacheKey = `providers:movie:${id}`;
+  const cached = getCache<TmdbWatchProvidersResponse>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbWatchProvidersResponse>(
+    `/movie/${id}/watch/providers`
+  );
+  setCache(cacheKey, data, CACHE_TTL_SECONDS);
+  return data;
 }
 
 /**
  * Get watch provider information for a specific TV show.
  * Returns availability across different streaming platforms by country.
- * 
+ *
  * @param id - The TMDB TV show ID
  * @returns Promise resolving to watch providers by country
- * 
+ *
  * @example
  * ```typescript
  * const providers = await getTvWatchProviders(1396);
@@ -160,14 +206,24 @@ export async function getMovieWatchProviders(
 export async function getTvWatchProviders(
   id: number
 ): Promise<TmdbWatchProvidersResponse> {
-  return tmdbGet<TmdbWatchProvidersResponse>(`/tv/${id}/watch/providers`);
+  const cacheKey = `providers:tv:${id}`;
+  const cached = getCache<TmdbWatchProvidersResponse>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbWatchProvidersResponse>(
+    `/tv/${id}/watch/providers`
+  );
+  setCache(cacheKey, data, CACHE_TTL_SECONDS);
+  return data;
 }
 
 /**
  * Get the list of official movie genres.
- * 
+ *
  * @returns Promise resolving to list of movie genres with IDs and names
- * 
+ *
  * @example
  * ```typescript
  * const { genres } = await getMovieGenres();
@@ -175,14 +231,22 @@ export async function getTvWatchProviders(
  * ```
  */
 export async function getMovieGenres(): Promise<TmdbGenreList> {
-  return tmdbGet<TmdbGenreList>('/genre/movie/list');
+  const cacheKey = 'genres:movie';
+  const cached = getCache<TmdbGenreList>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbGenreList>('/genre/movie/list');
+  setCache(cacheKey, data, 24 * 60 * 60); // 24 hours
+  return data;
 }
 
 /**
  * Get the list of official TV show genres.
- * 
+ *
  * @returns Promise resolving to list of TV genres with IDs and names
- * 
+ *
  * @example
  * ```typescript
  * const { genres } = await getTvGenres();
@@ -190,5 +254,13 @@ export async function getMovieGenres(): Promise<TmdbGenreList> {
  * ```
  */
 export async function getTvGenres(): Promise<TmdbGenreList> {
-  return tmdbGet<TmdbGenreList>('/genre/tv/list');
+  const cacheKey = 'genres:tv';
+  const cached = getCache<TmdbGenreList>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbGenreList>('/genre/tv/list');
+  setCache(cacheKey, data, 24 * 60 * 60); // 24 hours
+  return data;
 }
