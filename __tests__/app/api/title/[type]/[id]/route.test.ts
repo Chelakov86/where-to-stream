@@ -1,263 +1,255 @@
-import { GET } from '../../../../../../app/api/title/[type]/[id]/route';
-import * as tmdbApi from '../../../../../../app/tmdbApi';
-import * as availabilityMapper from '../../../../../../app/availabilityMapper';
-import { TmdbError } from '../../../../../../app/tmdbClient';
 import { NextRequest, NextResponse } from 'next/server';
+import { TmdbError } from '@/app/tmdbClient';
 
-// Mock next/server to handle NextResponse correctly in tests
+// Mock NextResponse
 jest.mock('next/server', () => ({
   NextResponse: {
     json: jest.fn((data, init) => {
       return {
+        json: () => Promise.resolve(data), // Mock the json() method of the response object
         status: init?.status || 200,
-        json: async () => data,
       };
     }),
   },
 }));
 
-// Mock the TMDB API functions
-jest.mock('../../../../../../app/tmdbApi', () => ({
+// Mock TMDB API functions
+jest.mock('@/app/tmdbApi', () => ({
   getMovieDetails: jest.fn(),
-  getTvDetails: jest.fn(),
   getMovieWatchProviders: jest.fn(),
+  getTvDetails: jest.fn(),
   getTvWatchProviders: jest.fn(),
 }));
 
-// Mock the availabilityMapper
-jest.mock('../../../../../../app/availabilityMapper', () => ({
+// Mock availabilityMapper
+jest.mock('@/app/availabilityMapper', () => ({
   mapAvailability: jest.fn(),
 }));
 
+// Import the mocked modules AFTER jest.mock calls
+import * as tmdbApi from '@/app/tmdbApi';
+import * as availabilityMapper from '@/app/availabilityMapper';
+import { GET } from '@/app/api/title/[type]/[id]/route';
+
+// Now, get references to the mocked functions
 const mockGetMovieDetails = tmdbApi.getMovieDetails as jest.Mock;
-const mockGetTvDetails = tmdbApi.getTvDetails as jest.Mock;
 const mockGetMovieWatchProviders = tmdbApi.getMovieWatchProviders as jest.Mock;
+const mockGetTvDetails = tmdbApi.getTvDetails as jest.Mock;
 const mockGetTvWatchProviders = tmdbApi.getTvWatchProviders as jest.Mock;
 const mockMapAvailability = availabilityMapper.mapAvailability as jest.Mock;
+
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 describe('GET /api/title/[type]/[id]', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Default mock implementations for successful calls
+    mockGetMovieDetails.mockResolvedValue({
+      id: 550,
+      title: 'Fight Club',
+      original_title: 'Fight Club',
+      release_date: '1999-10-15',
+      genres: [{ id: 18, name: 'Drama' }],
+      overview: 'An insomniac office worker looking for a way to change his life crosses paths with a devil-may-care soap maker and they form an underground fight club that evolves into something much, much more.',
+      vote_average: 8.4,
+      poster_path: '/pB8BM7pdXLXbZVZC65E3J9xk3LX.jpg',
+      runtime: 139,
+    });
+    mockGetMovieWatchProviders.mockResolvedValue({
+      id: 550,
+      results: {
+        US: {
+          link: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
+          flatrate: [{ logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg', provider_id: 8, provider_name: 'Netflix', display_priority: 1 }],
+        },
+      },
+    });
+    mockGetTvDetails.mockResolvedValue({
+      id: 1399,
+      name: 'Game of Thrones',
+      original_name: 'Game of Thrones',
+      first_air_date: '2011-04-17',
+      genres: [{ id: 10765, name: 'Sci-Fi & Fantasy' }],
+      overview: 'Nine noble families fight for control over the mythical lands of Westeros, while an ancient enemy returns after being dormant for thousands of years.',
+      vote_average: 8.4,
+      poster_path: '/2OMB0ynKlyXlHZWSnQcBGqL2AER.jpg',
+      episode_run_time: [60],
+    });
+    mockGetTvWatchProviders.mockResolvedValue({
+      id: 1399,
+      results: {
+        US: {
+          link: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
+          flatrate: [{ logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg', provider_id: 8, provider_name: 'HBO Max', display_priority: 1 }],
+        },
+      },
+    });
+    mockMapAvailability.mockReturnValue({
+      flatrate: [{ provider_name: 'Netflix', logo_url: `${TMDB_IMAGE_BASE_URL}/5NyMoF5fJbB62D3B5F5F5F5F.jpg` }],
+      buy: [],
+      rent: [],
+    });
   });
 
   // Helper to create a mock NextRequest
   const createMockRequest = (type: string, id: string) => {
     return {
-      url: `http://localhost:3000/api/title/${type}/${id}`,
-    } as NextRequest;
+      nextUrl: {
+        pathname: `/api/title/${type}/${id}`,
+      },
+    } as unknown as NextRequest;
   };
 
-  // Mock data
-  const mockMovie = {
-    id: 123,
-    title: 'Mock Movie',
-    original_title: 'Original Mock Movie',
-    release_date: '2023-01-01',
-    genres: [{ id: 1, name: 'Action' }],
-    overview: 'Movie overview',
-    vote_average: 7.5,
-    poster_path: '/poster.jpg',
-    runtime: 120,
-  };
+  // --- Valid Requests ---
+  it('should return normalized movie details and availability for a valid movie ID', async () => {
+    const req = createMockRequest('movie', '550');
+    const response = await GET(req, { params: { type: 'movie', id: '550' } });
+    const json = await response.json();
 
-  const mockTv = {
-    id: 456,
-    name: 'Mock TV Show',
-    original_name: 'Original Mock TV Show',
-    first_air_date: '2022-01-01',
-    genres: [{ id: 2, name: 'Drama' }],
-    overview: 'TV show overview',
-    vote_average: 8.0,
-    poster_path: '/tv_poster.jpg',
-    episode_run_time: [60],
-  };
-
-  const mockWatchProviders = {
-    id: 123,
-    results: {
+    expect(response.status).toBe(200);
+    expect(mockGetMovieDetails).toHaveBeenCalledWith(550);
+    expect(mockGetMovieWatchProviders).toHaveBeenCalledWith(550);
+    expect(mockMapAvailability).toHaveBeenCalledWith({
       US: {
-        link: 'https://www.themoviedb.org/movie/123-mock-movie/watch?locale=US',
-        flatrate: [{ provider_id: 8, provider_name: 'Netflix', display_priority: 1 }],
+        link: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
+        flatrate: [{ logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg', provider_id: 8, provider_name: 'Netflix', display_priority: 1 }],
       },
-    },
-  };
-
-  const mockAvailabilityResult = {
-    preferredCountries: [
-      {
-        countryCode: 'US',
-        countryName: 'United States',
-        hasNetflix: true,
-        freeOrAdsProviders: [],
-        watchLink: 'https://www.themoviedb.org/movie/123-mock-movie/watch?locale=US',
-      },
-    ],
-    otherCountries: [],
-  };
-
-  it('should return 200 with normalized movie data and availability', async () => {
-    mockGetMovieDetails.mockResolvedValue(mockMovie);
-    mockGetMovieWatchProviders.mockResolvedValue(mockWatchProviders);
-    mockMapAvailability.mockReturnValue(mockAvailabilityResult);
-
-    const request = createMockRequest('movie', '123');
-    const response = await GET(request, { params: { type: 'movie', id: '123' } });
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(data).toEqual({
-      id: 123,
+    });
+    expect(json).toEqual({
+      id: 550,
       type: 'movie',
-      title: 'Mock Movie',
-      originalTitle: 'Original Mock Movie',
-      year: 2023,
-      genres: [{ id: 1, name: 'Action' }],
-      overview: 'Movie overview',
-      rating: 7.5,
-      posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg',
-      runtime: 120,
-      availability: mockAvailabilityResult,
+      title: 'Fight Club',
+      originalTitle: 'Fight Club',
+      year: 1999,
+      genres: [{ id: 18, name: 'Drama' }],
+      overview: 'An insomniac office worker looking for a way to change his life crosses paths with a devil-may-care soap maker and they form an underground fight club that evolves into something much, much more.',
+      rating: 8.4,
+      posterUrl: `${TMDB_IMAGE_BASE_URL}/pB8BM7pdXLXbZVZC65E3J9xk3LX.jpg`,
+      runtime: 139,
+      availability: {
+        flatrate: [{ provider_name: 'Netflix', logo_url: `${TMDB_IMAGE_BASE_URL}/5NyMoF5fJbB62D3B5F5F5F5F.jpg` }],
+        buy: [],
+        rent: [],
+      },
     });
-    expect(mockGetMovieDetails).toHaveBeenCalledWith(123);
-    expect(mockGetMovieWatchProviders).toHaveBeenCalledWith(123);
-    expect(mockMapAvailability).toHaveBeenCalledWith(mockWatchProviders);
   });
 
-  it('should return 200 with normalized TV data and availability', async () => {
-    mockGetTvDetails.mockResolvedValue(mockTv);
-    mockGetTvWatchProviders.mockResolvedValue(mockWatchProviders);
-    mockMapAvailability.mockReturnValue(mockAvailabilityResult);
-
-    const request = createMockRequest('tv', '456');
-    const response = await GET(request, { params: { type: 'tv', id: '456' } });
-    const data = await response.json();
+  it('should return normalized TV show details and availability for a valid TV show ID', async () => {
+    const req = createMockRequest('tv', '1399');
+    const response = await GET(req, { params: { type: 'tv', id: '1399' } });
+    const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({
-      id: 456,
-      type: 'tv',
-      title: 'Mock TV Show',
-      originalTitle: 'Original Mock TV Show',
-      year: 2022,
-      genres: [{ id: 2, name: 'Drama' }],
-      overview: 'TV show overview',
-      rating: 8.0,
-      posterUrl: 'https://image.tmdb.org/t/p/w500/tv_poster.jpg',
-      runtime: 60, // Takes first episode_run_time
-      availability: mockAvailabilityResult,
+    expect(mockGetTvDetails).toHaveBeenCalledWith(1399);
+    expect(mockGetTvWatchProviders).toHaveBeenCalledWith(1399);
+    expect(mockMapAvailability).toHaveBeenCalledWith({
+      US: {
+        link: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
+        flatrate: [{ logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg', provider_id: 8, provider_name: 'HBO Max', display_priority: 1 }],
+      },
     });
-    expect(mockGetTvDetails).toHaveBeenCalledWith(456);
-    expect(mockGetTvWatchProviders).toHaveBeenCalledWith(456);
-    expect(mockMapAvailability).toHaveBeenCalledWith(mockWatchProviders);
+    expect(json).toEqual({
+      id: 1399,
+      type: 'tv',
+      title: 'Game of Thrones',
+      originalTitle: 'Game of Thrones',
+      year: 2011,
+      genres: [{ id: 10765, name: 'Sci-Fi & Fantasy' }],
+      overview: 'Nine noble families fight for control over the mythical lands of Westeros, while an ancient enemy returns after being dormant for thousands of years.',
+      rating: 8.4,
+      posterUrl: `${TMDB_IMAGE_BASE_URL}/2OMB0ynKlyXlHZWSnQcBGqL2AER.jpg`,
+      runtime: 60, // Assuming episode_run_time[0] for TV
+      availability: {
+        flatrate: [{ provider_name: 'Netflix', logo_url: `${TMDB_IMAGE_BASE_URL}/5NyMoF5fJbB62D3B5F5F5F5F.jpg` }],
+        buy: [],
+        rent: [],
+      },
+    });
   });
 
-  it('should return 400 for an invalid type', async () => {
-    const request = createMockRequest('unknown', '123');
-    const response = await GET(request, { params: { type: 'unknown', id: '123' } });
-    const data = await response.json();
+  // --- Invalid Requests ---
+  it('should return 400 for an invalid type parameter', async () => {
+    const req = createMockRequest('unknown', '123');
+    const response = await GET(req, { params: { type: 'unknown', id: '123' } });
+    const json = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data).toEqual({ error: 'Invalid type. Must be "movie" or "tv".' });
+    expect(json).toEqual({ error: 'Invalid type. Must be "movie" or "tv".' });
+    expect(mockGetMovieDetails).not.toHaveBeenCalled();
+    expect(mockGetTvDetails).not.toHaveBeenCalled();
   });
 
-  it('should return 400 for a non-numeric ID', async () => {
-    const request = createMockRequest('movie', 'abc');
-    const response = await GET(request, { params: { type: 'movie', id: 'abc' } });
-    const data = await response.json();
+  it('should return 400 for a non-numeric ID parameter', async () => {
+    const req = createMockRequest('movie', 'abc');
+    const response = await GET(req, { params: { type: 'movie', id: 'abc' } });
+    const json = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data).toEqual({ error: 'Invalid ID. Must be a positive integer.' });
+    expect(json).toEqual({ error: 'Invalid ID. Must be a positive integer.' });
+    expect(mockGetMovieDetails).not.toHaveBeenCalled();
   });
 
-  it('should return 400 for a non-positive ID', async () => {
-    const request = createMockRequest('movie', '0');
-    const response = await GET(request, { params: { type: 'movie', id: '0' } });
-    const data = await response.json();
+  it('should return 400 for a non-positive integer ID parameter', async () => {
+    const req = createMockRequest('tv', '0');
+    const response = await GET(req, { params: { type: 'tv', id: '0' } });
+    const json = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data).toEqual({ error: 'Invalid ID. Must be a positive integer.' });
+    expect(json).toEqual({ error: 'Invalid ID. Must be a positive integer.' });
+    expect(mockGetTvDetails).not.toHaveBeenCalled();
   });
 
-  it('should return 502 if getMovieDetails throws TmdbError', async () => {
-    mockGetMovieDetails.mockRejectedValue(new TmdbError(404, 'Not Found'));
-
-    const request = createMockRequest('movie', '123');
-    const response = await GET(request, { params: { type: 'movie', id: '123' } });
-    const data = await response.json();
+  // --- Error Handling ---
+  it('should return 502/503 if getMovieDetails fails', async () => {
+    mockGetMovieDetails.mockRejectedValue(new TmdbError('TMDB Movie Details Error', 500));
+    const req = createMockRequest('movie', '550');
+    const response = await GET(req, { params: { type: 'movie', id: '550' } });
+    const json = await response.json();
 
     expect(response.status).toBe(502);
-    expect(data).toEqual({ error: 'Failed to fetch movie details from TMDB: 404 Not Found' });
+    expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
   });
 
-  it('should return 502 if getMovieWatchProviders throws TmdbError', async () => {
-    mockGetMovieDetails.mockResolvedValue(mockMovie);
-    mockGetMovieWatchProviders.mockRejectedValue(new TmdbError(404, 'Not Found'));
-
-    const request = createMockRequest('movie', '123');
-    const response = await GET(request, { params: { type: 'movie', id: '123' } });
-    const data = await response.json();
+  it('should return 502/503 if getMovieWatchProviders fails', async () => {
+    mockGetMovieWatchProviders.mockRejectedValue(new TmdbError('TMDB Movie Providers Error', 500));
+    const req = createMockRequest('movie', '550');
+    const response = await GET(req, { params: { type: 'movie', id: '550' } });
+    const json = await response.json();
 
     expect(response.status).toBe(502);
-    expect(data).toEqual({ error: 'Failed to fetch movie details from TMDB: 404 Not Found' });
+    expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
   });
 
-  it('should return 502 if getTvDetails throws TmdbError', async () => {
-    mockGetTvDetails.mockRejectedValue(new TmdbError(404, 'Not Found'));
-
-    const request = createMockRequest('tv', '456');
-    const response = await GET(request, { params: { type: 'tv', id: '456' } });
-    const data = await response.json();
+  it('should return 502/503 if getTvDetails fails', async () => {
+    mockGetTvDetails.mockRejectedValue(new TmdbError('TMDB TV Details Error', 500));
+    const req = createMockRequest('tv', '1399');
+    const response = await GET(req, { params: { type: 'tv', id: '1399' } });
+    const json = await response.json();
 
     expect(response.status).toBe(502);
-    expect(data).toEqual({ error: 'Failed to fetch tv details from TMDB: 404 Not Found' });
+    expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
   });
 
-  it('should return 502 if getTvWatchProviders throws TmdbError', async () => {
-    mockGetTvDetails.mockResolvedValue(mockTv);
-    mockGetTvWatchProviders.mockRejectedValue(new TmdbError(404, 'Not Found'));
-
-    const request = createMockRequest('tv', '456');
-    const response = await GET(request, { params: { type: 'tv', id: '456' } });
-    const data = await response.json();
+  it('should return 502/503 if getTvWatchProviders fails', async () => {
+    mockGetTvWatchProviders.mockRejectedValue(new TmdbError('TMDB TV Providers Error', 500));
+    const req = createMockRequest('tv', '1399');
+    const response = await GET(req, { params: { type: 'tv', id: '1399' } });
+    const json = await response.json();
 
     expect(response.status).toBe(502);
-    expect(data).toEqual({ error: 'Failed to fetch tv details from TMDB: 404 Not Found' });
+    expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
   });
 
   it('should return 500 if mapAvailability throws an error', async () => {
-    mockGetMovieDetails.mockResolvedValue(mockMovie);
-    mockGetMovieWatchProviders.mockResolvedValue(mockWatchProviders);
     mockMapAvailability.mockImplementation(() => {
-      throw new Error('Mapping error');
+      throw new Error('Availability mapping failed');
     });
-
-    const request = createMockRequest('movie', '123');
-    const response = await GET(request, { params: { type: 'movie', id: '123' } });
-    const data = await response.json();
-
-    expect(response.status).toBe(500);
-    expect(data).toEqual({ error: 'Internal Server Error: Mapping error' });
-  });
-
-  it('should return 500 for other unexpected errors during movie processing', async () => {
-    mockGetMovieDetails.mockRejectedValue(new Error('Network error'));
-
-    const request = createMockRequest('movie', '123');
-    const response = await GET(request, { params: { type: 'movie', id: '123' } });
-    const data = await response.json();
+    const req = createMockRequest('movie', '550');
+    const response = await GET(req, { params: { type: 'movie', id: '550' } });
+    const json = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data).toEqual({ error: 'Internal Server Error: Network error' });
-  });
-
-  it('should return 500 for other unexpected errors during TV processing', async () => {
-    mockGetTvDetails.mockRejectedValue(new Error('Network error'));
-
-    const request = createMockRequest('tv', '456');
-    const response = await GET(request, { params: { type: 'tv', id: '456' } });
-    const data = await response.json();
-
-    expect(response.status).toBe(500);
-    expect(data).toEqual({ error: 'Internal Server Error: Network error' });
+    expect(json).toEqual({ error: 'Internal Server Error' });
   });
 });

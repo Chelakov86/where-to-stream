@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getMovieDetails,
-  getTvDetails,
   getMovieWatchProviders,
+  getTvDetails,
   getTvWatchProviders,
-} from '../../../../tmdbApi';
-import { mapAvailability, AvailabilityResult } from '../../../../availabilityMapper';
-import { TmdbError } from '../../../../tmdbClient';
-import { TmdbMovieDetails, TmdbTvDetails } from '../../../../tmdbTypes';
+} from '@/app/tmdbApi';
+import { mapAvailability, AvailabilityResult } from '@/app/availabilityMapper';
+import { TmdbError } from '@/app/tmdbClient';
 
-// Helper to build the poster URL
-const buildPosterUrl = (posterPath?: string): string | undefined => {
-  return posterPath ? `https://image.tmdb.org/t/p/w500${posterPath}` : undefined;
-};
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 interface NormalizedTitle {
   id: number;
@@ -28,8 +24,13 @@ interface NormalizedTitle {
   availability: AvailabilityResult;
 }
 
+const getYear = (dateString?: string): number | undefined => {
+  if (!dateString || dateString.length < 4) return undefined;
+  return new Date(dateString).getFullYear();
+};
+
 export async function GET(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: { type: string; id: string } }
 ) {
   const { type, id } = params;
@@ -52,61 +53,77 @@ export async function GET(
   }
 
   try {
-    let details: TmdbMovieDetails | TmdbTvDetails;
-    let watchProviders;
     let normalizedTitle: NormalizedTitle;
+    let watchProvidersResponse;
 
     if (type === 'movie') {
-      details = await getMovieDetails(numericId);
-      watchProviders = await getMovieWatchProviders(numericId);
+      const [movieDetails, movieWatchProviders] = await Promise.all([
+        getMovieDetails(numericId),
+        getMovieWatchProviders(numericId),
+      ]);
 
-      const movieDetails = details as TmdbMovieDetails;
+      watchProvidersResponse = movieWatchProviders.results;
+
       normalizedTitle = {
         id: movieDetails.id,
         type: 'movie',
         title: movieDetails.title,
         originalTitle: movieDetails.original_title,
-        year: movieDetails.release_date ? new Date(movieDetails.release_date).getFullYear() : undefined,
-        genres: movieDetails.genres || [],
+        year: getYear(movieDetails.release_date),
+        genres: movieDetails.genres,
         overview: movieDetails.overview,
         rating: movieDetails.vote_average,
-        posterUrl: buildPosterUrl(movieDetails.poster_path),
+        posterUrl: movieDetails.poster_path
+          ? `${TMDB_IMAGE_BASE_URL}${movieDetails.poster_path}`
+          : undefined,
         runtime: movieDetails.runtime,
-        availability: mapAvailability(watchProviders),
+        availability: { flatrate: [], buy: [], rent: [] }, // Placeholder, will be filled below
       };
-    } else { // type === 'tv'
-      details = await getTvDetails(numericId);
-      watchProviders = await getTvWatchProviders(numericId);
+    } else {
+      // type === 'tv'
+      const [tvDetails, tvWatchProviders] = await Promise.all([
+        getTvDetails(numericId),
+        getTvWatchProviders(numericId),
+      ]);
 
-      const tvDetails = details as TmdbTvDetails;
+      watchProvidersResponse = tvWatchProviders.results;
+
       normalizedTitle = {
         id: tvDetails.id,
         type: 'tv',
         title: tvDetails.name,
         originalTitle: tvDetails.original_name,
-        year: tvDetails.first_air_date ? new Date(tvDetails.first_air_date).getFullYear() : undefined,
-        genres: tvDetails.genres || [],
+        year: getYear(tvDetails.first_air_date),
+        genres: tvDetails.genres,
         overview: tvDetails.overview,
         rating: tvDetails.vote_average,
-        posterUrl: buildPosterUrl(tvDetails.poster_path),
-        runtime: tvDetails.episode_run_time?.[0], // Take the first runtime if available
-        availability: mapAvailability(watchProviders),
+        posterUrl: tvDetails.poster_path
+          ? `${TMDB_IMAGE_BASE_URL}${tvDetails.poster_path}`
+          : undefined,
+        runtime: tvDetails.episode_run_time?.[0], // Assuming first episode runtime for TV
+        availability: { flatrate: [], buy: [], rent: [] }, // Placeholder, will be filled below
       };
     }
 
-    return NextResponse.json(normalizedTitle, { status: 200 });
+    // 4. Availability
+    normalizedTitle.availability = mapAvailability(watchProvidersResponse);
+
+    return NextResponse.json(normalizedTitle);
   } catch (error) {
     if (error instanceof TmdbError) {
-      const errorMessage = `Failed to fetch ${type} details from TMDB: ${error.status} ${error.statusText}`;
+      const errorMessage = `Error fetching data from TMDB.`;
       return NextResponse.json({ error: errorMessage }, { status: 502 });
     } else if (error instanceof Error) {
+      console.error(`API Error for /api/title/${type}/${id}:`, error);
       return NextResponse.json(
-        { error: `Internal Server Error: ${error.message}` },
+        { error: 'Internal Server Error' },
         { status: 500 }
       );
     }
+    // Fallback for unknown errors
+    console.error(`Unknown error for /api/title/${type}/${id}:`, error);
     return NextResponse.json(
-      { error: 'An unexpected error occurred.' },
+      { error: 'Internal Server Error' },
       { status: 500 }
     );
   }

@@ -12,6 +12,7 @@ const config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)', '**/*route.test.ts'],
   testEnvironmentOptions: {
     customExportConditions: [''],
   },
