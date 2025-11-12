@@ -388,27 +388,27 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 11. AutocompleteList Component
 
-- [ ] Implement `components/AutocompleteList.tsx`
-  - [ ] Props: `items`, `isOpen`, `onSelect`
-  - [ ] Render:
-    - [ ] Nothing or minimal placeholder when `isOpen` is false or `items` empty
-    - [ ] When open, show list of items (title, year, type badge, poster thumbnail if available)
+- [x] Implement `components/AutocompleteList.tsx`
+  - [x] Props: `items`, `isOpen`, `onSelect`
+  - [x] Render:
+    - [x] Nothing or minimal placeholder when `isOpen` is false or `items` empty
+    - [x] When open, show list of items (title, year, type badge, poster thumbnail if available)
 
-- [ ] Interactions
-  - [ ] Clicking an item → `onSelect(item)`
-  - [ ] Keyboard:
-    - [ ] Up/Down arrows move highlight
-    - [ ] Enter selects highlighted item
-    - [ ] Escape closes (signaled via optional callback or parent state)
+- [x] Interactions
+  - [x] Clicking an item → `onSelect(item)`
+  - [x] Keyboard:
+    - [x] Up/Down arrows move highlight
+    - [x] Enter selects highlighted item
+    - [x] Escape closes (signaled via optional callback or parent state)
 
-- [ ] Accessibility
-  - [ ] Use `ul/li` structure
-  - [ ] ARIA attributes for listbox/option if feasible
+- [x] Accessibility
+  - [x] Use `ul/li` structure
+  - [x] ARIA attributes for listbox/option if feasible
 
-- [ ] Tests
-  - [ ] List renders given items when open
-  - [ ] Click selection calls `onSelect` correctly
-  - [ ] Keyboard navigation & Enter select the proper item
+- [x] Tests
+  - [x] List renders given items when open
+  - [x] Click selection calls `onSelect` correctly
+  - [x] Keyboard navigation & Enter select the proper item
 
 ---
 
