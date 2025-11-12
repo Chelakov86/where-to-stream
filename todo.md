@@ -356,33 +356,33 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 10. SearchForm Component
 
-- [ ] Implement `components/SearchForm.tsx`
-  - [ ] Props: `genres`, `onSearch`, `onAutocompleteRequest?`
-  - [ ] Fields:
-    - [ ] Query text input with accessible label
-    - [ ] Type dropdown (All / Movies only / Series only)
-    - [ ] Year from / to numeric inputs
-    - [ ] Language dropdown (e.g. EN, DE)
-    - [ ] Genre multi-select (checkboxes or multi-select input)
-    - [ ] Min rating input (slider or numeric)
+- [x] Implement `components/SearchForm.tsx`
+  - [x] Props: `genres`, `onSearch`, `onAutocompleteRequest?`
+  - [x] Fields:
+    - [x] Query text input with accessible label
+    - [x] Type dropdown (All / Movies only / Series only)
+    - [x] Year from / to numeric inputs
+    - [x] Language dropdown (e.g. EN, DE)
+    - [x] Genre multi-select (checkboxes or multi-select input)
+    - [x] Min rating input (slider or numeric)
 
-- [ ] Behavior
-  - [ ] On submit:
-    - [ ] Prevent default
-    - [ ] If query non-empty → call `onSearch` with normalized params
-    - [ ] If query empty → do not call `onSearch` (optional inline error)
-  - [ ] On query change:
-    - [ ] If `onAutocompleteRequest` provided → call with current query
+- [x] Behavior
+  - [x] On submit:
+    - [x] Prevent default
+    - [x] If query non-empty → call `onSearch` with normalized params
+    - [x] If query empty → do not call `onSearch` (optional inline error)
+  - [x] On query change:
+    - [x] If `onAutocompleteRequest` provided → call with current query
 
-- [ ] Styling
-  - [ ] Use Tailwind to match dark theme
-  - [ ] Use card-like container
+- [x] Styling
+  - [x] Use Tailwind to match dark theme
+  - [x] Use card-like container
 
-- [ ] Tests
-  - [ ] All fields render with labels
-  - [ ] Valid form submission calls `onSearch` with expected values
-  - [ ] Empty query on submit does not call `onSearch`
-  - [ ] Typing in query triggers `onAutocompleteRequest` with current value
+- [x] Tests
+  - [x] All fields render with labels
+  - [x] Valid form submission calls `onSearch` with expected values
+  - [x] Empty query on submit does not call `onSearch`
+  - [x] Typing in query triggers `onAutocompleteRequest` with current value
 
 ---
 
