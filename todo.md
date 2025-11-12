@@ -356,118 +356,118 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 10. SearchForm Component
 
-- [x] Implement `components/SearchForm.tsx`
-  - [x] Props: `genres`, `onSearch`, `onAutocompleteRequest?`
-  - [x] Fields:
-    - [x] Query text input with accessible label
-    - [x] Type dropdown (All / Movies only / Series only)
-    - [x] Year from / to numeric inputs
-    - [x] Language dropdown (e.g. EN, DE)
-    - [x] Genre multi-select (checkboxes or multi-select input)
-    - [x] Min rating input (slider or numeric)
+- [ ] Implement `components/SearchForm.tsx`
+  - [ ] Props: `genres`, `onSearch`, `onAutocompleteRequest?`
+  - [ ] Fields:
+    - [ ] Query text input with accessible label
+    - [ ] Type dropdown (All / Movies only / Series only)
+    - [ ] Year from / to numeric inputs
+    - [ ] Language dropdown (e.g. EN, DE)
+    - [ ] Genre multi-select (checkboxes or multi-select input)
+    - [ ] Min rating input (slider or numeric)
 
-- [x] Behavior
-  - [x] On submit:
-    - [x] Prevent default
-    - [x] If query non-empty → call `onSearch` with normalized params
-    - [x] If query empty → do not call `onSearch` (optional inline error)
-  - [x] On query change:
-    - [x] If `onAutocompleteRequest` provided → call with current query
+- [ ] Behavior
+  - [ ] On submit:
+    - [ ] Prevent default
+    - [ ] If query non-empty → call `onSearch` with normalized params
+    - [ ] If query empty → do not call `onSearch` (optional inline error)
+  - [ ] On query change:
+    - [ ] If `onAutocompleteRequest` provided → call with current query
 
-- [x] Styling
-  - [x] Use Tailwind to match dark theme
-  - [x] Use card-like container
+- [ ] Styling
+  - [ ] Use Tailwind to match dark theme
+  - [ ] Use card-like container
 
-- [x] Tests
-  - [x] All fields render with labels
-  - [x] Valid form submission calls `onSearch` with expected values
-  - [x] Empty query on submit does not call `onSearch`
-  - [x] Typing in query triggers `onAutocompleteRequest` with current value
+- [ ] Tests
+  - [ ] All fields render with labels
+  - [ ] Valid form submission calls `onSearch` with expected values
+  - [ ] Empty query on submit does not call `onSearch`
+  - [ ] Typing in query triggers `onAutocompleteRequest` with current value
 
 ---
 
 ## 11. AutocompleteList Component
 
-- [x] Implement `components/AutocompleteList.tsx`
-  - [x] Props: `items`, `isOpen`, `onSelect`
-  - [x] Render:
-    - [x] Nothing or minimal placeholder when `isOpen` is false or `items` empty
-    - [x] When open, show list of items (title, year, type badge, poster thumbnail if available)
+- [ ] Implement `components/AutocompleteList.tsx`
+  - [ ] Props: `items`, `isOpen`, `onSelect`
+  - [ ] Render:
+    - [ ] Nothing or minimal placeholder when `isOpen` is false or `items` empty
+    - [ ] When open, show list of items (title, year, type badge, poster thumbnail if available)
 
-- [x] Interactions
-  - [x] Clicking an item → `onSelect(item)`
-  - [x] Keyboard:
-    - [x] Up/Down arrows move highlight
-    - [x] Enter selects highlighted item
-    - [x] Escape closes (signaled via optional callback or parent state)
+- [ ] Interactions
+  - [ ] Clicking an item → `onSelect(item)`
+  - [ ] Keyboard:
+    - [ ] Up/Down arrows move highlight
+    - [ ] Enter selects highlighted item
+    - [ ] Escape closes (signaled via optional callback or parent state)
 
-- [x] Accessibility
-  - [x] Use `ul/li` structure
-  - [x] ARIA attributes for listbox/option if feasible
+- [ ] Accessibility
+  - [ ] Use `ul/li` structure
+  - [ ] ARIA attributes for listbox/option if feasible
 
-- [x] Tests
-  - [x] List renders given items when open
-  - [x] Click selection calls `onSelect` correctly
-  - [x] Keyboard navigation & Enter select the proper item
+- [ ] Tests
+  - [ ] List renders given items when open
+  - [ ] Click selection calls `onSelect` correctly
+  - [ ] Keyboard navigation & Enter select the proper item
 
 ---
 
 ## 12. ResultsList & ResultItem Components
 
-- [x] Implement `components/ResultItem.tsx`
-  - [x] Display poster, title, year, type badge
-  - [x] Show rating if available
-  - [x] Show simple genre tags (IDs or names if mapping available)
-  - [x] Provide "Details" button/link that triggers callback
+- [ ] Implement `components/ResultItem.tsx`
+  - [ ] Display poster, title, year, type badge
+  - [ ] Show rating if available
+  - [ ] Show simple genre tags (IDs or names if mapping available)
+  - [ ] Provide "Details" button/link that triggers callback
 
-- [x] Implement `components/ResultsList.tsx`
-  - [x] Props: `results`, `page`, `totalPages`, `onPageChange`, `onSelectResult`
-  - [x] Render list of `ResultItem`
-  - [x] Pagination controls:
-    - [x] "Previous" disabled on page 1
-    - [x] "Next" disabled on `page >= totalPages`
+- [ ] Implement `components/ResultsList.tsx`
+  - [ ] Props: `results`, `page`, `totalPages`, `onPageChange`, `onSelectResult`
+  - [ ] Render list of `ResultItem`
+  - [ ] Pagination controls:
+    - [ ] "Previous" disabled on page 1
+    - [ ] "Next" disabled on `page >= totalPages`
 
-- [x] Tests
-  - [x] Renders items correctly
-  - [x] Clicking "Next"/"Previous" calls `onPageChange` with right page
-  - [x] Clicking "Details" on an item calls `onSelectResult` with that item
+- [ ] Tests
+  - [ ] Renders items correctly
+  - [ ] Clicking "Next"/"Previous" calls `onPageChange` with right page
+  - [ ] Clicking "Details" on an item calls `onSelectResult` with that item
 
 ---
 
 ## 13. ResultDetails Component
 
-- [ ] Implement `components/ResultDetails.tsx`
-  - [ ] Props: `id`, `type`
-  - [ ] Fetch `/api/title/${type}/${id}` on mount (and when props change)
-  - [ ] States:
-    - [ ] Loading
-    - [ ] Error
-    - [ ] Loaded with data
+- [x] Implement `components/ResultDetails.tsx`
+  - [x] Props: `id`, `type`
+  - [x] Fetch `/api/title/${type}/${id}` on mount (and when props change)
+  - [x] States:
+    - [x] Loading
+    - [x] Error
+    - [x] Loaded with data
 
-- [ ] Render on success
-  - [ ] Poster, title, year, type badge
-  - [ ] Genres list (names)
-  - [ ] Overview
-  - [ ] Rating
-  - [ ] Runtime (if available)
+- [x] Render on success
+  - [x] Poster, title, year, type badge
+  - [x] Genres list (names)
+  - [x] Overview
+  - [x] Rating
+  - [x] Runtime (if available)
 
-- [ ] Availability UI
-  - [ ] Preferred countries section:
-    - [ ] Country name, optional flag emoji
-    - [ ] Netflix availability (Yes/No)
-    - [ ] Free/ad-supported provider list
-    - [ ] Watch link (if present)
-  - [ ] Other countries section (if any)
-  - [ ] If no availability anywhere → show “No streaming availability found”
+- [x] Availability UI
+  - [x] Preferred countries section:
+    - [x] Country name, optional flag emoji
+    - [x] Netflix availability (Yes/No)
+    - [x] Free/ad-supported provider list
+    - [x] Watch link (if present)
+  - [x] Other countries section (if any)
+  - [x] If no availability anywhere → show “No streaming availability found”
 
-- [ ] Error UI
-  - [ ] Friendly error message text
+- [x] Error UI
+  - [x] Friendly error message text
 
-- [ ] Tests (mock `fetch`)
-  - [ ] Loading state visible initially
-  - [ ] Success state shows metadata and availability info
-  - [ ] No-availability state shows correct message
-  - [ ] Error state shows error message
+- [x] Tests (mock `fetch`)
+  - [x] Loading state visible initially
+  - [x] Success state shows metadata and availability info
+  - [x] No-availability state shows correct message
+  - [x] Error state shows error message
 
 ---
 
@@ -548,7 +548,7 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
   - [ ] `aria-label` or `<label>` for all inputs
   - [ ] Buttons with meaningful text
   - [ ] Autocomplete uses semantic `ul/li` or ARIA listbox pattern
-  - [ ] Details panel uses appropriate heading hierarchy
+  - [ ] Focus handling when opening/closing autocomplete & details
 
 - [ ] Keyboard accessibility
   - [ ] Query input submit via Enter key
