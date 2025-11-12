@@ -414,23 +414,23 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 12. ResultsList & ResultItem Components
 
-- [ ] Implement `components/ResultItem.tsx`
-  - [ ] Display poster, title, year, type badge
-  - [ ] Show rating if available
-  - [ ] Show simple genre tags (IDs or names if mapping available)
-  - [ ] Provide "Details" button/link that triggers callback
+- [x] Implement `components/ResultItem.tsx`
+  - [x] Display poster, title, year, type badge
+  - [x] Show rating if available
+  - [x] Show simple genre tags (IDs or names if mapping available)
+  - [x] Provide "Details" button/link that triggers callback
 
-- [ ] Implement `components/ResultsList.tsx`
-  - [ ] Props: `results`, `page`, `totalPages`, `onPageChange`, `onSelectResult`
-  - [ ] Render list of `ResultItem`
-  - [ ] Pagination controls:
-    - [ ] "Previous" disabled on page 1
-    - [ ] "Next" disabled on `page >= totalPages`
+- [x] Implement `components/ResultsList.tsx`
+  - [x] Props: `results`, `page`, `totalPages`, `onPageChange`, `onSelectResult`
+  - [x] Render list of `ResultItem`
+  - [x] Pagination controls:
+    - [x] "Previous" disabled on page 1
+    - [x] "Next" disabled on `page >= totalPages`
 
-- [ ] Tests
-  - [ ] Renders items correctly
-  - [ ] Clicking "Next"/"Previous" calls `onPageChange` with right page
-  - [ ] Clicking "Details" on an item calls `onSelectResult` with that item
+- [x] Tests
+  - [x] Renders items correctly
+  - [x] Clicking "Next"/"Previous" calls `onPageChange` with right page
+  - [x] Clicking "Details" on an item calls `onSelectResult` with that item
 
 ---
 
