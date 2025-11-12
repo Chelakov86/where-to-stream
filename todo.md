@@ -3,6 +3,21 @@
 A structured checklist you can work through step by step.  
 Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
+## 📋 Remaining Tasks Summary
+
+**What's Left:**
+- **Section 0**: Configure default branch & protections (optional, if using remote)
+- **Section 18**: Manual QA & Cross-browser Check (all items)
+  - Run app locally and test main flows
+  - Check responsive design (desktop, tablet, mobile)
+  - Cross-browser testing (Chrome, Firefox, Safari)
+  - Performance sanity check
+- **Section 19**: Documentation & Polish
+  - Add code comments where helpful
+  - Optional nice-to-haves (analytics, error boundary, i18n)
+
+**Status**: Core development is complete! Remaining items are primarily manual testing, QA, and optional polish.
+
 ---
 
 ## 0. Housekeeping & Repo Setup
@@ -606,11 +621,11 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 19. Documentation & Polish
 
-- [ ] Update `README.md`
-  - [ ] Setup instructions (env vars, `TMDB_API_KEY`)
-  - [ ] How to run dev server
-  - [ ] How to run tests
-  - [ ] Short description of main features
+- [x] Update `README.md`
+  - [x] Setup instructions (env vars, `TMDB_API_KEY`)
+  - [x] How to run dev server
+  - [x] How to run tests
+  - [x] Short description of main features
 
 - [ ] Add comments where helpful
   - [ ] Document key modules (`tmdbClient`, `availabilityMapper`, API routes)
