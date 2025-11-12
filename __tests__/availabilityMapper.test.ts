@@ -155,6 +155,60 @@ describe('mapAvailability', () => {
     expect(result.otherCountries).toHaveLength(0);
   });
 
+  it('should exclude Netflix Standard with Ads from freeOrAdsProviders', () => {
+    const tmdbProviders: TmdbWatchProvidersResponse = {
+      id: 1,
+      results: {
+        US: {
+          link: 'https://www.themoviedb.org/movie/1/watch?locale=US',
+          flatrate: [
+            { provider_id: 8, provider_name: 'Netflix', logo_path: '', display_priority: 0 },
+            {
+              provider_id: 1773,
+              provider_name: 'Netflix Standard with Ads',
+              logo_path: '',
+              display_priority: 0,
+            },
+            { provider_id: 2, provider_name: 'Tubi TV', logo_path: '', display_priority: 0 },
+          ],
+        },
+      },
+    };
+
+    const result = mapAvailability(tmdbProviders);
+    const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
+    expect(usData).toBeDefined();
+    expect(usData?.hasNetflix).toBe(true);
+    // Both Netflix and Netflix Standard with Ads should be excluded from freeOrAdsProviders
+    expect(usData?.freeOrAdsProviders).toEqual(['Tubi TV']);
+  });
+
+  it('should detect Netflix Standard with Ads as Netflix availability', () => {
+    const tmdbProviders: TmdbWatchProvidersResponse = {
+      id: 1,
+      results: {
+        US: {
+          link: 'https://www.themoviedb.org/movie/1/watch?locale=US',
+          flatrate: [
+            {
+              provider_id: 1773,
+              provider_name: 'Netflix Standard with Ads',
+              logo_path: '',
+              display_priority: 0,
+            },
+          ],
+        },
+      },
+    };
+
+    const result = mapAvailability(tmdbProviders);
+    const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
+    expect(usData).toBeDefined();
+    expect(usData?.hasNetflix).toBe(true);
+    // Netflix Standard with Ads should be excluded from freeOrAdsProviders
+    expect(usData?.freeOrAdsProviders).toEqual([]);
+  });
+
   it('should not list other countries if they only have buy/rent providers (no Netflix or free services)', () => {
     const tmdbProviders: TmdbWatchProvidersResponse = {
       id: 1,

@@ -48,33 +48,42 @@ export interface AvailabilityResult {
 // --- Constants ---
 
 /**
- * Netflix provider name for detection.
+ * Netflix provider names for detection.
  * Note: A more robust solution could use TMDB provider IDs (e.g., 8, 1773),
  * but name matching is simpler and works for most cases.
  */
 const NETFLIX_PROVIDER_NAME = 'Netflix';
+const NETFLIX_ADS_PROVIDER_NAME = 'Netflix Standard with Ads';
 
 // --- Helper Functions ---
 
 /**
  * Checks if Netflix is available in the given provider list.
  * Uses provider name matching (case-sensitive).
+ * Detects both "Netflix" and "Netflix Standard with Ads" as Netflix options.
  */
 const hasNetflix = (providers: TmdbWatchProviderInfo[] = []): boolean => {
-  return providers.some((p) => p.provider_name === NETFLIX_PROVIDER_NAME);
+  return providers.some(
+    (p) =>
+      p.provider_name === NETFLIX_PROVIDER_NAME ||
+      p.provider_name === NETFLIX_ADS_PROVIDER_NAME
+  );
 };
 
 /**
  * Extracts unique provider names from flatrate providers and returns them sorted.
  * This represents free/ad-supported streaming providers.
  * Note: Currently only uses flatrate category; ads and free categories are not included.
- * Excludes Netflix since it's shown in a dedicated column.
+ * Excludes Netflix and Netflix Standard with Ads since they're shown in a dedicated column.
  */
 const getFreeOrAdsProviders = (flatrateProviders: TmdbWatchProviderInfo[] = []): string[] => {
   const providers = new Set<string>();
   flatrateProviders.forEach((p) => {
-    // Exclude Netflix since it's shown in a dedicated column
-    if (p.provider_name !== NETFLIX_PROVIDER_NAME) {
+    // Exclude Netflix and Netflix Standard with Ads since they're shown in a dedicated column
+    if (
+      p.provider_name !== NETFLIX_PROVIDER_NAME &&
+      p.provider_name !== NETFLIX_ADS_PROVIDER_NAME
+    ) {
       providers.add(p.provider_name);
     }
   });
