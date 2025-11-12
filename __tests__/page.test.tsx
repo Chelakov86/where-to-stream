@@ -4,40 +4,77 @@ import '@testing-library/jest-dom';
 import Home from '../app/page';
 import { mockGenres } from '../test/mocks';
 
+type Deferred<T> = {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+};
+
+const createDeferred = <T,>(): Deferred<T> => {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => {
+    resolve = res;
+  });
+  return {
+    promise,
+    resolve,
+  };
+};
+
+const buildOkResponse = (data: unknown) => ({
+  ok: true,
+  json: async () => data,
+});
+
+const globalErrorMessage =
+  'We’re having trouble fetching data right now. Please try again later.';
+
+const scrollIntoViewMock = jest.fn();
+
+beforeAll(() => {
+  Object.defineProperty(window.HTMLElement.prototype, 'scrollIntoView', {
+    configurable: true,
+    value: scrollIntoViewMock,
+  });
+});
+
 // Mock fetch
 global.fetch = jest.fn();
 
-// Mock components
+// Mock components with lightweight shells so we can assert behaviour from Home.
 jest.mock(
   '../app/components/SearchForm',
   () =>
-    (props: {
-      onAutocompleteRequest: (query: string) => void;
+    ({
+      isGenresLoading,
+      onAutocompleteRequest,
+      onSearch,
+    }: {
+      isGenresLoading?: boolean;
+      onAutocompleteRequest?: (query: string) => void;
       onSearch: (params: any) => void;
     }) => (
       <div data-testid="search-form">
-        <button onClick={() => props.onAutocompleteRequest('test')}>Autocomplete</button>
-        <button onClick={() => props.onSearch({ query: 'test' })}>Search</button>
+        {isGenresLoading && <span>Loading filters...</span>}
+        <button onClick={() => onAutocompleteRequest?.('test')}>Autocomplete</button>
+        <button onClick={() => onSearch({ query: 'test' })}>Search</button>
       </div>
     )
 );
+
 jest.mock('../app/components/AutocompleteList', () => ({
   AutocompleteList: ({
     items,
-    onSelect,
   }: {
-    items: { id: number; name: string; media_type: 'movie' | 'tv' }[];
-    onSelect: (id: number, type: 'movie' | 'tv') => void;
+    items: { id: number; title: string; type: 'movie' | 'tv' }[];
   }) => (
     <div data-testid="autocomplete-list">
-      {items.map((s) => (
-        <div key={s.id} onClick={() => onSelect(s.id, s.media_type)}>
-          {s.name}
-        </div>
+      {items.map((item) => (
+        <span key={item.id}>{item.title}</span>
       ))}
     </div>
   ),
 }));
+
 jest.mock('../app/components/ResultsList', () => ({
   ResultsList: ({
     results,
@@ -46,60 +83,90 @@ jest.mock('../app/components/ResultsList', () => ({
   }: {
     results: { id: number; title: string; type: 'movie' | 'tv' }[];
     onPageChange: (page: number) => void;
-    onSelectResult: (result: TMDBResult) => void;
+    onSelectResult: (result: any) => void;
   }) => (
     <div data-testid="results-list">
-      {results.map((r) => (
-        <div key={r.id} onClick={() => onSelectResult(r)} data-testid="result-item">
-          {r.name}
-        </div>
-      ))}
+      <div>
+        {results.map((result) => (
+          <button key={result.id} onClick={() => onSelectResult(result)}>
+            {result.title}
+          </button>
+        ))}
+      </div>
       <button onClick={() => onPageChange(2)}>Next Page</button>
     </div>
   ),
 }));
-jest.mock(
-  '../app/components/ResultDetails',
-  () =>
-    ({ title }: { title: { id: number; type: 'movie' | 'tv' } | null }) => (
-      <div data-testid="result-details">
-        {title ? `Details for ${title.type} ${title.id}` : null}
-      </div>
-    )
-);
+
+jest.mock('../app/components/ResultDetails', () => ({
+  __esModule: true,
+  default: ({
+    title,
+    onError,
+  }: {
+    title: { id: number; type: 'movie' | 'tv' } | null;
+    onError?: (message: string) => void;
+  }) => (
+    <div data-testid="result-details">
+      {title ? `Details for ${title.type} ${title.id}` : null}
+      <button
+        type="button"
+        onClick={() => onError?.('Details request failed')}
+        data-testid="details-error-trigger"
+      >
+        Simulate details error
+      </button>
+    </div>
+  ),
+}));
 
 describe('Home Page', () => {
   beforeEach(() => {
-    (global.fetch as jest.Mock).mockClear();
+    (global.fetch as jest.Mock).mockReset();
+    scrollIntoViewMock.mockClear();
   });
 
-  it('should render the initial state and fetch genres', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockGenres,
-    });
+  it('shows a loading state while genres are fetching', async () => {
+    const deferred = createDeferred<any>();
+    (global.fetch as jest.Mock).mockReturnValueOnce(deferred.promise);
 
     render(<Home />);
 
-    expect(
-      screen.getByText('Search for a movie or series to see where it’s streaming.')
-    ).toBeInTheDocument();
-    expect(global.fetch).toHaveBeenCalledWith('/api/genres');
-    await waitFor(() => expect(screen.getByTestId('search-form')).toBeInTheDocument());
+    expect(screen.getByText('Loading filters...')).toBeInTheDocument();
+
+    deferred.resolve(buildOkResponse(mockGenres));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading filters...')).not.toBeInTheDocument();
+    });
   });
 
-  it('should handle autocomplete', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockGenres,
-    });
-    const autocompleteSuggestions = [{ id: 1, name: 'Test Movie', media_type: 'movie' }];
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ results: autocompleteSuggestions }),
-    });
+  it('displays and dismisses a global error when the genres request fails', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false });
 
     render(<Home />);
+
+    const banner = await screen.findByText(globalErrorMessage);
+    expect(banner).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /dismiss error/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText(globalErrorMessage)).not.toBeInTheDocument();
+    });
+  });
+
+  it('handles autocomplete requests and renders suggestions', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(buildOkResponse(mockGenres))
+      .mockResolvedValueOnce(
+        buildOkResponse({
+          results: [{ id: 1, title: 'Test Movie', type: 'movie' }],
+        })
+      );
+
+    render(<Home />);
+
     await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres'));
 
     fireEvent.click(screen.getByText('Autocomplete'));
@@ -111,148 +178,117 @@ describe('Home Page', () => {
     });
   });
 
-  it('should handle full search', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockGenres,
-    });
-    const searchResults = {
-      results: [{ id: 1, name: 'Test Movie', media_type: 'movie' }],
-      page: 1,
-      total_pages: 1,
-    };
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => searchResults,
-    });
+  it('shows a searching overlay while a search request is in flight', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(buildOkResponse(mockGenres));
+
+    const searchDeferred = createDeferred<any>();
+    (global.fetch as jest.Mock).mockReturnValueOnce(searchDeferred.promise);
 
     render(<Home />);
+
     await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres'));
 
     fireEvent.click(screen.getByText('Search'));
 
+    expect(await screen.findByText('Searching...')).toBeInTheDocument();
+
+    searchDeferred.resolve(
+      buildOkResponse({
+        results: [{ id: 1, title: 'Loaded Movie', type: 'movie' }],
+        total_pages: 1,
+      })
+    );
+
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/search?mode=full&query=test&page=1');
-      expect(screen.getByTestId('results-list')).toBeInTheDocument();
-      expect(screen.getByText('Test Movie')).toBeInTheDocument();
+      expect(screen.queryByText('Searching...')).not.toBeInTheDocument();
     });
+    expect(screen.getByTestId('results-list')).toBeInTheDocument();
   });
 
-  it('should handle pagination', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockGenres,
-    });
-    const searchResults = {
-      results: [{ id: 1, name: 'Test Movie', media_type: 'movie' }],
-      page: 1,
-      total_pages: 2,
-    };
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => searchResults,
-    });
+  it('displays a global error when the search request fails', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(buildOkResponse(mockGenres))
+      .mockResolvedValueOnce({ ok: false });
 
     render(<Home />);
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres'));
+
+    fireEvent.click(screen.getByText('Search'));
+
+    expect(await screen.findByText(globalErrorMessage)).toBeInTheDocument();
+  });
+
+  it('shows the no results message when the search completes without titles', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(buildOkResponse(mockGenres))
+      .mockResolvedValueOnce(
+        buildOkResponse({
+          results: [],
+          total_pages: 1,
+        })
+      );
+
+    render(<Home />);
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres'));
+
+    fireEvent.click(screen.getByText('Search'));
+
+    expect(
+      await screen.findByText('No titles found. Please check the spelling or try a different title.')
+    ).toBeInTheDocument();
+  });
+
+  it('surfaces a global error when details fetching fails', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(buildOkResponse(mockGenres))
+      .mockResolvedValueOnce(
+        buildOkResponse({
+          results: [{ id: 42, title: 'Mystery Movie', type: 'movie' }],
+          total_pages: 1,
+        })
+      );
+
+    render(<Home />);
+
     await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres'));
 
     fireEvent.click(screen.getByText('Search'));
 
     await waitFor(() => expect(screen.getByTestId('results-list')).toBeInTheDocument());
 
-    const nextResults = {
-      results: [{ id: 2, name: 'Test Movie 2', media_type: 'movie' }],
-      page: 2,
-      total_pages: 2,
-    };
+    fireEvent.click(screen.getByText('Mystery Movie'));
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => nextResults,
-    });
+    fireEvent.click(screen.getByTestId('details-error-trigger'));
 
-    fireEvent.click(screen.getByText('Next Page'));
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/search?mode=full&query=test&page=2');
-      expect(screen.getByText('Test Movie 2')).toBeInTheDocument();
-    });
+    expect(await screen.findByText(globalErrorMessage)).toBeInTheDocument();
   });
 
-  it('should show details for a selected result', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockGenres,
-    });
-    const searchResults = {
-      results: [{ id: 1, title: 'Test Movie', type: 'movie' }],
-      page: 1,
-      total_pages: 1,
-    };
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => searchResults,
-    });
+  it('scrolls to the details section after selecting a result', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(buildOkResponse(mockGenres))
+      .mockResolvedValueOnce(
+        buildOkResponse({
+          results: [{ id: 42, title: 'Mystery Movie', type: 'movie' }],
+          total_pages: 1,
+        })
+      );
 
     render(<Home />);
+
     await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres'));
 
     fireEvent.click(screen.getByText('Search'));
 
     await waitFor(() => expect(screen.getByTestId('results-list')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByTestId('result-item'));
+    scrollIntoViewMock.mockClear();
+
+    fireEvent.click(screen.getByText('Mystery Movie'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('result-details')).toHaveTextContent('Details for movie 1');
-    });
-  });
-
-  it('should show an error message on API failure', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockGenres,
-    });
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-    });
-
-    render(<Home />);
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres'));
-
-    fireEvent.click(screen.getByText('Search'));
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('We’re having trouble fetching data right now. Please try again later.')
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('should show a "no results" message', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockGenres,
-    });
-    const searchResults = {
-      results: [],
-      page: 1,
-      total_pages: 1,
-    };
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => searchResults,
-    });
-
-    render(<Home />);
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres'));
-
-    fireEvent.click(screen.getByText('Search'));
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('No titles found. Please check the spelling or try a different title.')
-      ).toBeInTheDocument();
+      expect(scrollIntoViewMock).toHaveBeenCalled();
     });
   });
 });

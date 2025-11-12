@@ -90,4 +90,10 @@ describe('SearchForm', () => {
 
     expect(handleAutocomplete).toHaveBeenCalledWith('Matrix');
   });
+
+  it('shows a loading state for filters when genres are loading', () => {
+    render(<SearchForm genres={[]} onSearch={jest.fn()} isGenresLoading />);
+
+    expect(screen.getByText('Loading filters...')).toBeInTheDocument();
+  });
 });

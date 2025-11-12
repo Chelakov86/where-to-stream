@@ -20,16 +20,20 @@ describe('ResultDetails', () => {
   it('should show a loading indicator', () => {
     mockFetch(mockMovie);
     render(<ResultDetails title={{ id: 123, type: 'movie' }} />);
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText('Loading details...')).toBeInTheDocument();
   });
 
   it('should show an error message on fetch failure', async () => {
     mockFetch({}, false);
-    render(<ResultDetails title={{ id: 123, type: 'movie' }} />);
+    const handleError = jest.fn();
+    render(<ResultDetails title={{ id: 123, type: 'movie' }} onError={handleError} />);
     await waitFor(() => {
       expect(
         screen.getByText('We’re having trouble fetching data right now. Please try again later.')
       ).toBeInTheDocument();
+      expect(handleError).toHaveBeenCalledWith(
+        'We’re having trouble fetching data right now. Please try again later.'
+      );
     });
   });
 
@@ -105,7 +109,7 @@ describe('ResultDetails', () => {
     render(<ResultDetails title={{ id: movieWithoutAvailability.id, type: 'movie' }} />);
 
     await waitFor(() => {
-      expect(screen.getByText('No streaming availability found')).toBeInTheDocument();
+      expect(screen.getByText('No streaming availability found.')).toBeInTheDocument();
     });
   });
 });

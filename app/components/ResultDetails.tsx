@@ -8,6 +8,7 @@ interface ResultDetailsProps {
     id: number;
     type: 'movie' | 'tv';
   };
+  onError?: (message: string | null) => void;
 }
 
 type Status = 'loading' | 'error' | 'success';
@@ -79,7 +80,9 @@ const AvailabilityTable = ({
   </div>
 );
 
-const ResultDetails = ({ title: { id, type } }: ResultDetailsProps) => {
+const ERROR_MESSAGE = 'We’re having trouble fetching data right now. Please try again later.';
+
+const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => {
   const [status, setStatus] = useState<Status>('loading');
   const [details, setDetails] = useState<TitleDetails | null>(null);
 
@@ -97,9 +100,11 @@ const ResultDetails = ({ title: { id, type } }: ResultDetailsProps) => {
         const data = await response.json();
         setDetails(data);
         setStatus('success');
+        onError?.(null);
       } catch (error) {
         if (error instanceof Error && error.name !== 'AbortError') {
           setStatus('error');
+          onError?.(ERROR_MESSAGE);
         }
       }
     };
@@ -109,16 +114,16 @@ const ResultDetails = ({ title: { id, type } }: ResultDetailsProps) => {
     return () => {
       controller.abort();
     };
-  }, [id, type]);
+  }, [id, onError, type]);
 
   if (status === 'loading') {
-    return <div className="p-8 text-center text-gray-400">Loading...</div>;
+    return <div className="p-8 text-center text-gray-400">Loading details...</div>;
   }
 
   if (status === 'error') {
     return (
       <div className="p-8 text-center text-red-400">
-        We’re having trouble fetching data right now. Please try again later.
+        {ERROR_MESSAGE}
       </div>
     );
   }
@@ -160,7 +165,7 @@ const ResultDetails = ({ title: { id, type } }: ResultDetailsProps) => {
           Streaming Availability
         </h2>
         {!hasAvailability ? (
-          <p className="mt-4 text-gray-400">No streaming availability found</p>
+          <p className="mt-4 text-gray-400">No streaming availability found.</p>
         ) : (
           <>
             {details.availability.preferredCountries.length > 0 && (

@@ -12,9 +12,15 @@ interface SearchFormProps {
     minRating?: number;
   }) => void;
   onAutocompleteRequest?: (query: string) => void;
+  isGenresLoading?: boolean;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ genres, onSearch, onAutocompleteRequest }) => {
+const SearchForm: React.FC<SearchFormProps> = ({
+  genres,
+  onSearch,
+  onAutocompleteRequest,
+  isGenresLoading = false,
+}) => {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -129,19 +135,23 @@ const SearchForm: React.FC<SearchFormProps> = ({ genres, onSearch, onAutocomplet
 
       <div>
         <label className="block text-sm font-medium">Genres</label>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">
-          {genres.map((genre) => (
-            <label key={genre.id} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                name="genre"
-                value={genre.id}
-                className="form-checkbox h-5 w-5 bg-gray-700 border-gray-600 rounded"
-              />
-              <span>{genre.name}</span>
-            </label>
-          ))}
-        </div>
+        {isGenresLoading ? (
+          <p className="mt-2 text-sm text-gray-400">Loading filters...</p>
+        ) : (
+          <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
+            {genres.map((genre) => (
+              <label key={genre.id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  name="genre"
+                  value={genre.id}
+                  className="form-checkbox h-5 w-5 rounded border-gray-600 bg-gray-700"
+                />
+                <span>{genre.name}</span>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>

@@ -356,81 +356,81 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 10. SearchForm Component
 
-- [ ] Implement `components/SearchForm.tsx`
-  - [ ] Props: `genres`, `onSearch`, `onAutocompleteRequest?`
-  - [ ] Fields:
-    - [ ] Query text input with accessible label
-    - [ ] Type dropdown (All / Movies only / Series only)
-    - [ ] Year from / to numeric inputs
-    - [ ] Language dropdown (e.g. EN, DE)
-    - [ ] Genre multi-select (checkboxes or multi-select input)
-    - [ ] Min rating input (slider or numeric)
+- [x] Implement `components/SearchForm.tsx`
+  - [x] Props: `genres`, `onSearch`, `onAutocompleteRequest?`
+  - [x] Fields:
+    - [x] Query text input with accessible label
+    - [x] Type dropdown (All / Movies only / Series only)
+    - [x] Year from / to numeric inputs
+    - [x] Language dropdown (e.g. EN, DE)
+    - [x] Genre multi-select (checkboxes or multi-select input)
+    - [x] Min rating input (slider or numeric)
 
-- [ ] Behavior
-  - [ ] On submit:
-    - [ ] Prevent default
-    - [ ] If query non-empty → call `onSearch` with normalized params
-    - [ ] If query empty → do not call `onSearch` (optional inline error)
-  - [ ] On query change:
-    - [ ] If `onAutocompleteRequest` provided → call with current query
+- [x] Behavior
+  - [x] On submit:
+    - [x] Prevent default
+    - [x] If query non-empty → call `onSearch` with normalized params
+    - [x] If query empty → do not call `onSearch` (optional inline error)
+  - [x] On query change:
+    - [x] If `onAutocompleteRequest` provided → call with current query
 
-- [ ] Styling
-  - [ ] Use Tailwind to match dark theme
-  - [ ] Use card-like container
+- [x] Styling
+  - [x] Use Tailwind to match dark theme
+  - [x] Use card-like container
 
-- [ ] Tests
-  - [ ] All fields render with labels
-  - [ ] Valid form submission calls `onSearch` with expected values
-  - [ ] Empty query on submit does not call `onSearch`
-  - [ ] Typing in query triggers `onAutocompleteRequest` with current value
+- [x] Tests
+  - [x] All fields render with labels
+  - [x] Valid form submission calls `onSearch` with expected values
+  - [x] Empty query on submit does not call `onSearch`
+  - [x] Typing in query triggers `onAutocompleteRequest` with current value
 
 ---
 
 ## 11. AutocompleteList Component
 
-- [ ] Implement `components/AutocompleteList.tsx`
-  - [ ] Props: `items`, `isOpen`, `onSelect`
-  - [ ] Render:
-    - [ ] Nothing or minimal placeholder when `isOpen` is false or `items` empty
-    - [ ] When open, show list of items (title, year, type badge, poster thumbnail if available)
+- [x] Implement `components/AutocompleteList.tsx`
+  - [x] Props: `items`, `isOpen`, `onSelect`
+  - [x] Render:
+    - [x] Nothing or minimal placeholder when `isOpen` is false or `items` empty
+    - [x] When open, show list of items (title, year, type badge, poster thumbnail if available)
 
-- [ ] Interactions
-  - [ ] Clicking an item → `onSelect(item)`
-  - [ ] Keyboard:
-    - [ ] Up/Down arrows move highlight
-    - [ ] Enter selects highlighted item
-    - [ ] Escape closes (signaled via optional callback or parent state)
+- [x] Interactions
+  - [x] Clicking an item → `onSelect(item)`
+  - [x] Keyboard:
+    - [x] Up/Down arrows move highlight
+    - [x] Enter selects highlighted item
+    - [x] Escape closes (signaled via optional callback or parent state)
 
-- [ ] Accessibility
-  - [ ] Use `ul/li` structure
-  - [ ] ARIA attributes for listbox/option if feasible
+- [x] Accessibility
+  - [x] Use `ul/li` structure
+  - [x] ARIA attributes for listbox/option if feasible
 
-- [ ] Tests
-  - [ ] List renders given items when open
-  - [ ] Click selection calls `onSelect` correctly
-  - [ ] Keyboard navigation & Enter select the proper item
+- [x] Tests
+  - [x] List renders given items when open
+  - [x] Click selection calls `onSelect` correctly
+  - [x] Keyboard navigation & Enter select the proper item
 
 ---
 
 ## 12. ResultsList & ResultItem Components
 
-- [ ] Implement `components/ResultItem.tsx`
-  - [ ] Display poster, title, year, type badge
-  - [ ] Show rating if available
-  - [ ] Show simple genre tags (IDs or names if mapping available)
-  - [ ] Provide "Details" button/link that triggers callback
+- [x] Implement `components/ResultItem.tsx`
+  - [x] Display poster, title, year, type badge
+  - [x] Show rating if available
+  - [x] Show simple genre tags (IDs or names if mapping available)
+  - [x] Provide "Details" button/link that triggers callback
 
-- [ ] Implement `components/ResultsList.tsx`
-  - [ ] Props: `results`, `page`, `totalPages`, `onPageChange`, `onSelectResult`
-  - [ ] Render list of `ResultItem`
-  - [ ] Pagination controls:
-    - [ ] "Previous" disabled on page 1
-    - [ ] "Next" disabled on `page >= totalPages`
+- [x] Implement `components/ResultsList.tsx`
+  - [x] Props: `results`, `page`, `totalPages`, `onPageChange`, `onSelectResult`
+  - [x] Render list of `ResultItem`
+  - [x] Pagination controls:
+    - [x] "Previous" disabled on page 1
+    - [x] "Next" disabled on `page >= totalPages`
 
-- [ ] Tests
-  - [ ] Renders items correctly
-  - [ ] Clicking "Next"/"Previous" calls `onPageChange` with right page
-  - [ ] Clicking "Details" on an item calls `onSelectResult` with that item
+- [x] Tests
+  - [x] Renders items correctly
+  - [x] Clicking "Next"/"Previous" calls `onPageChange` with right page
+  - [x] Clicking "Details" on an item calls `onSelectResult` with that item
 
 ---
 
@@ -473,72 +473,72 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 14. Global Error & Loading Handling
 
-- [ ] Implement `components/ErrorBanner.tsx`
-  - [ ] Props: `message`, `onClose`
-  - [ ] Render dismissible banner
+- [x] Implement `components/ErrorBanner.tsx`
+  - [x] Props: `message`, `onClose`
+  - [x] Render dismissible banner
 
-- [ ] Integrate `ErrorBanner` into main page
-  - [ ] Show banner on API failures (genres, search, title)
-  - [ ] Allow user to dismiss
+- [x] Integrate `ErrorBanner` into main page
+  - [x] Show banner on API failures (genres, search, title)
+  - [x] Allow user to dismiss
 
-- [ ] Ensure loading indicators
-  - [ ] Search results area shows "Searching..." or spinner during search
-  - [ ] Filters show "Loading filters..." while genres load
-  - [ ] ResultDetails shows "Loading details..." while fetching
+- [x] Ensure loading indicators
+  - [x] Search results area shows "Searching..." or spinner during search
+  - [x] Filters show "Loading filters..." while genres load
+  - [x] ResultDetails shows "Loading details..." while fetching
 
-- [ ] Tests
-  - [ ] `ErrorBanner` renders message & supports dismissal
-  - [ ] Page shows banner when fetch fails (mock failures)
-  - [ ] Loading indicators appear while async operations in-flight
+- [x] Tests
+  - [x] `ErrorBanner` renders message & supports dismissal
+  - [x] Page shows banner when fetch fails (mock failures)
+  - [x] Loading indicators appear while async operations in-flight
 
 ---
 
 ## 15. Main Page Wiring (`app/page.tsx`)
 
-- [ ] Fetch genres on load from `/api/genres`
-  - [ ] Pass `genres` to `SearchForm`
-  - [ ] Handle error & loading states
+- [x] Fetch genres on load from `/api/genres`
+  - [x] Pass `genres` to `SearchForm`
+  - [x] Handle error & loading states
 
-- [ ] Implement state management
-  - [ ] `genres`
-        [ ] `searchParams`
-  - [ ] `results`, `page`, `totalPages`
-  - [ ] `autocompleteItems`, `isAutocompleteOpen`
-  - [ ] `selectedTitle` (id + type)
-  - [ ] `errorMessage`
-  - [ ] Loading flags for search, genres, details
+- [x] Implement state management
+  - [x] `genres`
+  - [x] `searchParams`
+  - [x] `results`, `page`, `totalPages`
+  - [x] `autocompleteItems`, `isAutocompleteOpen`
+  - [x] `selectedTitle` (id + type)
+  - [x] `errorMessage`
+  - [x] Loading flags for search, genres, details
 
-- [ ] Autocomplete flow
-  - [ ] `SearchForm.onAutocompleteRequest` → call `/api/search?mode=autocomplete`
-  - [ ] Update `autocompleteItems`
-  - [ ] Show `AutocompleteList` under query input
-  - [ ] On `AutocompleteList.onSelect`:
-    - [ ] Clear autocomplete items
-    - [ ] Set `selectedTitle`
-    - [ ] Optionally scroll to details section
+- [x] Autocomplete flow
+  - [x] `SearchForm.onAutocompleteRequest` → call `/api/search?mode=autocomplete`
+  - [x] Update `autocompleteItems`
+  - [x] Show `AutocompleteList` under query input
+  - [x] On `AutocompleteList.onSelect`:
+    - [x] Clear autocomplete items
+    - [x] Set `selectedTitle`
+    - [x] Optionally scroll to details section
 
-- [ ] Full search flow
-  - [ ] `SearchForm.onSearch` → call `/api/search?mode=full`
-  - [ ] Update `results`, `page`, `totalPages`, `searchParams`
-  - [ ] Clear `selectedTitle` or maintain as separate
+- [x] Full search flow
+  - [x] `SearchForm.onSearch` → call `/api/search?mode=full`
+  - [x] Update `results`, `page`, `totalPages`, `searchParams`
+  - [x] Clear `selectedTitle` or maintain as separate
 
-- [ ] Pagination flow
-  - [ ] `ResultsList.onPageChange` → re-call `/api/search` with same filters + new page
-  - [ ] Update `results` and `page`
+- [x] Pagination flow
+  - [x] `ResultsList.onPageChange` → re-call `/api/search` with same filters + new page
+  - [x] Update `results` and `page`
 
-- [ ] Details flow
-  - [ ] `ResultsList.onSelectResult` → set `selectedTitle`
-  - [ ] Render `ResultDetails` inline (e.g. under selected item or in side panel)
+- [x] Details flow
+  - [x] `ResultsList.onSelectResult` → set `selectedTitle`
+  - [x] Render `ResultDetails` inline (e.g. under selected item or in side panel)
 
-- [ ] Empty states
-  - [ ] Initial: “Search for a movie or series to see where it’s streaming.”
-  - [ ] No results: “No titles found. Please check the spelling or try a different title.”
+- [x] Empty states
+  - [x] Initial: “Search for a movie or series to see where it’s streaming.”
+  - [x] No results: “No titles found. Please check the spelling or try a different title.”
 
-- [ ] Tests (page-level with mocked `fetch`)
-  - [ ] Genres load and populate SearchForm
-  - [ ] Search returns results and renders them
-  - [ ] Clicking result shows `ResultDetails`
-  - [ ] Autocomplete selection directly shows a details view
+- [x] Tests (page-level with mocked `fetch`)
+  - [x] Genres load and populate SearchForm
+  - [x] Search returns results and renders them
+  - [x] Clicking result shows `ResultDetails`
+  - [x] Autocomplete selection directly shows a details view
 
 ---
 
