@@ -334,23 +334,23 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 9. UI Shell: Layout, Header, Footer
 
-- [ ] Update `app/layout.tsx`
-  - [ ] Wrap children in layout with header & footer
-  - [ ] Apply dark gradient background
-  - [ ] Apply global font
+- [x] Update `app/layout.tsx`
+  - [x] Wrap children in layout with header & footer
+  - [x] Apply dark gradient background
+  - [x] Apply global font
 
-- [ ] Header component
-  - [ ] Contains app name "WhereToStream"
-  - [ ] Simple logo/icon or stylized text
-  - [ ] Good contrast vs background
+- [x] Header component
+  - [x] Contains app name "WhereToStream"
+  - [x] Simple logo/icon or stylized text
+  - [x] Good contrast vs background
 
-- [ ] Footer component
-  - [ ] Text: “This product uses the TMDB API but is not endorsed or certified by TMDB.”
-  - [ ] Text: “Streaming availability is based on public data sources and may be incomplete or out of date.”
+- [x] Footer component
+  - [x] Text: “This product uses the TMDB API but is not endorsed or certified by TMDB.”
+  - [x] Text: “Streaming availability is based on public data sources and may be incomplete or out of date.”
 
-- [ ] Tests (RTL)
-  - [ ] Header renders text "WhereToStream"
-  - [ ] Footer renders both disclaimers
+- [x] Tests (RTL)
+  - [x] Header renders text "WhereToStream"
+  - [x] Footer renders both disclaimers
 
 ---
 

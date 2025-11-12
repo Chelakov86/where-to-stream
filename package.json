@@ -10,8 +10,8 @@
     "lint": "next lint",
     "format": "npx prettier --write .",
     "format:check": "npx prettier --check .",
-    "test": "NODE_ENV=test npx jest",
-    "test:watch": "NODE_ENV=test npx jest --watch"
+    "test": "cross-env NODE_ENV=test npx jest",
+    "test:watch": "cross-env NODE_ENV=test npx jest --watch"
   },
   "repository": {
     "type": "git",
@@ -41,6 +41,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "autoprefixer": "^10.4.22",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.1",
     "eslint-config-prettier": "^9.1.0",
