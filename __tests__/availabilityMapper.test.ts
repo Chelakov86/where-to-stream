@@ -152,4 +152,43 @@ describe('mapAvailability', () => {
     const result = mapAvailability(tmdbProviders);
     expect(result.otherCountries).toHaveLength(0);
   });
+
+  it('should not list other countries if they only have buy/rent providers (no Netflix or free services)', () => {
+    const tmdbProviders: TmdbWatchProvidersResponse = {
+      id: 1,
+      results: {
+        IT: {
+          link: 'https://www.themoviedb.org/movie/1/watch?locale=IT',
+          buy: [
+            { provider_id: 2, provider_name: 'Apple TV', logo_path: '', display_priority: 0 },
+          ],
+          rent: [
+            { provider_id: 3, provider_name: 'Google Play', logo_path: '', display_priority: 0 },
+          ],
+          // No flatrate (Netflix or free services)
+        },
+        ES: {
+          link: 'https://www.themoviedb.org/movie/1/watch?locale=ES',
+          flatrate: [
+            { provider_id: 337, provider_name: 'Disney Plus', logo_path: '', display_priority: 0 },
+          ],
+          // Has flatrate provider (free service), should be included
+        },
+        BR: {
+          link: 'https://www.themoviedb.org/movie/1/watch?locale=BR',
+          flatrate: [
+            { provider_id: 8, provider_name: 'Netflix', logo_path: '', display_priority: 0 },
+          ],
+          // Has Netflix, should be included
+        },
+      },
+    };
+    const result = mapAvailability(tmdbProviders);
+    // Should only include ES (has free service) and BR (has Netflix), not IT (only buy/rent)
+    expect(result.otherCountries).toHaveLength(2);
+    const countryCodes = result.otherCountries.map((c) => c.countryCode);
+    expect(countryCodes).toContain('ES');
+    expect(countryCodes).toContain('BR');
+    expect(countryCodes).not.toContain('IT');
+  });
 });
