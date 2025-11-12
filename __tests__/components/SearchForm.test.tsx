@@ -124,12 +124,15 @@ describe('SearchForm', () => {
 
   it('exposes autocomplete aria attributes when autocomplete props are provided', () => {
     const handleSearch = jest.fn();
+    const mockItems = [{ id: 1, type: 'movie' as const, title: 'Test Movie', year: 2020 }];
     render(
       <SearchForm
         genres={mockGenres}
         onSearch={handleSearch}
         autocompleteListId="test-list"
-        isAutocompleteOpen
+        autocompleteItems={mockItems}
+        onAutocompleteSelect={jest.fn()}
+        onAutocompleteClose={jest.fn()}
       />
     );
 

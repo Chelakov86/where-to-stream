@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import SearchForm from './components/SearchForm';
-import { AutocompleteList } from './components/AutocompleteList';
 import { ResultsList } from './components/ResultsList';
 import ResultDetails from './components/ResultDetails';
 import ErrorBanner from './components/ErrorBanner';
@@ -177,17 +176,10 @@ export default function Home() {
         onAutocompleteRequest={handleAutocompleteRequest}
         onSearch={handleSearch}
         autocompleteListId={AUTOCOMPLETE_LIST_ID}
-        isAutocompleteOpen={autocompleteSuggestions.length > 0}
+        autocompleteItems={autocompleteSuggestions}
+        onAutocompleteSelect={handleSelectSuggestion}
+        onAutocompleteClose={() => setAutocompleteSuggestions([])}
       />
-      {autocompleteSuggestions.length > 0 && (
-        <AutocompleteList
-          id={AUTOCOMPLETE_LIST_ID}
-          items={autocompleteSuggestions}
-          isOpen={true}
-          onSelect={handleSelectSuggestion}
-          onClose={() => setAutocompleteSuggestions([])}
-        />
-      )}
       <div className="mt-8 space-y-8">
         <div ref={resultDetailsRef}>
           {selectedTitle && <ResultDetails title={selectedTitle} onError={handleDetailsError} />}

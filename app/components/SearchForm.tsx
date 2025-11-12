@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { AutocompleteList, AutocompleteItem } from './AutocompleteList';
 
 interface SearchFormProps {
   genres: { id: number; name: string }[];
@@ -14,7 +15,9 @@ interface SearchFormProps {
   onAutocompleteRequest?: (query: string) => void;
   isGenresLoading?: boolean;
   autocompleteListId?: string;
-  isAutocompleteOpen?: boolean;
+  autocompleteItems?: AutocompleteItem[];
+  onAutocompleteSelect?: (item: AutocompleteItem) => void;
+  onAutocompleteClose?: () => void;
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({
@@ -23,12 +26,22 @@ const SearchForm: React.FC<SearchFormProps> = ({
   onAutocompleteRequest,
   isGenresLoading = false,
   autocompleteListId,
-  isAutocompleteOpen,
+  autocompleteItems = [],
+  onAutocompleteSelect,
+  onAutocompleteClose,
 }) => {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [minRating, setMinRating] = useState(5);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
   const errorMessageId = 'search-form-query-error';
+
+  useEffect(() => {
+    if (autocompleteItems.length === 0) {
+      setHighlightedIndex(-1);
+    }
+  }, [autocompleteItems.length]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -55,6 +68,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = event.target.value;
     setQuery(newQuery);
+    setHighlightedIndex(-1);
     if (onAutocompleteRequest) {
       onAutocompleteRequest(newQuery);
     }
@@ -63,24 +77,61 @@ const SearchForm: React.FC<SearchFormProps> = ({
     }
   };
 
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (autocompleteItems.length === 0) return;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        setHighlightedIndex((prevIndex) =>
+          prevIndex < autocompleteItems.length - 1 ? prevIndex + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        setHighlightedIndex((prevIndex) =>
+          prevIndex > 0 ? prevIndex - 1 : autocompleteItems.length - 1
+        );
+        break;
+      case 'Enter':
+        if (
+          highlightedIndex >= 0 &&
+          highlightedIndex < autocompleteItems.length &&
+          onAutocompleteSelect
+        ) {
+          event.preventDefault();
+          onAutocompleteSelect(autocompleteItems[highlightedIndex]);
+        }
+        break;
+      case 'Escape':
+        if (onAutocompleteClose) {
+          event.preventDefault();
+          onAutocompleteClose();
+        }
+        break;
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-gray-800 text-white rounded-lg">
-      <div>
+      <div className="relative">
         <label htmlFor="query" className="sr-only">
           Search for a movie or series
         </label>
         <input
+          ref={inputRef}
           id="query"
           name="query"
           type="text"
           value={query}
           onChange={handleQueryChange}
+          onKeyDown={handleInputKeyDown}
           placeholder="Search for a movie or series"
           className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
           aria-autocomplete="list"
           aria-haspopup="listbox"
           aria-controls={autocompleteListId}
-          aria-expanded={isAutocompleteOpen ?? undefined}
+          aria-expanded={autocompleteItems.length > 0}
           aria-describedby={error ? errorMessageId : undefined}
           autoComplete="off"
         />
@@ -88,6 +139,19 @@ const SearchForm: React.FC<SearchFormProps> = ({
           <p id={errorMessageId} className="text-red-500 text-sm mt-1" role="alert">
             {error}
           </p>
+        )}
+        {autocompleteItems.length > 0 && onAutocompleteSelect && onAutocompleteClose && (
+          <div className="absolute top-full left-0 right-0 z-50 mt-1">
+            <AutocompleteList
+              id={autocompleteListId}
+              items={autocompleteItems}
+              isOpen={true}
+              onSelect={onAutocompleteSelect}
+              onClose={onAutocompleteClose}
+              highlightedIndex={highlightedIndex}
+              onHighlightChange={setHighlightedIndex}
+            />
+          </div>
         )}
       </div>
 

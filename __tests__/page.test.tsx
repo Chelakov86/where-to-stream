@@ -47,15 +47,24 @@ jest.mock(
       isGenresLoading,
       onAutocompleteRequest,
       onSearch,
+      autocompleteItems = [],
     }: {
       isGenresLoading?: boolean;
       onAutocompleteRequest?: (query: string) => void;
       onSearch: (params: any) => void;
+      autocompleteItems?: { id: number; title: string; type: 'movie' | 'tv' }[];
     }) => (
       <div data-testid="search-form">
         {isGenresLoading && <span>Loading filters...</span>}
         <button onClick={() => onAutocompleteRequest?.('test')}>Autocomplete</button>
         <button onClick={() => onSearch({ query: 'test' })}>Search</button>
+        {autocompleteItems.length > 0 && (
+          <div data-testid="autocomplete-list">
+            {autocompleteItems.map((item) => (
+              <span key={item.id}>{item.title}</span>
+            ))}
+          </div>
+        )}
       </div>
     )
 );

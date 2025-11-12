@@ -15,6 +15,8 @@ export interface AutocompleteListProps {
   onSelect: (item: AutocompleteItem) => void;
   onClose: () => void;
   id?: string;
+  highlightedIndex?: number;
+  onHighlightChange?: (index: number) => void;
 }
 
 export const AutocompleteList: React.FC<AutocompleteListProps> = ({
@@ -23,9 +25,26 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
   onSelect,
   onClose,
   id,
+  highlightedIndex: controlledHighlightedIndex,
+  onHighlightChange,
 }) => {
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [internalHighlightedIndex, setInternalHighlightedIndex] = useState(-1);
   const listRef = useRef<HTMLUListElement>(null);
+  const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
+
+  // Use controlled index if provided, otherwise use internal state
+  const highlightedIndex =
+    controlledHighlightedIndex !== undefined
+      ? controlledHighlightedIndex
+      : internalHighlightedIndex;
+
+  const setHighlightedIndex = (index: number) => {
+    if (onHighlightChange) {
+      onHighlightChange(index);
+    } else {
+      setInternalHighlightedIndex(index);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -33,11 +52,21 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
     }
   }, [isOpen]);
 
+  // Scroll highlighted item into view
   useEffect(() => {
-    if (isOpen && listRef.current) {
-      listRef.current.focus();
+    if (highlightedIndex >= 0 && itemRefs.current[highlightedIndex] && listRef.current) {
+      const element = itemRefs.current[highlightedIndex];
+      if (element && typeof element.scrollIntoView === 'function') {
+        element.scrollIntoView({
+          block: 'nearest',
+          behavior: 'smooth',
+        });
+      }
     }
-  }, [isOpen, items]);
+  }, [highlightedIndex]);
+
+  // Removed auto-focus to prevent stealing focus from input field
+  // Focus will be managed through keyboard navigation only
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLUListElement>) => {
     if (!isOpen) return;
@@ -45,16 +74,12 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();
-        setHighlightedIndex((prevIndex) => (prevIndex + 1) % items.length);
+        setHighlightedIndex((highlightedIndex + 1) % items.length);
         break;
       case 'ArrowUp':
         event.preventDefault();
-        setHighlightedIndex((prevIndex) => {
-          if (prevIndex <= 0) {
-            return items.length - 1;
-          }
-          return prevIndex - 1;
-        });
+        const newIndex = highlightedIndex <= 0 ? items.length - 1 : highlightedIndex - 1;
+        setHighlightedIndex(newIndex);
         break;
       case 'Enter':
         event.preventDefault();
@@ -77,7 +102,7 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
     <ul
       id={id}
       ref={listRef}
-      className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg"
+      className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-96 overflow-y-auto"
       role="listbox"
       tabIndex={-1}
       onKeyDown={handleKeyDown}
@@ -85,6 +110,9 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
       {items.map((item, index) => (
         <li
           key={item.id}
+          ref={(el) => {
+            itemRefs.current[index] = el;
+          }}
           className={`cursor-pointer p-2 flex items-center ${
             index === highlightedIndex ? 'bg-gray-700' : 'hover:bg-gray-700'
           }`}
