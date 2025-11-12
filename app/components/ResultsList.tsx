@@ -1,6 +1,6 @@
-import React from "react";
-import { ResultItem } from "./ResultItem";
-import { ResultsListProps } from "@/app/types";
+import React from 'react';
+import { ResultItem } from './ResultItem';
+import { ResultsListProps } from '@/app/types';
 
 export const ResultsList: React.FC<ResultsListProps> = ({
   results,
@@ -17,7 +17,11 @@ export const ResultsList: React.FC<ResultsListProps> = ({
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4">
         {results.map((result) => (
-          <ResultItem key={`${result.type}-${result.id}`} result={result} onSelectResult={onSelectResult} />
+          <ResultItem
+            key={`${result.type}-${result.id}`}
+            result={result}
+            onSelectResult={onSelectResult}
+          />
         ))}
       </div>
 

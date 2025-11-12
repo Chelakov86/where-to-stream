@@ -501,7 +501,7 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 - [ ] Implement state management
   - [ ] `genres`
-  [ ] `searchParams`
+        [ ] `searchParams`
   - [ ] `results`, `page`, `totalPages`
   - [ ] `autocompleteItems`, `isAutocompleteOpen`
   - [ ] `selectedTitle` (id + type)
@@ -563,19 +563,19 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 17. Backend Integration Tests
 
-- [ ] Integration tests for `/api/search`
-  - [ ] Validate combined behavior: parsing + TMDB client + normalization
-  - [ ] Movie-only
-  - [ ] TV-only
-  - [ ] Mixed type = all
-  - [ ] Autocomplete mode
-  - [ ] TMDB error handling
+- [x] Integration tests for `/api/search`
+  - [x] Validate combined behavior: parsing + TMDB client + normalization
+  - [x] Movie-only
+  - [x] TV-only
+  - [x] Mixed type = all
+  - [x] Autocomplete mode
+  - [x] TMDB error handling
 
-- [ ] Integration tests for `/api/title/:type/:id`
-  - [ ] Movie path (details + providers + availability)
-  - [ ] TV path
-  - [ ] Invalid type / id
-  - [ ] TMDB / mapper error
+- [x] Integration tests for `/api/title/:type/:id`
+  - [x] Movie path (details + providers + availability)
+  - [x] TV path
+  - [x] Invalid type / id
+  - [x] TMDB / mapper error
 
 ---
 

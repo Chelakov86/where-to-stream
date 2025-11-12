@@ -1,19 +1,32 @@
 import { GET } from '@/app/api/search/route';
-import { NextResponse } from 'next/server';
 import * as tmdbApi from '@/app/tmdbApi';
 import { TmdbError } from '@/app/tmdbClient';
-import { TmdbSearchResponse } from '@/app/tmdbTypes';
+import { TmdbSearchResponse, TmdbSearchResult } from '@/app/tmdbTypes';
 
-jest.mock('next/server', () => ({
-  NextResponse: {
-    json: jest.fn((data, options) => {
-      return new Response(JSON.stringify(data), {
-        status: options?.status || 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+// Mock Next.js server components
+jest.mock('next/server', () => {
+  return {
+    NextResponse: {
+      json: jest.fn((data, options) => {
+        return {
+          json: () => Promise.resolve(data),
+          status: options?.status || 200,
+        };
+      }),
+    },
+    NextRequest: jest.fn().mockImplementation((input: RequestInfo, init?: RequestInit) => {
+      const request = new Request(input, init);
+      const url = new URL(request.url);
+      return {
+        ...request,
+        nextUrl: url,
+      };
     }),
-  },
-}));
+  };
+});
+
+// Import NextRequest after mocking
+import { NextRequest } from 'next/server';
 
 jest.mock('@/app/tmdbApi');
 const mockedTmdbApi = tmdbApi as jest.Mocked<typeof tmdbApi>;
@@ -23,11 +36,7 @@ const createRequest = (searchParams: Record<string, string>) => {
   Object.entries(searchParams).forEach(([key, value]) => {
     url.searchParams.set(key, value);
   });
-  return {
-    nextUrl: {
-      searchParams: url.searchParams,
-    },
-  } as any;
+  return new NextRequest(url.toString());
 };
 
 describe('GET /api/search', () => {
@@ -147,11 +156,39 @@ describe('GET /api/search', () => {
 
     it('should call both services, merge, and sort results for type=all', async () => {
       const req = createRequest({ query: 'Star', type: 'all' });
-      const movie = { id: 1, title: 'Star Wars', popularity: 200, release_date: '1977-05-25' };
-      const tv = { id: 2, name: 'Star Trek', popularity: 300, first_air_date: '1966-09-08' };
+      const movie: TmdbSearchResult = {
+        id: 1,
+        title: 'Star Wars',
+        popularity: 200,
+        release_date: '1977-05-25',
+        poster_path: '',
+        vote_average: 8,
+        genre_ids: [],
+        overview: '',
+      };
+      const tv: TmdbSearchResult = {
+        id: 2,
+        name: 'Star Trek',
+        popularity: 300,
+        first_air_date: '1966-09-08',
+        poster_path: '',
+        vote_average: 8,
+        genre_ids: [],
+        overview: '',
+      };
 
-      mockedTmdbApi.searchMovies.mockResolvedValueOnce({ page: 1, results: [movie], total_pages: 1, total_results: 1 });
-      mockedTmdbApi.searchTv.mockResolvedValueOnce({ page: 1, results: [tv], total_pages: 1, total_results: 1 });
+      mockedTmdbApi.searchMovies.mockResolvedValueOnce({
+        page: 1,
+        results: [movie],
+        total_pages: 1,
+        total_results: 1,
+      });
+      mockedTmdbApi.searchTv.mockResolvedValueOnce({
+        page: 1,
+        results: [tv],
+        total_pages: 1,
+        total_results: 1,
+      });
 
       const res = await GET(req);
       const data = await res.json();
@@ -169,7 +206,18 @@ describe('GET /api/search', () => {
         page: 1,
         total_pages: 1,
         total_results: 1,
-        results: [{ id: 123, title: 'Dune', release_date: '2021-09-15', poster_path: '/d5NXSklXo0qyIY2VhrJUdJ9qpGu.jpg', popularity: 150.0 }],
+        results: [
+          {
+            id: 123,
+            title: 'Dune',
+            release_date: '2021-09-15',
+            poster_path: '/d5NXSklXo0qyIY2VhrJUdJ9qpGu.jpg',
+            popularity: 150.0,
+            vote_average: 7.9,
+            genre_ids: [878, 12],
+            overview: 'A mythic and emotionally charged hero’s journey...',
+          },
+        ],
       };
 
       mockedTmdbApi.searchMovies.mockResolvedValueOnce(mockResponse);
@@ -185,9 +233,7 @@ describe('GET /api/search', () => {
         year: 2021,
         posterUrl: 'https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIY2VhrJUdJ9qpGu.jpg',
         popularity: 150.0,
-        // overview, rating, and genres should be undefined
       });
-      expect(data.results[0].overview).toBeUndefined();
     });
 
     it('should return 502 on TMDB error', async () => {

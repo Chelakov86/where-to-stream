@@ -1,6 +1,6 @@
 export interface NormalizedSearchResult {
   id: number;
-  type: "movie" | "tv";
+  type: 'movie' | 'tv';
   title: string;
   year?: number;
   posterUrl?: string;
@@ -9,6 +9,18 @@ export interface NormalizedSearchResult {
   overview?: string;
   popularity?: number;
 }
+
+export interface SearchParams {
+  query: string;
+  type?: 'movie' | 'tv' | 'all';
+  yearFrom?: number;
+  yearTo?: number;
+  language?: string;
+  genreIds?: number[];
+  minRating?: number;
+}
+
+export type TMDBResult = NormalizedSearchResult;
 
 export interface ResultsListProps {
   results: NormalizedSearchResult[];
@@ -27,7 +39,7 @@ export interface CountryAvailability {
   countryCode: string;
   countryName: string;
   hasNetflix: boolean;
-  free: string[];
+  freeOrAdsProviders: string[];
   watchLink?: string;
 }
 
@@ -35,7 +47,7 @@ export interface TitleDetails {
   id: number;
   title: string;
   year: number;
-  type: "movie" | "tv";
+  type: 'movie' | 'tv';
   genres: Genre[];
   overview: string;
   posterUrl: string;

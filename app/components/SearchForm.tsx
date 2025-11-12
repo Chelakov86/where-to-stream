@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
 interface SearchFormProps {
   genres: { id: number; name: string }[];
   onSearch: (params: {
     query: string;
-    type: "movie" | "tv" | "all";
+    type: 'movie' | 'tv' | 'all';
     yearFrom?: number;
     yearTo?: number;
     language?: string;
@@ -14,35 +14,29 @@ interface SearchFormProps {
   onAutocompleteRequest?: (query: string) => void;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({
-  genres,
-  onSearch,
-  onAutocompleteRequest,
-}) => {
-  const [query, setQuery] = useState("");
+const SearchForm: React.FC<SearchFormProps> = ({ genres, onSearch, onAutocompleteRequest }) => {
+  const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!query.trim()) {
-      setError("Please enter a search query.");
+      setError('Please enter a search query.');
       return;
     }
     setError(null);
 
     const formData = new FormData(event.currentTarget);
-    const selectedGenreIds = formData
-      .getAll("genre")
-      .map((id) => parseInt(id as string, 10));
+    const selectedGenreIds = formData.getAll('genre').map((id) => parseInt(id as string, 10));
 
     onSearch({
-      query: formData.get("query") as string,
-      type: formData.get("type") as "movie" | "tv" | "all",
-      yearFrom: Number(formData.get("yearFrom")) || undefined,
-      yearTo: Number(formData.get("yearTo")) || undefined,
-      language: formData.get("language") as string,
+      query: formData.get('query') as string,
+      type: formData.get('type') as 'movie' | 'tv' | 'all',
+      yearFrom: Number(formData.get('yearFrom')) || undefined,
+      yearTo: Number(formData.get('yearTo')) || undefined,
+      language: formData.get('language') as string,
       genreIds: selectedGenreIds.length > 0 ? selectedGenreIds : undefined,
-      minRating: Number(formData.get("minRating")) || undefined,
+      minRating: Number(formData.get('minRating')) || undefined,
     });
   };
 
@@ -58,10 +52,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-4 p-4 bg-gray-800 text-white rounded-lg"
-    >
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-gray-800 text-white rounded-lg">
       <div>
         <label htmlFor="query" className="sr-only">
           Search for a movie or series
@@ -167,7 +158,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           defaultValue="5"
           className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
           onChange={(e) => {
-            const valueEl = document.getElementById("minRatingValue");
+            const valueEl = document.getElementById('minRatingValue');
             if (valueEl) {
               valueEl.textContent = e.target.value;
             }
@@ -175,10 +166,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
         />
       </div>
 
-      <button
-        type="submit"
-        className="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded font-bold"
-      >
+      <button type="submit" className="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded font-bold">
         Search
       </button>
     </form>

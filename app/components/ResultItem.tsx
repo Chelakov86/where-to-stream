@@ -1,6 +1,6 @@
-import React from "react";
-import Image from "next/image";
-import { NormalizedSearchResult } from "@/app/types";
+import React from 'react';
+import Image from 'next/image';
+import { NormalizedSearchResult } from '@/app/types';
 
 interface ResultItemProps {
   result: NormalizedSearchResult;
@@ -38,10 +38,10 @@ export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }
         <div className="flex items-center space-x-2 mt-1">
           <span
             className={`px-2 py-1 text-xs font-semibold rounded-full ${
-              type === "movie" ? "bg-blue-600 text-blue-100" : "bg-purple-600 text-purple-100"
+              type === 'movie' ? 'bg-blue-600 text-blue-100' : 'bg-purple-600 text-purple-100'
             }`}
           >
-            {type === "movie" ? "Movie" : "Series"}
+            {type === 'movie' ? 'Movie' : 'Series'}
           </span>
           {rating && (
             <div className="flex items-center">

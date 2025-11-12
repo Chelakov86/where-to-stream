@@ -55,9 +55,7 @@ export interface SearchTvParams {
  * });
  * ```
  */
-export async function searchMovies(
-  params: SearchMoviesParams
-): Promise<TmdbSearchResponse> {
+export async function searchMovies(params: SearchMoviesParams): Promise<TmdbSearchResponse> {
   const cacheKey = `search:movie:${JSON.stringify(params)}`;
   const cached = getCache<TmdbSearchResponse>(cacheKey);
   if (cached) {
@@ -91,9 +89,7 @@ export async function searchMovies(
  * });
  * ```
  */
-export async function searchTv(
-  params: SearchTvParams
-): Promise<TmdbSearchResponse> {
+export async function searchTv(params: SearchTvParams): Promise<TmdbSearchResponse> {
   const cacheKey = `search:tv:${JSON.stringify(params)}`;
   const cached = getCache<TmdbSearchResponse>(cacheKey);
   if (cached) {
@@ -174,18 +170,14 @@ export async function getTvDetails(id: number): Promise<TmdbTvDetails> {
  * console.log(providers.results.US?.flatrate); // Netflix, Amazon Prime, etc.
  * ```
  */
-export async function getMovieWatchProviders(
-  id: number
-): Promise<TmdbWatchProvidersResponse> {
+export async function getMovieWatchProviders(id: number): Promise<TmdbWatchProvidersResponse> {
   const cacheKey = `providers:movie:${id}`;
   const cached = getCache<TmdbWatchProvidersResponse>(cacheKey);
   if (cached) {
     return cached;
   }
 
-  const data = await tmdbGet<TmdbWatchProvidersResponse>(
-    `/movie/${id}/watch/providers`
-  );
+  const data = await tmdbGet<TmdbWatchProvidersResponse>(`/movie/${id}/watch/providers`);
   setCache(cacheKey, data, CACHE_TTL_SECONDS);
   return data;
 }
@@ -203,18 +195,14 @@ export async function getMovieWatchProviders(
  * console.log(providers.results.US?.flatrate); // Streaming services
  * ```
  */
-export async function getTvWatchProviders(
-  id: number
-): Promise<TmdbWatchProvidersResponse> {
+export async function getTvWatchProviders(id: number): Promise<TmdbWatchProvidersResponse> {
   const cacheKey = `providers:tv:${id}`;
   const cached = getCache<TmdbWatchProvidersResponse>(cacheKey);
   if (cached) {
     return cached;
   }
 
-  const data = await tmdbGet<TmdbWatchProvidersResponse>(
-    `/tv/${id}/watch/providers`
-  );
+  const data = await tmdbGet<TmdbWatchProvidersResponse>(`/tv/${id}/watch/providers`);
   setCache(cacheKey, data, CACHE_TTL_SECONDS);
   return data;
 }

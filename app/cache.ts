@@ -23,16 +23,16 @@ export function setCache<T>(key: string, value: T, ttlSeconds: number): void {
  */
 export function getCache<T>(key: string): T | undefined {
   const entry = cache.get(key);
-  
+
   if (!entry) {
     return undefined;
   }
-  
+
   if (Date.now() > entry.expiresAt) {
     cache.delete(key);
     return undefined;
   }
-  
+
   return entry.value as T;
 }
 

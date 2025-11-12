@@ -37,12 +37,8 @@ jest.mock('@/app/cache', () => ({
 
 describe('tmdbApi', () => {
   const mockTmdbGet = tmdbGet as jest.MockedFunction<typeof tmdbGet>;
-  const mockGetCache = cache.getCache as jest.MockedFunction<
-    typeof cache.getCache
-  >;
-  const mockSetCache = cache.setCache as jest.MockedFunction<
-    typeof cache.setCache
-  >;
+  const mockGetCache = cache.getCache as jest.MockedFunction<typeof cache.getCache>;
+  const mockSetCache = cache.setCache as jest.MockedFunction<typeof cache.setCache>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -493,7 +489,12 @@ describe('tmdbApi', () => {
     describe('searchMovies', () => {
       it('should cache search results and return from cache on subsequent identical calls', async () => {
         const params = { query: 'Inception', year: 2010 };
-        const mockResponse: TmdbSearchResponse = { page: 1, results: [], total_pages: 1, total_results: 0 };
+        const mockResponse: TmdbSearchResponse = {
+          page: 1,
+          results: [],
+          total_pages: 1,
+          total_results: 0,
+        };
         mockTmdbGet.mockResolvedValue(mockResponse);
         mockGetCache.mockReturnValue(undefined);
 
@@ -512,8 +513,18 @@ describe('tmdbApi', () => {
       it('should not use cache for different search parameters', async () => {
         const params1 = { query: 'Inception' };
         const params2 = { query: 'Interstellar' };
-        const mockResponse1: TmdbSearchResponse = { page: 1, results: [{ id: 27205 }], total_pages: 1, total_results: 1 } as any;
-        const mockResponse2: TmdbSearchResponse = { page: 1, results: [{ id: 157336 }], total_pages: 1, total_results: 1 } as any;
+        const mockResponse1: TmdbSearchResponse = {
+          page: 1,
+          results: [{ id: 27205 }],
+          total_pages: 1,
+          total_results: 1,
+        } as any;
+        const mockResponse2: TmdbSearchResponse = {
+          page: 1,
+          results: [{ id: 157336 }],
+          total_pages: 1,
+          total_results: 1,
+        } as any;
 
         // First call
         mockGetCache.mockReturnValue(undefined);
@@ -534,24 +545,29 @@ describe('tmdbApi', () => {
     });
 
     describe('searchTv', () => {
-        it('should cache search results and return from cache on subsequent identical calls', async () => {
-          const params = { query: 'Breaking Bad', firstAirDateYear: 2008 };
-          const mockResponse: TmdbSearchResponse = { page: 1, results: [], total_pages: 1, total_results: 0 };
-          mockTmdbGet.mockResolvedValue(mockResponse);
-          mockGetCache.mockReturnValue(undefined);
-  
-          // First call
-          await searchTv(params);
-          expect(mockTmdbGet).toHaveBeenCalledTimes(1);
-          const cacheKey = `search:tv:${JSON.stringify(params)}`;
-          expect(mockSetCache).toHaveBeenCalledWith(cacheKey, mockResponse, 43200);
-  
-          // Second call
-          mockGetCache.mockReturnValue(mockResponse);
-          await searchTv(params);
-          expect(mockTmdbGet).toHaveBeenCalledTimes(1);
-        });
+      it('should cache search results and return from cache on subsequent identical calls', async () => {
+        const params = { query: 'Breaking Bad', firstAirDateYear: 2008 };
+        const mockResponse: TmdbSearchResponse = {
+          page: 1,
+          results: [],
+          total_pages: 1,
+          total_results: 0,
+        };
+        mockTmdbGet.mockResolvedValue(mockResponse);
+        mockGetCache.mockReturnValue(undefined);
+
+        // First call
+        await searchTv(params);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
+        const cacheKey = `search:tv:${JSON.stringify(params)}`;
+        expect(mockSetCache).toHaveBeenCalledWith(cacheKey, mockResponse, 43200);
+
+        // Second call
+        mockGetCache.mockReturnValue(mockResponse);
+        await searchTv(params);
+        expect(mockTmdbGet).toHaveBeenCalledTimes(1);
       });
+    });
 
     describe('getMovieDetails', () => {
       it('should cache details and return from cache on second call', async () => {

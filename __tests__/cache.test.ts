@@ -19,24 +19,24 @@ describe('cache', () => {
 
     it('should return undefined for expired key', async () => {
       setCache('expired-key', 'expired-value', 1);
-      
+
       // Wait for the cache entry to expire
-      await new Promise(resolve => setTimeout(resolve, 1100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+
       const result = getCache('expired-key');
       expect(result).toBeUndefined();
     });
 
     it('should remove expired entry from cache', async () => {
       setCache('expired-key', 'expired-value', 1);
-      
+
       // Wait for the cache entry to expire
-      await new Promise(resolve => setTimeout(resolve, 1100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+
       // First call should return undefined and remove the entry
       const result1 = getCache('expired-key');
       expect(result1).toBeUndefined();
-      
+
       // Second call should also return undefined (entry was removed)
       const result2 = getCache('expired-key');
       expect(result2).toBeUndefined();
@@ -69,13 +69,13 @@ describe('cache', () => {
     it('should overwrite existing key with new value and expiry', async () => {
       // Set initial value with short TTL
       setCache('overwrite-key', 'initial-value', 1);
-      
+
       // Immediately overwrite with new value and longer TTL
       setCache('overwrite-key', 'new-value', 10);
-      
+
       // Wait for original TTL to pass
-      await new Promise(resolve => setTimeout(resolve, 1100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+
       // Should still return new value (not expired)
       const result = getCache<string>('overwrite-key');
       expect(result).toBe('new-value');
@@ -84,7 +84,7 @@ describe('cache', () => {
     it('should handle zero or negative values gracefully', () => {
       setCache('zero-key', 0, 10);
       expect(getCache<number>('zero-key')).toBe(0);
-      
+
       setCache('negative-key', -100, 10);
       expect(getCache<number>('negative-key')).toBe(-100);
     });
@@ -92,7 +92,7 @@ describe('cache', () => {
     it('should handle null and undefined values', () => {
       setCache('null-key', null, 10);
       expect(getCache<null>('null-key')).toBeNull();
-      
+
       setCache('undefined-key', undefined, 10);
       expect(getCache<undefined>('undefined-key')).toBeUndefined();
     });
@@ -101,10 +101,10 @@ describe('cache', () => {
   describe('edge cases', () => {
     it('should handle very short TTL (immediate expiry)', async () => {
       setCache('short-ttl-key', 'value', 0.1);
-      
+
       // Wait for 200ms (should be expired)
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
       const result = getCache('short-ttl-key');
       expect(result).toBeUndefined();
     });
@@ -113,7 +113,7 @@ describe('cache', () => {
       setCache('key1', 'value1', 10);
       setCache('key2', 'value2', 10);
       setCache('key3', 'value3', 10);
-      
+
       expect(getCache<string>('key1')).toBe('value1');
       expect(getCache<string>('key2')).toBe('value2');
       expect(getCache<string>('key3')).toBe('value3');

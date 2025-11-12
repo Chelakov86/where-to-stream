@@ -4,12 +4,12 @@ import { TmdbError } from '@/app/tmdbClient';
 // Mock NextResponse
 jest.mock('next/server', () => ({
   NextResponse: {
-    json: jest.fn((data, init) => {
+    json: (data: any, init: any) => {
       return {
         json: () => Promise.resolve(data), // Mock the json() method of the response object
         status: init?.status || 200,
       };
-    }),
+    },
   },
 }));
 
@@ -51,7 +51,8 @@ describe('GET /api/title/[type]/[id]', () => {
       original_title: 'Fight Club',
       release_date: '1999-10-15',
       genres: [{ id: 18, name: 'Drama' }],
-      overview: 'An insomniac office worker looking for a way to change his life crosses paths with a devil-may-care soap maker and they form an underground fight club that evolves into something much, much more.',
+      overview:
+        'An insomniac office worker looking for a way to change his life crosses paths with a devil-may-care soap maker and they form an underground fight club that evolves into something much, much more.',
       vote_average: 8.4,
       poster_path: '/pB8BM7pdXLXbZVZC65E3J9xk3LX.jpg',
       runtime: 139,
@@ -61,7 +62,14 @@ describe('GET /api/title/[type]/[id]', () => {
       results: {
         US: {
           link: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
-          flatrate: [{ logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg', provider_id: 8, provider_name: 'Netflix', display_priority: 1 }],
+          flatrate: [
+            {
+              logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
+              provider_id: 8,
+              provider_name: 'Netflix',
+              display_priority: 1,
+            },
+          ],
         },
       },
     });
@@ -71,7 +79,8 @@ describe('GET /api/title/[type]/[id]', () => {
       original_name: 'Game of Thrones',
       first_air_date: '2011-04-17',
       genres: [{ id: 10765, name: 'Sci-Fi & Fantasy' }],
-      overview: 'Nine noble families fight for control over the mythical lands of Westeros, while an ancient enemy returns after being dormant for thousands of years.',
+      overview:
+        'Nine noble families fight for control over the mythical lands of Westeros, while an ancient enemy returns after being dormant for thousands of years.',
       vote_average: 8.4,
       poster_path: '/2OMB0ynKlyXlHZWSnQcBGqL2AER.jpg',
       episode_run_time: [60],
@@ -81,14 +90,28 @@ describe('GET /api/title/[type]/[id]', () => {
       results: {
         US: {
           link: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
-          flatrate: [{ logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg', provider_id: 8, provider_name: 'HBO Max', display_priority: 1 }],
+          flatrate: [
+            {
+              logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
+              provider_id: 8,
+              provider_name: 'HBO Max',
+              display_priority: 1,
+            },
+          ],
         },
       },
     });
     mockMapAvailability.mockReturnValue({
-      flatrate: [{ provider_name: 'Netflix', logo_url: `${TMDB_IMAGE_BASE_URL}/5NyMoF5fJbB62D3B5F5F5F5F.jpg` }],
-      buy: [],
-      rent: [],
+      preferredCountries: [
+        {
+          countryCode: 'US',
+          countryName: 'United States',
+          hasNetflix: true,
+          freeOrAdsProviders: ['Netflix'],
+          watchLink: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
+        },
+      ],
+      otherCountries: [],
     });
   });
 
@@ -111,9 +134,19 @@ describe('GET /api/title/[type]/[id]', () => {
     expect(mockGetMovieDetails).toHaveBeenCalledWith(550);
     expect(mockGetMovieWatchProviders).toHaveBeenCalledWith(550);
     expect(mockMapAvailability).toHaveBeenCalledWith({
-      US: {
-        link: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
-        flatrate: [{ logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg', provider_id: 8, provider_name: 'Netflix', display_priority: 1 }],
+      id: 550,
+      results: {
+        US: {
+          link: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
+          flatrate: [
+            {
+              logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
+              provider_id: 8,
+              provider_name: 'Netflix',
+              display_priority: 1,
+            },
+          ],
+        },
       },
     });
     expect(json).toEqual({
@@ -123,19 +156,39 @@ describe('GET /api/title/[type]/[id]', () => {
       originalTitle: 'Fight Club',
       year: 1999,
       genres: [{ id: 18, name: 'Drama' }],
-      overview: 'An insomniac office worker looking for a way to change his life crosses paths with a devil-may-care soap maker and they form an underground fight club that evolves into something much, much more.',
+      overview:
+        'An insomniac office worker looking for a way to change his life crosses paths with a devil-may-care soap maker and they form an underground fight club that evolves into something much, much more.',
       rating: 8.4,
       posterUrl: `${TMDB_IMAGE_BASE_URL}/pB8BM7pdXLXbZVZC65E3J9xk3LX.jpg`,
       runtime: 139,
       availability: {
-        flatrate: [{ provider_name: 'Netflix', logo_url: `${TMDB_IMAGE_BASE_URL}/5NyMoF5fJbB62D3B5F5F5F5F.jpg` }],
-        buy: [],
-        rent: [],
+        preferredCountries: [
+          {
+            countryCode: 'US',
+            countryName: 'United States',
+            hasNetflix: true,
+            freeOrAdsProviders: ['Netflix'],
+            watchLink: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
+          },
+        ],
+        otherCountries: [],
       },
     });
   });
 
   it('should return normalized TV show details and availability for a valid TV show ID', async () => {
+    mockMapAvailability.mockReturnValue({
+      preferredCountries: [
+        {
+          countryCode: 'US',
+          countryName: 'United States',
+          hasNetflix: true,
+          freeOrAdsProviders: ['HBO Max'],
+          watchLink: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
+        },
+      ],
+      otherCountries: [],
+    });
     const req = createMockRequest('tv', '1399');
     const response = await GET(req, { params: { type: 'tv', id: '1399' } });
     const json = await response.json();
@@ -144,9 +197,19 @@ describe('GET /api/title/[type]/[id]', () => {
     expect(mockGetTvDetails).toHaveBeenCalledWith(1399);
     expect(mockGetTvWatchProviders).toHaveBeenCalledWith(1399);
     expect(mockMapAvailability).toHaveBeenCalledWith({
-      US: {
-        link: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
-        flatrate: [{ logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg', provider_id: 8, provider_name: 'HBO Max', display_priority: 1 }],
+      id: 1399,
+      results: {
+        US: {
+          link: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
+          flatrate: [
+            {
+              logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
+              provider_id: 8,
+              provider_name: 'HBO Max',
+              display_priority: 1,
+            },
+          ],
+        },
       },
     });
     expect(json).toEqual({
@@ -156,14 +219,22 @@ describe('GET /api/title/[type]/[id]', () => {
       originalTitle: 'Game of Thrones',
       year: 2011,
       genres: [{ id: 10765, name: 'Sci-Fi & Fantasy' }],
-      overview: 'Nine noble families fight for control over the mythical lands of Westeros, while an ancient enemy returns after being dormant for thousands of years.',
+      overview:
+        'Nine noble families fight for control over the mythical lands of Westeros, while an ancient enemy returns after being dormant for thousands of years.',
       rating: 8.4,
       posterUrl: `${TMDB_IMAGE_BASE_URL}/2OMB0ynKlyXlHZWSnQcBGqL2AER.jpg`,
       runtime: 60, // Assuming episode_run_time[0] for TV
       availability: {
-        flatrate: [{ provider_name: 'Netflix', logo_url: `${TMDB_IMAGE_BASE_URL}/5NyMoF5fJbB62D3B5F5F5F5F.jpg` }],
-        buy: [],
-        rent: [],
+        preferredCountries: [
+          {
+            countryCode: 'US',
+            countryName: 'United States',
+            hasNetflix: true,
+            freeOrAdsProviders: ['HBO Max'],
+            watchLink: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
+          },
+        ],
+        otherCountries: [],
       },
     });
   });
@@ -202,7 +273,7 @@ describe('GET /api/title/[type]/[id]', () => {
 
   // --- Error Handling ---
   it('should return 502/503 if getMovieDetails fails', async () => {
-    mockGetMovieDetails.mockRejectedValue(new TmdbError('TMDB Movie Details Error', 500));
+    mockGetMovieDetails.mockRejectedValue(new TmdbError(500, 'TMDB Movie Details Error'));
     const req = createMockRequest('movie', '550');
     const response = await GET(req, { params: { type: 'movie', id: '550' } });
     const json = await response.json();
@@ -212,7 +283,7 @@ describe('GET /api/title/[type]/[id]', () => {
   });
 
   it('should return 502/503 if getMovieWatchProviders fails', async () => {
-    mockGetMovieWatchProviders.mockRejectedValue(new TmdbError('TMDB Movie Providers Error', 500));
+    mockGetMovieWatchProviders.mockRejectedValue(new TmdbError(500, 'TMDB Movie Providers Error'));
     const req = createMockRequest('movie', '550');
     const response = await GET(req, { params: { type: 'movie', id: '550' } });
     const json = await response.json();
@@ -222,7 +293,7 @@ describe('GET /api/title/[type]/[id]', () => {
   });
 
   it('should return 502/503 if getTvDetails fails', async () => {
-    mockGetTvDetails.mockRejectedValue(new TmdbError('TMDB TV Details Error', 500));
+    mockGetTvDetails.mockRejectedValue(new TmdbError(500, 'TMDB TV Details Error'));
     const req = createMockRequest('tv', '1399');
     const response = await GET(req, { params: { type: 'tv', id: '1399' } });
     const json = await response.json();
@@ -232,7 +303,7 @@ describe('GET /api/title/[type]/[id]', () => {
   });
 
   it('should return 502/503 if getTvWatchProviders fails', async () => {
-    mockGetTvWatchProviders.mockRejectedValue(new TmdbError('TMDB TV Providers Error', 500));
+    mockGetTvWatchProviders.mockRejectedValue(new TmdbError(500, 'TMDB TV Providers Error'));
     const req = createMockRequest('tv', '1399');
     const response = await GET(req, { params: { type: 'tv', id: '1399' } });
     const json = await response.json();

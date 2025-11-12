@@ -1,21 +1,22 @@
+'use client';
 
-"use client";
-
-import { useEffect, useState } from "react";
-import { CountryAvailability, TitleDetails, Genre } from "@/app/types";
+import { useEffect, useState } from 'react';
+import { CountryAvailability, TitleDetails, Genre } from '@/app/types';
 
 interface ResultDetailsProps {
-  id: number;
-  type: "movie" | "tv";
+  title: {
+    id: number;
+    type: 'movie' | 'tv';
+  };
 }
 
-type Status = "loading" | "error" | "success";
+type Status = 'loading' | 'error' | 'success';
 
 const countryFlagMapping: Record<string, string> = {
-  DE: "🇩🇪",
-  GB: "🇬🇧",
-  US: "🇺🇸",
-  CA: "🇨🇦",
+  DE: '🇩🇪',
+  GB: '🇬🇧',
+  US: '🇺🇸',
+  CA: '🇨🇦',
 };
 
 const formatRuntime = (runtime: number) => {
@@ -37,10 +38,7 @@ const AvailabilityTable = ({
   <div className="mt-4">
     <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
     <div className="overflow-x-auto">
-      <table
-        className="min-w-full bg-gray-800 border border-gray-700"
-        aria-label={title}
-      >
+      <table className="min-w-full bg-gray-800 border border-gray-700" aria-label={title}>
         <thead>
           <tr className="bg-gray-900">
             <th className="py-2 px-4 border-b border-gray-700 text-left">Country</th>
@@ -53,14 +51,13 @@ const AvailabilityTable = ({
           {countries.map((country) => (
             <tr key={country.countryCode} className="hover:bg-gray-700">
               <td className="py-2 px-4 border-b border-gray-600">
-                {countryFlagMapping[country.countryCode] || ""}{" "}
-                {country.countryName}
+                {countryFlagMapping[country.countryCode] || ''} {country.countryName}
               </td>
               <td className="py-2 px-4 border-b border-gray-600">
-                {country.hasNetflix ? "Yes" : "No"}
+                {country.hasNetflix ? 'Yes' : 'No'}
               </td>
               <td className="py-2 px-4 border-b border-gray-600">
-                {country.free.join(", ")}
+                {country.freeOrAdsProviders.join(', ')}
               </td>
               <td className="py-2 px-4 border-b border-gray-600">
                 {country.watchLink && (
@@ -82,8 +79,8 @@ const AvailabilityTable = ({
   </div>
 );
 
-const ResultDetails = ({ id, type }: ResultDetailsProps) => {
-  const [status, setStatus] = useState<Status>("loading");
+const ResultDetails = ({ title: { id, type } }: ResultDetailsProps) => {
+  const [status, setStatus] = useState<Status>('loading');
   const [details, setDetails] = useState<TitleDetails | null>(null);
 
   useEffect(() => {
@@ -91,18 +88,18 @@ const ResultDetails = ({ id, type }: ResultDetailsProps) => {
     const { signal } = controller;
 
     const fetchData = async () => {
-      setStatus("loading");
+      setStatus('loading');
       try {
         const response = await fetch(`/api/title/${type}/${id}`, { signal });
         if (!response.ok) {
-          throw new Error("Failed to fetch");
+          throw new Error('Failed to fetch');
         }
         const data = await response.json();
         setDetails(data);
-        setStatus("success");
+        setStatus('success');
       } catch (error) {
         if (error instanceof Error && error.name !== 'AbortError') {
-          setStatus("error");
+          setStatus('error');
         }
       }
     };
@@ -114,11 +111,11 @@ const ResultDetails = ({ id, type }: ResultDetailsProps) => {
     };
   }, [id, type]);
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return <div className="p-8 text-center text-gray-400">Loading...</div>;
   }
 
-  if (status === "error") {
+  if (status === 'error') {
     return (
       <div className="p-8 text-center text-red-400">
         We’re having trouble fetching data right now. Please try again later.
@@ -138,22 +135,18 @@ const ResultDetails = ({ id, type }: ResultDetailsProps) => {
     <div className="bg-gray-800 text-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
       <div className="flex flex-col md:flex-row gap-6">
         <div className="md:w-1/3">
-          <img
-            src={details.posterUrl}
-            alt={details.title}
-            className="rounded-lg w-full"
-          />
+          <img src={details.posterUrl} alt={details.title} className="rounded-lg w-full" />
         </div>
         <div className="md:w-2/3">
           <h1 className="text-4xl font-bold">{details.title}</h1>
           <div className="flex items-center space-x-4 text-gray-400 mt-2">
             <span>{details.year}</span>
-            <span>{details.type === "movie" ? "Movie" : "TV Show"}</span>
+            <span>{details.type === 'movie' ? 'Movie' : 'TV Show'}</span>
             {details.runtime && <span>{formatRuntime(details.runtime)}</span>}
           </div>
           <div className="mt-4">
-            <span className="font-semibold">Genres:</span>{" "}
-            {details.genres.map((g: Genre) => g.name).join(", ")}
+            <span className="font-semibold">Genres:</span>{' '}
+            {details.genres.map((g: Genre) => g.name).join(', ')}
           </div>
           <div className="mt-4" data-testid="rating">
             <span className="font-semibold">Rating:</span> {details.rating.toFixed(1)}/10
@@ -167,9 +160,7 @@ const ResultDetails = ({ id, type }: ResultDetailsProps) => {
           Streaming Availability
         </h2>
         {!hasAvailability ? (
-          <p className="mt-4 text-gray-400">
-            No streaming availability found
-          </p>
+          <p className="mt-4 text-gray-400">No streaming availability found</p>
         ) : (
           <>
             {details.availability.preferredCountries.length > 0 && (

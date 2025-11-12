@@ -55,9 +55,7 @@ const normalizeTmdbResult = (
     type: type,
     title: (isMovie ? result.title : result.name) || '',
     year: getYear(isMovie ? result.release_date : result.first_air_date),
-    posterUrl: result.poster_path
-      ? `${TMDB_IMAGE_BASE_URL}${result.poster_path}`
-      : undefined,
+    posterUrl: result.poster_path ? `${TMDB_IMAGE_BASE_URL}${result.poster_path}` : undefined,
     popularity: result.popularity,
   };
 
@@ -83,7 +81,10 @@ const parseSearchParams = (searchParams: URLSearchParams): SearchParams => {
 
   const genreIds = searchParams.get('genreIds');
   if (genreIds) {
-    params.genreIds = genreIds.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+    params.genreIds = genreIds
+      .split(',')
+      .map((id) => parseInt(id.trim(), 10))
+      .filter((id) => !isNaN(id));
   }
 
   return params;
@@ -108,7 +109,7 @@ export async function GET(req: NextRequest) {
         page: tmdbResponse.page,
         totalPages: tmdbResponse.total_pages,
         totalResults: tmdbResponse.total_results,
-        results: tmdbResponse.results.map(r => normalizeTmdbResult(r, 'movie', params.mode)),
+        results: tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
       };
     } else if (params.type === 'tv') {
       const tmdbResponse = await searchTv(tvParams);
@@ -116,17 +117,18 @@ export async function GET(req: NextRequest) {
         page: tmdbResponse.page,
         totalPages: tmdbResponse.total_pages,
         totalResults: tmdbResponse.total_results,
-        results: tmdbResponse.results.map(r => normalizeTmdbResult(r, 'tv', params.mode)),
+        results: tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
       };
-    } else { // type === 'all'
+    } else {
+      // type === 'all'
       const [movieResponse, tvResponse] = await Promise.all([
         searchMovies(movieParams),
         searchTv(tvParams),
       ]);
 
       const combinedResults = [
-        ...movieResponse.results.map(r => normalizeTmdbResult(r, 'movie', params.mode)),
-        ...tvResponse.results.map(r => normalizeTmdbResult(r, 'tv', params.mode)),
+        ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
+        ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
       ];
 
       combinedResults.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));

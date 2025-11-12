@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image";
+import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 
 export interface AutocompleteItem {
   id: number;
-  type: "movie" | "tv";
+  type: 'movie' | 'tv';
   title: string;
   year?: number;
   posterUrl?: string;
@@ -16,7 +16,12 @@ export interface AutocompleteListProps {
   onClose: () => void;
 }
 
-export const AutocompleteList: React.FC<AutocompleteListProps> = ({ items, isOpen, onSelect, onClose }) => {
+export const AutocompleteList: React.FC<AutocompleteListProps> = ({
+  items,
+  isOpen,
+  onSelect,
+  onClose,
+}) => {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -36,11 +41,11 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({ items, isOpe
     if (!isOpen) return;
 
     switch (event.key) {
-      case "ArrowDown":
+      case 'ArrowDown':
         event.preventDefault();
         setHighlightedIndex((prevIndex) => (prevIndex + 1) % items.length);
         break;
-      case "ArrowUp":
+      case 'ArrowUp':
         event.preventDefault();
         setHighlightedIndex((prevIndex) => {
           if (prevIndex <= 0) {
@@ -49,13 +54,13 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({ items, isOpe
           return prevIndex - 1;
         });
         break;
-      case "Enter":
+      case 'Enter':
         event.preventDefault();
         if (highlightedIndex >= 0 && highlightedIndex < items.length) {
           onSelect(items[highlightedIndex]);
         }
         break;
-      case "Escape":
+      case 'Escape':
         event.preventDefault();
         onClose();
         break;
@@ -78,7 +83,7 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({ items, isOpe
         <li
           key={item.id}
           className={`cursor-pointer p-2 flex items-center ${
-            index === highlightedIndex ? "bg-gray-700" : "hover:bg-gray-700"
+            index === highlightedIndex ? 'bg-gray-700' : 'hover:bg-gray-700'
           }`}
           onMouseEnter={() => setHighlightedIndex(index)}
           onClick={() => onSelect(item)}
@@ -105,10 +110,12 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({ items, isOpe
               <span className="mx-2">•</span>
               <span
                 className={`px-2 py-0.5 rounded-full text-xs ${
-                  item.type === "movie" ? "bg-blue-600 text-blue-100" : "bg-purple-600 text-purple-100"
+                  item.type === 'movie'
+                    ? 'bg-blue-600 text-blue-100'
+                    : 'bg-purple-600 text-purple-100'
                 }`}
               >
-                {item.type === "movie" ? "Movie" : "Series"}
+                {item.type === 'movie' ? 'Movie' : 'Series'}
               </span>
             </div>
           </div>
