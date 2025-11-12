@@ -68,10 +68,16 @@ const hasNetflix = (providers: TmdbWatchProviderInfo[] = []): boolean => {
  * Extracts unique provider names from flatrate providers and returns them sorted.
  * This represents free/ad-supported streaming providers.
  * Note: Currently only uses flatrate category; ads and free categories are not included.
+ * Excludes Netflix since it's shown in a dedicated column.
  */
 const getFreeOrAdsProviders = (flatrateProviders: TmdbWatchProviderInfo[] = []): string[] => {
   const providers = new Set<string>();
-  flatrateProviders.forEach((p) => providers.add(p.provider_name));
+  flatrateProviders.forEach((p) => {
+    // Exclude Netflix since it's shown in a dedicated column
+    if (p.provider_name !== NETFLIX_PROVIDER_NAME) {
+      providers.add(p.provider_name);
+    }
+  });
   return Array.from(providers).sort();
 };
 

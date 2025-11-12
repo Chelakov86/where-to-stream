@@ -16,6 +16,12 @@ describe('SearchForm', () => {
     render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
 
     expect(screen.getByPlaceholderText('Search for a movie or series')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Show Filters/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument();
+    
+    // Filters are hidden by default, so click to show them
+    fireEvent.click(screen.getByRole('button', { name: /Show Filters/ }));
+    
     expect(screen.getByLabelText('Type')).toBeInTheDocument();
     expect(screen.getByLabelText('From Year')).toBeInTheDocument();
     expect(screen.getByLabelText('To Year')).toBeInTheDocument();
@@ -24,7 +30,6 @@ describe('SearchForm', () => {
     expect(screen.getByRole('checkbox', { name: 'Adventure' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Animation' })).toBeInTheDocument();
     expect(screen.getByLabelText(/Minimum Rating/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument();
   });
 
   it('associates the query input with its accessible label', () => {
@@ -43,6 +48,10 @@ describe('SearchForm', () => {
     fireEvent.change(screen.getByPlaceholderText('Search for a movie or series'), {
       target: { value: 'Inception' },
     });
+    
+    // Show filters first
+    fireEvent.click(screen.getByRole('button', { name: /Show Filters/ }));
+    
     fireEvent.change(screen.getByLabelText('Type'), {
       target: { value: 'movie' },
     });
@@ -119,6 +128,9 @@ describe('SearchForm', () => {
   it('shows a loading state for filters when genres are loading', () => {
     render(<SearchForm genres={[]} onSearch={jest.fn()} isGenresLoading />);
 
+    // Show filters first
+    fireEvent.click(screen.getByRole('button', { name: /Show Filters/ }));
+    
     expect(screen.getByText('Loading filters...')).toBeInTheDocument();
   });
 

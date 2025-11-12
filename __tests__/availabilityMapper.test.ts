@@ -61,7 +61,8 @@ describe('mapAvailability', () => {
     expect(usData).toBeDefined();
     expect(usData?.countryName).toBe('United States');
     expect(usData?.hasNetflix).toBe(true);
-    expect(usData?.freeOrAdsProviders).toEqual(['Netflix']);
+    // Netflix should not appear in freeOrAdsProviders since it has its own column
+    expect(usData?.freeOrAdsProviders).toEqual([]);
     expect(usData?.watchLink).toContain('locale=US');
 
     const gbData = result.preferredCountries.find((c) => c.countryCode === 'GB');
@@ -88,7 +89,8 @@ describe('mapAvailability', () => {
     expect(frData.countryCode).toBe('FR');
     expect(frData.countryName).toBe('France');
     expect(frData.hasNetflix).toBe(true);
-    expect(frData.freeOrAdsProviders).toEqual(['Netflix']);
+    // Netflix should not appear in freeOrAdsProviders since it has its own column
+    expect(frData.freeOrAdsProviders).toEqual([]);
   });
 
   it('should handle only non-preferred countries having availability', () => {
