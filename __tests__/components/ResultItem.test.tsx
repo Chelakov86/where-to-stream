@@ -58,6 +58,13 @@ describe('ResultItem', () => {
     expect(screen.getByText('16')).toBeInTheDocument();
   });
 
+  it('exposes an article landmark named after the result title', () => {
+    const onSelectResult = jest.fn();
+    render(<ResultItem result={mockResult} onSelectResult={onSelectResult} />);
+
+    expect(screen.getByRole('article', { name: /test movie \(2023\)/i })).toBeInTheDocument();
+  });
+
   it('calls onSelectResult with the correct result when the "Details" button is clicked', () => {
     const onSelectResult = jest.fn();
     render(<ResultItem result={mockResult} onSelectResult={onSelectResult} />);

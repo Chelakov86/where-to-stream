@@ -112,4 +112,29 @@ describe('AutocompleteList', () => {
     fireEvent.keyDown(input!, { key: 'ArrowDown' });
     expect(screen.getByText('Inception').closest('li')).toHaveClass('bg-gray-700');
   });
+
+  it('uses listbox semantics with options reflecting the highlighted state', () => {
+    render(
+      <AutocompleteList
+        items={mockItems}
+        isOpen={true}
+        onSelect={onSelect}
+        onClose={onClose}
+        id="suggestions"
+      />
+    );
+
+    const listbox = screen.getByRole('listbox');
+    expect(listbox).toHaveAttribute('id', 'suggestions');
+
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(mockItems.length);
+    options.forEach((option) => {
+      expect(option).toHaveAttribute('aria-selected');
+    });
+
+    fireEvent.keyDown(listbox, { key: 'ArrowDown' });
+    expect(options[0]).toHaveAttribute('aria-selected', 'true');
+    expect(options[1]).toHaveAttribute('aria-selected', 'false');
+  });
 });

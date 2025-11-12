@@ -14,16 +14,14 @@ export const ResultsList: React.FC<ResultsListProps> = ({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4">
+    <div className="space-y-4" aria-live="polite">
+      <ul className="grid grid-cols-1 gap-4 p-0" role="list">
         {results.map((result) => (
-          <ResultItem
-            key={`${result.type}-${result.id}`}
-            result={result}
-            onSelectResult={onSelectResult}
-          />
+          <li key={`${result.type}-${result.id}`} className="list-none">
+            <ResultItem result={result} onSelectResult={onSelectResult} />
+          </li>
         ))}
-      </div>
+      </ul>
 
       <div className="flex justify-center items-center space-x-4 mt-6">
         <button

@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import SearchForm from '../../app/components/SearchForm';
 
@@ -24,6 +25,15 @@ describe('SearchForm', () => {
     expect(screen.getByRole('checkbox', { name: 'Animation' })).toBeInTheDocument();
     expect(screen.getByLabelText(/Minimum Rating/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument();
+  });
+
+  it('associates the query input with its accessible label', () => {
+    const handleSearch = jest.fn();
+    render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
+
+    expect(
+      screen.getByRole('textbox', { name: /search for a movie or series/i })
+    ).toBeInTheDocument();
   });
 
   it('calls onSearch with all form values on submit', () => {
@@ -64,6 +74,21 @@ describe('SearchForm', () => {
     });
   });
 
+  it('submits the search when pressing Enter on the query input', async () => {
+    const handleSearch = jest.fn();
+    const user = userEvent.setup();
+    render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
+
+    const queryInput = screen.getByRole('textbox', { name: /search for a movie or series/i });
+    await user.type(queryInput, 'Inception{enter}');
+
+    expect(handleSearch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: 'Inception',
+      })
+    );
+  });
+
   it('does not call onSearch if query is empty and shows an error', () => {
     const handleSearch = jest.fn();
     render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
@@ -95,5 +120,23 @@ describe('SearchForm', () => {
     render(<SearchForm genres={[]} onSearch={jest.fn()} isGenresLoading />);
 
     expect(screen.getByText('Loading filters...')).toBeInTheDocument();
+  });
+
+  it('exposes autocomplete aria attributes when autocomplete props are provided', () => {
+    const handleSearch = jest.fn();
+    render(
+      <SearchForm
+        genres={mockGenres}
+        onSearch={handleSearch}
+        autocompleteListId="test-list"
+        isAutocompleteOpen
+      />
+    );
+
+    const queryInput = screen.getByRole('textbox', { name: /search for a movie or series/i });
+    expect(queryInput).toHaveAttribute('aria-controls', 'test-list');
+    expect(queryInput).toHaveAttribute('aria-expanded', 'true');
+    expect(queryInput).toHaveAttribute('aria-haspopup', 'listbox');
+    expect(queryInput).toHaveAttribute('aria-autocomplete', 'list');
   });
 });

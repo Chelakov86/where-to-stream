@@ -8,6 +8,7 @@ describe('ErrorBanner', () => {
     render(<ErrorBanner message="Something went wrong" onDismiss={() => {}} />);
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /dismiss error/i })).toBeInTheDocument();
   });
 

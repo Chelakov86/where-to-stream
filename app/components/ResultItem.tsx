@@ -10,9 +10,14 @@ interface ResultItemProps {
 export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }) => {
   const { title, year, type, posterUrl, rating, genres } = result;
   const posterPath = posterUrl ? `https://image.tmdb.org/t/p/w200${posterUrl}` : null;
+  const titleId = `result-${result.type}-${result.id}-title`;
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow-md p-4 flex space-x-4">
+    <article
+      aria-labelledby={titleId}
+      className="bg-gray-800 rounded-lg shadow-md p-4 flex space-x-4"
+      role="article"
+    >
       <div className="flex-shrink-0">
         {posterPath ? (
           <Image
@@ -32,7 +37,7 @@ export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }
         )}
       </div>
       <div className="flex-grow">
-        <h3 className="text-xl font-bold">
+        <h3 id={titleId} className="text-xl font-bold">
           {title} {year && `(${year})`}
         </h3>
         <div className="flex items-center space-x-2 mt-1">
@@ -66,6 +71,6 @@ export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 };

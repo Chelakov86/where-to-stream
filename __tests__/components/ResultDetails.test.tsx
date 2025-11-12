@@ -99,6 +99,15 @@ describe('ResultDetails', () => {
     );
   });
 
+  it('uses a level 2 heading for the details title', async () => {
+    mockFetch(mockMovie);
+    await renderResultDetails({ title: { id: mockMovie.id, type: 'movie' } });
+
+    expect(
+      await screen.findByRole('heading', { level: 2, name: mockMovie.title })
+    ).toBeInTheDocument();
+  });
+
   it('should show "No streaming availability found" when availability is empty', async () => {
     const movieWithoutAvailability = {
       ...mockMovie,

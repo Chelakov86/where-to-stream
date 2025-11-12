@@ -14,6 +14,7 @@ export interface AutocompleteListProps {
   isOpen: boolean;
   onSelect: (item: AutocompleteItem) => void;
   onClose: () => void;
+  id?: string;
 }
 
 export const AutocompleteList: React.FC<AutocompleteListProps> = ({
@@ -21,6 +22,7 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
   isOpen,
   onSelect,
   onClose,
+  id,
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const listRef = useRef<HTMLUListElement>(null);
@@ -73,6 +75,7 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
 
   return (
     <ul
+      id={id}
       ref={listRef}
       className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg"
       role="listbox"

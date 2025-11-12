@@ -10,6 +10,7 @@ import { Genre, SearchParams, TMDBResult } from './types';
 
 const GLOBAL_ERROR_MESSAGE =
   'We’re having trouble fetching data right now. Please try again later.';
+const AUTOCOMPLETE_LIST_ID = 'search-autocomplete-list';
 
 export default function Home() {
   const [genres, setGenres] = useState<Genre[]>([]);
@@ -169,9 +170,12 @@ export default function Home() {
         isGenresLoading={isGenresLoading}
         onAutocompleteRequest={handleAutocompleteRequest}
         onSearch={handleSearch}
+        autocompleteListId={AUTOCOMPLETE_LIST_ID}
+        isAutocompleteOpen={autocompleteSuggestions.length > 0}
       />
       {autocompleteSuggestions.length > 0 && (
         <AutocompleteList
+          id={AUTOCOMPLETE_LIST_ID}
           items={autocompleteSuggestions}
           isOpen={true}
           onSelect={handleSelectSuggestion}

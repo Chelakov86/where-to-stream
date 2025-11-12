@@ -545,20 +545,20 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 
 ## 16. Accessibility & UX Refinements
 
-- [ ] Add accessible labels and ARIA
-  - [ ] `aria-label` or `<label>` for all inputs
-  - [ ] Buttons with meaningful text
-  - [ ] Autocomplete uses semantic `ul/li` or ARIA listbox pattern
-  - [ ] Focus handling when opening/closing autocomplete & details
+- [x] Add accessible labels and ARIA
+  - [x] `aria-label` or `<label>` for all inputs
+  - [x] Buttons with meaningful text
+  - [x] Autocomplete uses semantic `ul/li` or ARIA listbox pattern
+  - [x] Focus handling when opening/closing autocomplete & details
 
-- [ ] Keyboard accessibility
-  - [ ] Query input submit via Enter key
-  - [ ] Autocomplete navigation with arrows + Enter
-  - [ ] Focus handling when opening/closing autocomplete & details
+- [x] Keyboard accessibility
+  - [x] Query input submit via Enter key
+  - [x] Autocomplete navigation with arrows + Enter
+  - [x] Focus handling when opening/closing autocomplete & details
 
-- [ ] Frontend tests
-  - [ ] Check for accessible labels in tests
-  - [ ] Test keyboard interactions (submit via Enter, arrow navigation)
+- [x] Frontend tests
+  - [x] Check for accessible labels in tests
+  - [x] Test keyboard interactions (submit via Enter, arrow navigation)
 
 ---
 

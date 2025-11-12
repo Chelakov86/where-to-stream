@@ -13,6 +13,8 @@ interface SearchFormProps {
   }) => void;
   onAutocompleteRequest?: (query: string) => void;
   isGenresLoading?: boolean;
+  autocompleteListId?: string;
+  isAutocompleteOpen?: boolean;
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({
@@ -20,9 +22,13 @@ const SearchForm: React.FC<SearchFormProps> = ({
   onSearch,
   onAutocompleteRequest,
   isGenresLoading = false,
+  autocompleteListId,
+  isAutocompleteOpen,
 }) => {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [minRating, setMinRating] = useState(5);
+  const errorMessageId = 'search-form-query-error';
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -71,8 +77,18 @@ const SearchForm: React.FC<SearchFormProps> = ({
           onChange={handleQueryChange}
           placeholder="Search for a movie or series"
           className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+          aria-autocomplete="list"
+          aria-haspopup="listbox"
+          aria-controls={autocompleteListId}
+          aria-expanded={isAutocompleteOpen ?? undefined}
+          aria-describedby={error ? errorMessageId : undefined}
+          autoComplete="off"
         />
-        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+        {error && (
+          <p id={errorMessageId} className="text-red-500 text-sm mt-1" role="alert">
+            {error}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -156,7 +172,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
       <div>
         <label htmlFor="minRating" className="block text-sm font-medium">
-          Minimum Rating: <span id="minRatingValue">5</span>
+          Minimum Rating: <span>{minRating}</span>
         </label>
         <input
           id="minRating"
@@ -165,14 +181,9 @@ const SearchForm: React.FC<SearchFormProps> = ({
           min="0"
           max="10"
           step="0.5"
-          defaultValue="5"
+          value={minRating}
           className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-          onChange={(e) => {
-            const valueEl = document.getElementById('minRatingValue');
-            if (valueEl) {
-              valueEl.textContent = e.target.value;
-            }
-          }}
+          onChange={(event) => setMinRating(Number(event.target.value))}
         />
       </div>
 

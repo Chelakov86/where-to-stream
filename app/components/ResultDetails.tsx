@@ -37,7 +37,7 @@ const AvailabilityTable = ({
   countries: CountryAvailability[];
 }) => (
   <div className="mt-4">
-    <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+    <h4 className="text-lg font-semibold text-white mb-2">{title}</h4>
     <div className="overflow-x-auto">
       <table className="min-w-full bg-gray-800 border border-gray-700" aria-label={title}>
         <thead>
@@ -132,14 +132,26 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
     details.availability.preferredCountries.length > 0 ||
     details.availability.otherCountries.length > 0;
 
+  const titleHeadingId = `result-details-${details.id}-title`;
+
   return (
-    <div className="bg-gray-800 text-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
+    <section
+      className="bg-gray-800 text-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto"
+      aria-labelledby={titleHeadingId}
+      role="region"
+    >
       <div className="flex flex-col md:flex-row gap-6">
         <div className="md:w-1/3">
-          <img src={details.posterUrl} alt={details.title} className="rounded-lg w-full" />
+          <img
+            src={details.posterUrl}
+            alt={`Poster for ${details.title}`}
+            className="rounded-lg w-full"
+          />
         </div>
         <div className="md:w-2/3">
-          <h1 className="text-4xl font-bold">{details.title}</h1>
+          <h2 id={titleHeadingId} className="text-4xl font-bold">
+            {details.title}
+          </h2>
           <div className="flex items-center space-x-4 text-gray-400 mt-2">
             <span>{details.year}</span>
             <span>{details.type === 'movie' ? 'Movie' : 'TV Show'}</span>
@@ -157,9 +169,9 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
       </div>
 
       <div className="mt-8">
-        <h2 className="text-2xl font-bold border-b-2 border-gray-700 pb-2">
+        <h3 className="text-2xl font-bold border-b-2 border-gray-700 pb-2">
           Streaming Availability
-        </h2>
+        </h3>
         {!hasAvailability ? (
           <p className="mt-4 text-gray-400">No streaming availability found.</p>
         ) : (
@@ -179,7 +191,7 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
           </>
         )}
       </div>
-    </div>
+    </section>
   );
 };
 

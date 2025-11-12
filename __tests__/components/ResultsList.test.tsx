@@ -29,6 +29,24 @@ describe('ResultsList', () => {
     expect(screen.getByText('Movie 3 (2023)')).toBeInTheDocument();
   });
 
+  it('uses semantic list markup for search results', () => {
+    const onPageChange = jest.fn();
+    const onSelectResult = jest.fn();
+    render(
+      <ResultsList
+        results={mockResults}
+        page={1}
+        totalPages={3}
+        onPageChange={onPageChange}
+        onSelectResult={onSelectResult}
+      />
+    );
+
+    const list = screen.getByRole('list');
+    expect(list).toBeInTheDocument();
+    expect(list.querySelectorAll('li')).toHaveLength(mockResults.length);
+  });
+
   it('calls onPageChange with the next page number when "Next" is clicked', () => {
     const onPageChange = jest.fn();
     const onSelectResult = jest.fn();
