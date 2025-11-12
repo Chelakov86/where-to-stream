@@ -7,6 +7,7 @@ import {
 } from '@/app/tmdbApi';
 import { mapAvailability, AvailabilityResult } from '@/app/availabilityMapper';
 import { TmdbError } from '@/app/tmdbClient';
+import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
@@ -103,8 +104,10 @@ export function GET(req: NextRequest, context: any) {
       return NextResponse.json(normalizedTitle);
     } catch (error) {
       if (error instanceof TmdbError) {
-        const errorMessage = `Error fetching data from TMDB.`;
-        return NextResponse.json({ error: errorMessage }, { status: 502 });
+        return NextResponse.json(
+          { error: 'Error fetching data from TMDB.' },
+          { status: mapTmdbErrorToHttpStatus(error) }
+        );
       } else if (error instanceof Error) {
         console.error(`API Error for /api/title/${type}/${id}:`, error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

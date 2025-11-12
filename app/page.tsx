@@ -8,7 +8,8 @@ import ResultDetails from './components/ResultDetails';
 import ErrorBanner from './components/ErrorBanner';
 import { Genre, SearchParams, TMDBResult } from './types';
 
-const GLOBAL_ERROR_MESSAGE = 'We’re having trouble fetching data right now. Please try again later.';
+const GLOBAL_ERROR_MESSAGE =
+  'We’re having trouble fetching data right now. Please try again later.';
 
 export default function Home() {
   const [genres, setGenres] = useState<Genre[]>([]);
@@ -81,9 +82,7 @@ export default function Home() {
 
       const queryParams = new URLSearchParams({
         mode: 'full',
-        ...Object.fromEntries(
-          Object.entries(params).map(([key, value]) => [key, String(value)])
-        ),
+        ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, String(value)])),
         page: String(newPage),
       });
 
@@ -138,8 +137,7 @@ export default function Home() {
   );
 
   const shouldShowInitialPrompt = !searchQuery && !isSearching && !errorMessage;
-  const shouldShowNoResults =
-    searchQuery && !isSearching && results.length === 0 && !errorMessage;
+  const shouldShowNoResults = searchQuery && !isSearching && results.length === 0 && !errorMessage;
 
   useEffect(() => {
     if (!selectedTitle) {

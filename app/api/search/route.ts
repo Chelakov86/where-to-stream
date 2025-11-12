@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { searchMovies, searchTv, SearchMoviesParams, SearchTvParams } from '@/app/tmdbApi';
 import { TmdbError } from '@/app/tmdbClient';
 import { TmdbSearchResult, TmdbSearchResponse } from '@/app/tmdbTypes';
+import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
@@ -144,7 +145,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(response);
   } catch (error) {
     if (error instanceof TmdbError) {
-      return NextResponse.json({ error: 'Error from TMDB API' }, { status: 502 });
+      return NextResponse.json(
+        { error: 'Error from TMDB API' },
+        { status: mapTmdbErrorToHttpStatus(error) }
+      );
     }
     console.error('Search API Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

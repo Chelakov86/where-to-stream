@@ -234,6 +234,9 @@ describe('GET /api/search', () => {
         posterUrl: 'https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIY2VhrJUdJ9qpGu.jpg',
         popularity: 150.0,
       });
+      expect(data.results[0]).not.toHaveProperty('rating');
+      expect(data.results[0]).not.toHaveProperty('genres');
+      expect(data.results[0]).not.toHaveProperty('overview');
     });
 
     it('should return 502 on TMDB error', async () => {
@@ -244,6 +247,17 @@ describe('GET /api/search', () => {
       const data = await res.json();
 
       expect(res.status).toBe(502);
+      expect(data).toEqual({ error: 'Error from TMDB API' });
+    });
+
+    it('should return 503 on TMDB service unavailability', async () => {
+      const req = createRequest({ query: 'retry', type: 'movie' });
+      mockedTmdbApi.searchMovies.mockRejectedValueOnce(new TmdbError(503, 'Service Unavailable'));
+
+      const res = await GET(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(503);
       expect(data).toEqual({ error: 'Error from TMDB API' });
     });
   });

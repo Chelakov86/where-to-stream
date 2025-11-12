@@ -34,4 +34,3 @@ describe('ErrorBanner', () => {
     expect(screen.getByTestId('fallback')).toBeInTheDocument();
   });
 });
-

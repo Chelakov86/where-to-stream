@@ -46,6 +46,7 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 - [x] Linting & formatting
   - [x] ESLint configured (Next.js recommended rules)
   - [x] Prettier configured (and integrated with ESLint if desired)
+  - [x] Enforce LF line endings via Prettier configuration
   - [x] Add `lint` script to `package.json`
 
 - [x] Jest & React Testing Library setup

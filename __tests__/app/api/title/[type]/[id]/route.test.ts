@@ -282,6 +282,16 @@ describe('GET /api/title/[type]/[id]', () => {
     expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
   });
 
+  it('should return 503 if TMDB movie details are unavailable', async () => {
+    mockGetMovieDetails.mockRejectedValue(new TmdbError(503, 'Service Unavailable'));
+    const req = createMockRequest('movie', '550');
+    const response = await GET(req, { params: { type: 'movie', id: '550' } });
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
+  });
+
   it('should return 502/503 if getMovieWatchProviders fails', async () => {
     mockGetMovieWatchProviders.mockRejectedValue(new TmdbError(500, 'TMDB Movie Providers Error'));
     const req = createMockRequest('movie', '550');

@@ -25,8 +25,7 @@ const buildOkResponse = (data: unknown) => ({
   json: async () => data,
 });
 
-const globalErrorMessage =
-  'We’re having trouble fetching data right now. Please try again later.';
+const globalErrorMessage = 'We’re having trouble fetching data right now. Please try again later.';
 
 const scrollIntoViewMock = jest.fn();
 
@@ -236,7 +235,9 @@ describe('Home Page', () => {
     fireEvent.click(screen.getByText('Search'));
 
     expect(
-      await screen.findByText('No titles found. Please check the spelling or try a different title.')
+      await screen.findByText(
+        'No titles found. Please check the spelling or try a different title.'
+      )
     ).toBeInTheDocument();
   });
 

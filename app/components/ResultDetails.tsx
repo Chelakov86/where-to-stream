@@ -121,11 +121,7 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
   }
 
   if (status === 'error') {
-    return (
-      <div className="p-8 text-center text-red-400">
-        {ERROR_MESSAGE}
-      </div>
-    );
+    return <div className="p-8 text-center text-red-400">{ERROR_MESSAGE}</div>;
   }
 
   if (!details) {

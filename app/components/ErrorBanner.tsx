@@ -29,4 +29,3 @@ const ErrorBanner: React.FC<ErrorBannerProps> = ({ message, onDismiss }) => {
 };
 
 export default ErrorBanner;
-
