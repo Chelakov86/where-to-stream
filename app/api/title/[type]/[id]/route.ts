@@ -9,6 +9,27 @@ import { mapAvailability, AvailabilityResult } from '@/app/availabilityMapper';
 import { TmdbError } from '@/app/tmdbClient';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 
+/**
+ * API route handler for fetching detailed information about a specific movie or TV show.
+ *
+ * GET /api/title/:type/:id
+ *
+ * Fetches comprehensive details including metadata (title, year, genres, overview, rating, runtime)
+ * and streaming availability by country. The availability data is processed through the
+ * availabilityMapper to normalize provider information and group by preferred countries.
+ *
+ * Path Parameters:
+ * - type: "movie" | "tv" (required)
+ * - id: TMDB ID as positive integer (required)
+ *
+ * Returns a normalized title object with:
+ * - Basic metadata (id, type, title, originalTitle, year, genres, overview, rating, posterUrl, runtime)
+ * - Availability information grouped by preferred countries (DE, GB, US, CA) and other countries
+ *   - Each country entry includes: countryCode, countryName, hasNetflix, freeOrAdsProviders, watchLink
+ *
+ * The endpoint fetches details and watch providers in parallel for performance.
+ */
+
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 interface NormalizedTitle {
@@ -25,6 +46,10 @@ interface NormalizedTitle {
   availability: AvailabilityResult;
 }
 
+/**
+ * Extracts year from a date string (YYYY-MM-DD format).
+ * Returns undefined if the date string is invalid or too short.
+ */
 const getYear = (dateString?: string): number | undefined => {
   if (!dateString || dateString.length < 4) return undefined;
   return new Date(dateString).getFullYear();
@@ -60,6 +85,7 @@ export async function GET(
 
       watchProvidersResponse = movieWatchProviders;
 
+      // Normalize movie details to consistent structure
       normalizedTitle = {
         id: movieDetails.id,
         type: 'movie',
@@ -84,6 +110,8 @@ export async function GET(
 
       watchProvidersResponse = tvWatchProviders;
 
+      // Normalize TV details to consistent structure
+      // Note: TV shows use first_air_date instead of release_date, and name instead of title
       normalizedTitle = {
         id: tvDetails.id,
         type: 'tv',
@@ -96,12 +124,14 @@ export async function GET(
         posterUrl: tvDetails.poster_path
           ? `${TMDB_IMAGE_BASE_URL}${tvDetails.poster_path}`
           : undefined,
-        runtime: tvDetails.episode_run_time?.[0], // Assuming first episode runtime for TV
+        // Use first episode runtime as representative runtime for TV shows
+        runtime: tvDetails.episode_run_time?.[0],
         availability: { preferredCountries: [], otherCountries: [] },
       };
     }
 
-    // 4. Availability
+    // Map TMDB watch providers to our availability model
+    // This groups countries, detects Netflix availability, and extracts free/ad-supported providers
     normalizedTitle.availability = mapAvailability(watchProvidersResponse);
 
     return NextResponse.json(normalizedTitle);

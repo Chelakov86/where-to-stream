@@ -4,6 +4,31 @@ import { TmdbError } from '@/app/tmdbClient';
 import { TmdbSearchResult, TmdbSearchResponse } from '@/app/tmdbTypes';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 
+/**
+ * API route handler for searching movies and TV shows.
+ *
+ * GET /api/search
+ *
+ * Searches TMDB for movies and/or TV shows based on query parameters.
+ * Supports filtering by type, year range, language, genres, and rating.
+ * Returns normalized results with consistent structure regardless of content type.
+ *
+ * Query Parameters:
+ * - query (required): Search query string
+ * - type: "movie" | "tv" | "all" (default: "all")
+ * - mode: "autocomplete" | "full" (default: "full")
+ *   - autocomplete: Returns minimal fields (id, type, title, year, posterUrl, popularity)
+ *   - full: Returns complete data including rating, genres, overview
+ * - page: Page number (default: 1)
+ * - yearFrom, yearTo: Year range filters (optional)
+ * - language: ISO 639-1 language code (optional)
+ * - genreIds: Comma-separated genre IDs (optional)
+ * - minRating: Minimum rating filter (optional)
+ *
+ * When type="all", results from both movies and TV are merged and sorted by popularity.
+ * Results are normalized to a consistent structure regardless of source type.
+ */
+
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 type SearchType = 'movie' | 'tv' | 'all';
@@ -40,11 +65,20 @@ interface SearchResponse {
   results: NormalizedSearchResult[];
 }
 
+/**
+ * Extracts year from a date string (YYYY-MM-DD format).
+ * Returns undefined if the date string is invalid or too short.
+ */
 const getYear = (dateString?: string): number | undefined => {
   if (!dateString || dateString.length < 4) return undefined;
   return new Date(dateString).getFullYear();
 };
 
+/**
+ * Normalizes a TMDB search result to a consistent structure.
+ * Handles differences between movie and TV result formats (e.g., title vs name).
+ * In autocomplete mode, returns only essential fields for performance.
+ */
 const normalizeTmdbResult = (
   result: TmdbSearchResult,
   type: 'movie' | 'tv',
@@ -69,6 +103,11 @@ const normalizeTmdbResult = (
   return normalized;
 };
 
+/**
+ * Parses and validates query parameters from the request URL.
+ * Normalizes invalid values to defaults (e.g., invalid type -> "all").
+ * Handles comma-separated genreIds string conversion to number array.
+ */
 const parseSearchParams = (searchParams: URLSearchParams): SearchParams => {
   const type = (searchParams.get('type') as SearchType) || 'all';
   const mode = (searchParams.get('mode') as SearchMode) || 'full';
@@ -121,17 +160,19 @@ export async function GET(req: NextRequest) {
         results: tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
       };
     } else {
-      // type === 'all'
+      // type === 'all': Fetch both movies and TV in parallel, then merge and sort
       const [movieResponse, tvResponse] = await Promise.all([
         searchMovies(movieParams),
         searchTv(tvParams),
       ]);
 
+      // Combine results from both sources
       const combinedResults = [
         ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
         ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
       ];
 
+      // Sort by popularity (descending) to show most popular results first
       combinedResults.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
 
       response = {
