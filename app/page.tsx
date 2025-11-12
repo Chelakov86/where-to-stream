@@ -39,9 +39,15 @@ export default function Home() {
           throw new Error('Failed to fetch genres');
         }
         const data = await response.json();
-        setGenres(data);
+        // API returns { movie: Genre[], tv: Genre[] }, combine and deduplicate by id
+        const allGenres = [...(data.movie || []), ...(data.tv || [])];
+        const uniqueGenres = Array.from(
+          new Map(allGenres.map((genre) => [genre.id, genre])).values()
+        );
+        setGenres(Array.isArray(uniqueGenres) ? uniqueGenres : []);
         clearError();
       } catch (err) {
+        setGenres([]);
         showError(GLOBAL_ERROR_MESSAGE);
       } finally {
         setIsGenresLoading(false);

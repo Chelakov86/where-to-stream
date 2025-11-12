@@ -153,7 +153,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
         <label className="block text-sm font-medium">Genres</label>
         {isGenresLoading ? (
           <p className="mt-2 text-sm text-gray-400">Loading filters...</p>
-        ) : (
+        ) : Array.isArray(genres) && genres.length > 0 ? (
           <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
             {genres.map((genre) => (
               <label key={genre.id} className="flex items-center space-x-2">
@@ -167,6 +167,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
               </label>
             ))}
           </div>
+        ) : (
+          <p className="mt-2 text-sm text-gray-400">No genres available</p>
         )}
       </div>
 
