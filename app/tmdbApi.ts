@@ -17,6 +17,33 @@ import { getCache, setCache } from './cache';
 import { CACHE_TTL_SECONDS } from './config';
 
 /**
+ * Generates a stable cache key from an object by sorting keys before stringifying.
+ * This ensures that objects with the same properties in different orders produce the same key.
+ *
+ * @param prefix - Cache key prefix (e.g., "search:movie")
+ * @param params - Object to serialize for the cache key
+ * @returns Stable cache key string
+ *
+ * @example
+ * ```typescript
+ * generateCacheKey('search:movie', { query: 'test', page: 1 })
+ * // 'search:movie:{"page":1,"query":"test"}'
+ * ```
+ */
+function generateCacheKey(
+  prefix: string,
+  params: Record<string, unknown> | SearchMoviesParams | SearchTvParams
+): string {
+  // Sort keys to ensure stable ordering
+  const sortedParams: Record<string, unknown> = {};
+  const keys = Object.keys(params).sort();
+  for (const key of keys) {
+    sortedParams[key] = (params as Record<string, unknown>)[key];
+  }
+  return `${prefix}:${JSON.stringify(sortedParams)}`;
+}
+
+/**
  * Search parameters for movie search
  */
 export interface SearchMoviesParams {
@@ -56,7 +83,7 @@ export interface SearchTvParams {
  * ```
  */
 export async function searchMovies(params: SearchMoviesParams): Promise<TmdbSearchResponse> {
-  const cacheKey = `search:movie:${JSON.stringify(params)}`;
+  const cacheKey = generateCacheKey('search:movie', params);
   const cached = getCache<TmdbSearchResponse>(cacheKey);
   if (cached) {
     return cached;
@@ -90,7 +117,7 @@ export async function searchMovies(params: SearchMoviesParams): Promise<TmdbSear
  * ```
  */
 export async function searchTv(params: SearchTvParams): Promise<TmdbSearchResponse> {
-  const cacheKey = `search:tv:${JSON.stringify(params)}`;
+  const cacheKey = generateCacheKey('search:tv', params);
   const cached = getCache<TmdbSearchResponse>(cacheKey);
   if (cached) {
     return cached;

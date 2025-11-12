@@ -159,9 +159,7 @@ describe('mapAvailability', () => {
       results: {
         IT: {
           link: 'https://www.themoviedb.org/movie/1/watch?locale=IT',
-          buy: [
-            { provider_id: 2, provider_name: 'Apple TV', logo_path: '', display_priority: 0 },
-          ],
+          buy: [{ provider_id: 2, provider_name: 'Apple TV', logo_path: '', display_priority: 0 }],
           rent: [
             { provider_id: 3, provider_name: 'Google Play', logo_path: '', display_priority: 0 },
           ],

@@ -3,6 +3,8 @@ import { searchMovies, searchTv, SearchMoviesParams, SearchTvParams } from '@/ap
 import { TmdbError } from '@/app/tmdbClient';
 import { TmdbSearchResult, TmdbSearchResponse } from '@/app/tmdbTypes';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
+import { NormalizedSearchResult } from '@/app/types';
+import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
 
 /**
  * API route handler for searching movies and TV shows.
@@ -29,8 +31,6 @@ import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
  * Results are normalized to a consistent structure regardless of source type.
  */
 
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
-
 type SearchType = 'movie' | 'tv' | 'all';
 type SearchMode = 'autocomplete' | 'full';
 
@@ -46,33 +46,12 @@ interface SearchParams {
   mode: SearchMode;
 }
 
-interface NormalizedSearchResult {
-  id: number;
-  type: 'movie' | 'tv';
-  title: string;
-  year?: number;
-  posterUrl?: string;
-  rating?: number;
-  genres?: number[];
-  overview?: string;
-  popularity?: number;
-}
-
 interface SearchResponse {
   page: number;
   totalPages: number;
   totalResults: number;
   results: NormalizedSearchResult[];
 }
-
-/**
- * Extracts year from a date string (YYYY-MM-DD format).
- * Returns undefined if the date string is invalid or too short.
- */
-const getYear = (dateString?: string): number | undefined => {
-  if (!dateString || dateString.length < 4) return undefined;
-  return new Date(dateString).getFullYear();
-};
 
 /**
  * Normalizes a TMDB search result to a consistent structure.
@@ -90,7 +69,7 @@ const normalizeTmdbResult = (
     type: type,
     title: (isMovie ? result.title : result.name) || '',
     year: getYear(isMovie ? result.release_date : result.first_air_date),
-    posterUrl: result.poster_path ? `${TMDB_IMAGE_BASE_URL}${result.poster_path}` : undefined,
+    posterUrl: buildTmdbImageUrl(result.poster_path, 'w500'),
     popularity: result.popularity,
   };
 
@@ -119,6 +98,27 @@ const parseSearchParams = (searchParams: URLSearchParams): SearchParams => {
     mode: ['autocomplete', 'full'].includes(mode) ? mode : 'full',
   };
 
+  const yearFrom = searchParams.get('yearFrom');
+  if (yearFrom) {
+    const year = parseInt(yearFrom, 10);
+    if (!isNaN(year) && year > 0) {
+      params.yearFrom = year;
+    }
+  }
+
+  const yearTo = searchParams.get('yearTo');
+  if (yearTo) {
+    const year = parseInt(yearTo, 10);
+    if (!isNaN(year) && year > 0) {
+      params.yearTo = year;
+    }
+  }
+
+  const language = searchParams.get('language');
+  if (language && language.trim()) {
+    params.language = language.trim();
+  }
+
   const genreIds = searchParams.get('genreIds');
   if (genreIds) {
     params.genreIds = genreIds
@@ -127,7 +127,81 @@ const parseSearchParams = (searchParams: URLSearchParams): SearchParams => {
       .filter((id) => !isNaN(id));
   }
 
+  const minRating = searchParams.get('minRating');
+  if (minRating) {
+    const rating = parseFloat(minRating);
+    if (!isNaN(rating) && rating >= 0) {
+      params.minRating = rating;
+    }
+  }
+
   return params;
+};
+
+/**
+ * Maps search parameters to TMDB API parameters for movies.
+ * Handles year range mapping (yearFrom/yearTo → year for movies).
+ */
+const mapSearchParamsToMovieParams = (params: SearchParams): SearchMoviesParams => {
+  const movieParams: SearchMoviesParams = {
+    query: params.query,
+    page: params.page,
+  };
+
+  // For movies, use yearFrom as the year filter (TMDB uses single year, not range)
+  // If both yearFrom and yearTo are provided, prefer yearFrom
+  if (params.yearFrom) {
+    movieParams.year = params.yearFrom;
+  } else if (params.yearTo) {
+    movieParams.year = params.yearTo;
+  }
+
+  if (params.language) {
+    movieParams.language = params.language;
+  }
+
+  if (params.genreIds && params.genreIds.length > 0) {
+    movieParams.withGenres = params.genreIds.join(',');
+  }
+
+  if (params.minRating !== undefined) {
+    movieParams.voteAverageGte = params.minRating;
+  }
+
+  return movieParams;
+};
+
+/**
+ * Maps search parameters to TMDB API parameters for TV shows.
+ * Handles year range mapping (yearFrom/yearTo → firstAirDateYear for TV).
+ */
+const mapSearchParamsToTvParams = (params: SearchParams): SearchTvParams => {
+  const tvParams: SearchTvParams = {
+    query: params.query,
+    page: params.page,
+  };
+
+  // For TV shows, use yearFrom as the firstAirDateYear filter
+  // If both yearFrom and yearTo are provided, prefer yearFrom
+  if (params.yearFrom) {
+    tvParams.firstAirDateYear = params.yearFrom;
+  } else if (params.yearTo) {
+    tvParams.firstAirDateYear = params.yearTo;
+  }
+
+  if (params.language) {
+    tvParams.language = params.language;
+  }
+
+  if (params.genreIds && params.genreIds.length > 0) {
+    tvParams.withGenres = params.genreIds.join(',');
+  }
+
+  if (params.minRating !== undefined) {
+    tvParams.voteAverageGte = params.minRating;
+  }
+
+  return tvParams;
 };
 
 export async function GET(req: NextRequest) {
@@ -140,10 +214,8 @@ export async function GET(req: NextRequest) {
   try {
     let response: SearchResponse;
 
-    const movieParams: SearchMoviesParams = { query: params.query, page: params.page };
-    const tvParams: SearchTvParams = { query: params.query, page: params.page };
-
     if (params.type === 'movie') {
+      const movieParams = mapSearchParamsToMovieParams(params);
       const tmdbResponse = await searchMovies(movieParams);
       response = {
         page: tmdbResponse.page,
@@ -152,6 +224,7 @@ export async function GET(req: NextRequest) {
         results: tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
       };
     } else if (params.type === 'tv') {
+      const tvParams = mapSearchParamsToTvParams(params);
       const tmdbResponse = await searchTv(tvParams);
       response = {
         page: tmdbResponse.page,
@@ -161,6 +234,8 @@ export async function GET(req: NextRequest) {
       };
     } else {
       // type === 'all': Fetch both movies and TV in parallel, then merge and sort
+      const movieParams = mapSearchParamsToMovieParams(params);
+      const tvParams = mapSearchParamsToTvParams(params);
       const [movieResponse, tvResponse] = await Promise.all([
         searchMovies(movieParams),
         searchTv(tvParams),

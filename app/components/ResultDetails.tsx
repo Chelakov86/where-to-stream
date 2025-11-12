@@ -80,7 +80,7 @@ const AvailabilityTable = ({
   </div>
 );
 
-const ERROR_MESSAGE = 'We’re having trouble fetching data right now. Please try again later.';
+const ERROR_MESSAGE = "We're having trouble fetching data right now. Please try again later.";
 
 const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => {
   const [status, setStatus] = useState<Status>('loading');

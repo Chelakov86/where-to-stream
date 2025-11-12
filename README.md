@@ -137,6 +137,7 @@ The application exposes three main API endpoints:
 Returns combined movie and TV genres from TMDB.
 
 **Response:**
+
 ```json
 {
   "movie": [{ "id": 28, "name": "Action" }, ...],
@@ -149,6 +150,7 @@ Returns combined movie and TV genres from TMDB.
 Searches for movies and/or TV shows with optional filters.
 
 **Query Parameters:**
+
 - `query` (required): Search query string
 - `type`: `"movie"`, `"tv"`, or `"all"` (default: `"all"`)
 - `mode`: `"autocomplete"` or `"full"` (default: `"full"`)
@@ -160,6 +162,7 @@ Searches for movies and/or TV shows with optional filters.
 - `minRating`: Minimum rating (optional)
 
 **Response:**
+
 ```json
 {
   "page": 1,
@@ -186,10 +189,12 @@ Searches for movies and/or TV shows with optional filters.
 Returns detailed information about a specific movie or TV show, including streaming availability.
 
 **Path Parameters:**
+
 - `type`: `"movie"` or `"tv"`
 - `id`: TMDB ID (positive integer)
 
 **Response:**
+
 ```json
 {
   "id": 550,

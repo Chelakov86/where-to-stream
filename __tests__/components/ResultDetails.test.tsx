@@ -38,12 +38,12 @@ describe('ResultDetails', () => {
     await renderResultDetails({ title: { id: 123, type: 'movie' }, onError: handleError });
     expect(
       await screen.findByText(
-        'We’re having trouble fetching data right now. Please try again later.'
+        "We're having trouble fetching data right now. Please try again later."
       )
     ).toBeInTheDocument();
     await waitFor(() =>
       expect(handleError).toHaveBeenCalledWith(
-        'We’re having trouble fetching data right now. Please try again later.'
+        "We're having trouble fetching data right now. Please try again later."
       )
     );
   });

@@ -8,6 +8,7 @@ import {
 import { mapAvailability, AvailabilityResult } from '@/app/availabilityMapper';
 import { TmdbError } from '@/app/tmdbClient';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
+import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
 
 /**
  * API route handler for fetching detailed information about a specific movie or TV show.
@@ -30,8 +31,6 @@ import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
  * The endpoint fetches details and watch providers in parallel for performance.
  */
 
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
-
 interface NormalizedTitle {
   id: number;
   type: 'movie' | 'tv';
@@ -45,15 +44,6 @@ interface NormalizedTitle {
   runtime?: number | null;
   availability: AvailabilityResult;
 }
-
-/**
- * Extracts year from a date string (YYYY-MM-DD format).
- * Returns undefined if the date string is invalid or too short.
- */
-const getYear = (dateString?: string): number | undefined => {
-  if (!dateString || dateString.length < 4) return undefined;
-  return new Date(dateString).getFullYear();
-};
 
 export async function GET(
   req: NextRequest,
@@ -95,9 +85,7 @@ export async function GET(
         genres: movieDetails.genres,
         overview: movieDetails.overview,
         rating: movieDetails.vote_average,
-        posterUrl: movieDetails.poster_path
-          ? `${TMDB_IMAGE_BASE_URL}${movieDetails.poster_path}`
-          : undefined,
+        posterUrl: buildTmdbImageUrl(movieDetails.poster_path, 'w500'),
         runtime: movieDetails.runtime,
         availability: { preferredCountries: [], otherCountries: [] },
       };
@@ -121,9 +109,7 @@ export async function GET(
         genres: tvDetails.genres,
         overview: tvDetails.overview,
         rating: tvDetails.vote_average,
-        posterUrl: tvDetails.poster_path
-          ? `${TMDB_IMAGE_BASE_URL}${tvDetails.poster_path}`
-          : undefined,
+        posterUrl: buildTmdbImageUrl(tvDetails.poster_path, 'w500'),
         // Use first episode runtime as representative runtime for TV shows
         runtime: tvDetails.episode_run_time?.[0],
         availability: { preferredCountries: [], otherCountries: [] },

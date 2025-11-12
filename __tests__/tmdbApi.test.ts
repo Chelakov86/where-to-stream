@@ -501,7 +501,9 @@ describe('tmdbApi', () => {
         // First call
         await searchMovies(params);
         expect(mockTmdbGet).toHaveBeenCalledTimes(1);
-        const cacheKey = `search:movie:${JSON.stringify(params)}`;
+        // Cache key now uses sorted keys for stability (alphabetically sorted)
+        const sortedParams = { query: params.query, year: params.year };
+        const cacheKey = `search:movie:${JSON.stringify(sortedParams)}`;
         expect(mockSetCache).toHaveBeenCalledWith(cacheKey, mockResponse, 43200);
 
         // Second call
@@ -531,7 +533,9 @@ describe('tmdbApi', () => {
         mockTmdbGet.mockResolvedValueOnce(mockResponse1);
         await searchMovies(params1);
         expect(mockTmdbGet).toHaveBeenCalledTimes(1);
-        const cacheKey1 = `search:movie:${JSON.stringify(params1)}`;
+        // Cache key now uses sorted keys for stability
+        const sortedParams1 = { query: params1.query };
+        const cacheKey1 = `search:movie:${JSON.stringify(sortedParams1)}`;
         expect(mockSetCache).toHaveBeenCalledWith(cacheKey1, mockResponse1, 43200);
 
         // Second call with different params
@@ -539,7 +543,9 @@ describe('tmdbApi', () => {
         mockTmdbGet.mockResolvedValueOnce(mockResponse2);
         await searchMovies(params2);
         expect(mockTmdbGet).toHaveBeenCalledTimes(2);
-        const cacheKey2 = `search:movie:${JSON.stringify(params2)}`;
+        // Cache key now uses sorted keys for stability
+        const sortedParams2 = { query: params2.query };
+        const cacheKey2 = `search:movie:${JSON.stringify(sortedParams2)}`;
         expect(mockSetCache).toHaveBeenCalledWith(cacheKey2, mockResponse2, 43200);
       });
     });
@@ -559,7 +565,9 @@ describe('tmdbApi', () => {
         // First call
         await searchTv(params);
         expect(mockTmdbGet).toHaveBeenCalledTimes(1);
-        const cacheKey = `search:tv:${JSON.stringify(params)}`;
+        // Cache key now uses sorted keys for stability
+        const sortedParams = { firstAirDateYear: params.firstAirDateYear, query: params.query };
+        const cacheKey = `search:tv:${JSON.stringify(sortedParams)}`;
         expect(mockSetCache).toHaveBeenCalledWith(cacheKey, mockResponse, 43200);
 
         // Second call

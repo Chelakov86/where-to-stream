@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { NormalizedSearchResult } from '@/app/types';
+import { buildTmdbImageUrl } from '@/app/utils/tmdb';
 
 interface ResultItemProps {
   result: NormalizedSearchResult;
@@ -9,7 +10,20 @@ interface ResultItemProps {
 
 export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }) => {
   const { title, year, type, posterUrl, rating, genres } = result;
-  const posterPath = posterUrl ? `https://image.tmdb.org/t/p/w200${posterUrl}` : null;
+  // Extract poster path from full URL and rebuild with smaller size for list view
+  let posterPath: string | undefined = undefined;
+  if (posterUrl) {
+    if (posterUrl.startsWith('http')) {
+      // Extract path from full URL (e.g., "https://image.tmdb.org/t/p/w500/abc.jpg" -> "/abc.jpg")
+      const urlMatch = posterUrl.match(/\/t\/p\/w\d+\/(.+)$/);
+      if (urlMatch) {
+        posterPath = buildTmdbImageUrl(`/${urlMatch[1]}`, 'w200');
+      }
+    } else {
+      // Already a path, just rebuild with different size
+      posterPath = buildTmdbImageUrl(posterUrl, 'w200');
+    }
+  }
   const titleId = `result-${result.type}-${result.id}-title`;
 
   return (

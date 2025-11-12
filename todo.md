@@ -6,6 +6,7 @@ Feel free to tick items off as you go: `- [x]` instead of `- [ ]`.
 ## 📋 Remaining Tasks Summary
 
 **What's Left:**
+
 - **Section 0**: Configure default branch & protections (optional, if using remote)
 - **Section 18**: Manual QA & Cross-browser Check (all items)
   - Run app locally and test main flows
