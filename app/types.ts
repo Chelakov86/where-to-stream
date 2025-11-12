@@ -17,3 +17,32 @@ export interface ResultsListProps {
   onPageChange: (nextPage: number) => void;
   onSelectResult: (result: NormalizedSearchResult) => void;
 }
+
+export interface Genre {
+  id: number;
+  name: string;
+}
+
+export interface CountryAvailability {
+  countryCode: string;
+  countryName: string;
+  hasNetflix: boolean;
+  free: string[];
+  watchLink?: string;
+}
+
+export interface TitleDetails {
+  id: number;
+  title: string;
+  year: number;
+  type: "movie" | "tv";
+  genres: Genre[];
+  overview: string;
+  posterUrl: string;
+  rating: number;
+  runtime: number;
+  availability: {
+    preferredCountries: CountryAvailability[];
+    otherCountries: CountryAvailability[];
+  };
+}

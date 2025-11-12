@@ -71,3 +71,25 @@ npm start
     ```
 *   **Testing:** The project uses Jest and React Testing Library for testing. Tests are located in the `__tests__` directory and follow the `*.test.ts` or `*.test.tsx` naming convention.
 *   **Regression Testing:** After each implementation step, run all tests to ensure no existing functionality has been broken.
+
+# Verification Steps
+
+After making any code changes, it is crucial to run the following commands to ensure code quality, correctness, and adherence to project standards:
+
+*   **Run All Tests:**
+    ```bash
+    npm test
+    ```
+    This command executes all unit and integration tests to catch any regressions.
+
+*   **Run Linter:**
+    ```bash
+    npm run lint
+    ```
+    This command checks the codebase for stylistic and programmatic errors.
+
+*   **Perform Type-Checking:**
+    ```bash
+    npm run build
+    ```
+    This command compiles the project and performs static type analysis, ensuring type correctness across the application.

@@ -1,15 +1,19 @@
-/**
- * TMDB HTTP Client Module
- *
- * Provides a typed HTTP client for TMDB API v3 with error handling.
- *
- * Authentication: Uses Bearer token authentication as required by TMDB API v3.
- * The API key is passed in the Authorization header as "Bearer <api_key>".
- *
- * @see https://developer.themoviedb.org/reference/intro/authentication
- */
-
 import { TMDB_BASE_URL, getTmdbApiKey } from './config';
+
+/**
+ * Interface for a single genre object from TMDB.
+ */
+export interface Genre {
+  id: number;
+  name: string;
+}
+
+/**
+ * Interface for the TMDB genre list response.
+ */
+interface GenreListResponse {
+  genres: Genre[];
+}
 
 /**
  * Custom error class for TMDB API errors.
@@ -104,4 +108,22 @@ export async function tmdbGet<T>(
 
   // Parse and return JSON response
   return response.json() as Promise<T>;
+}
+
+/**
+ * Fetches the list of movie genres from TMDB.
+ * @returns Promise resolving to an array of Genre objects.
+ */
+export async function getMovieGenres(): Promise<Genre[]> {
+  const response = await tmdbGet<GenreListResponse>('/genre/movie/list');
+  return response.genres;
+}
+
+/**
+ * Fetches the list of TV show genres from TMDB.
+ * @returns Promise resolving to an array of Genre objects.
+ */
+export async function getTvGenres(): Promise<Genre[]> {
+  const response = await tmdbGet<GenreListResponse>('/genre/tv/list');
+  return response.genres;
 }

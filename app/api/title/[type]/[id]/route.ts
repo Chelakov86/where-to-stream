@@ -20,7 +20,7 @@ interface NormalizedTitle {
   overview?: string;
   rating?: number;
   posterUrl?: string;
-  runtime?: number;
+  runtime?: number | null;
   availability: AvailabilityResult;
 }
 
@@ -31,9 +31,9 @@ const getYear = (dateString?: string): number | undefined => {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { type: string; id: string } }
+  context: { params: Promise<{ type: string; id: string; }> }
 ) {
-  const { type, id } = params;
+  const { type, id } = await context.params;
 
   // 1. Validate type
   if (type !== 'movie' && type !== 'tv') {
@@ -62,7 +62,7 @@ export async function GET(
         getMovieWatchProviders(numericId),
       ]);
 
-      watchProvidersResponse = movieWatchProviders.results;
+      watchProvidersResponse = movieWatchProviders;
 
       normalizedTitle = {
         id: movieDetails.id,
@@ -76,8 +76,7 @@ export async function GET(
         posterUrl: movieDetails.poster_path
           ? `${TMDB_IMAGE_BASE_URL}${movieDetails.poster_path}`
           : undefined,
-        runtime: movieDetails.runtime,
-        availability: { flatrate: [], buy: [], rent: [] }, // Placeholder, will be filled below
+        availability: { preferredCountries: [], otherCountries: [] },
       };
     } else {
       // type === 'tv'
@@ -86,7 +85,7 @@ export async function GET(
         getTvWatchProviders(numericId),
       ]);
 
-      watchProvidersResponse = tvWatchProviders.results;
+      watchProvidersResponse = tvWatchProviders;
 
       normalizedTitle = {
         id: tvDetails.id,
@@ -101,7 +100,7 @@ export async function GET(
           ? `${TMDB_IMAGE_BASE_URL}${tvDetails.poster_path}`
           : undefined,
         runtime: tvDetails.episode_run_time?.[0], // Assuming first episode runtime for TV
-        availability: { flatrate: [], buy: [], rent: [] }, // Placeholder, will be filled below
+        availability: { preferredCountries: [], otherCountries: [] },
       };
     }
 

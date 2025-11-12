@@ -1,6 +1,6 @@
 
 import { PREFERRED_COUNTRIES } from './config';
-import { TmdbWatchProviderDetails, TmdbWatchProvidersResponse } from './tmdbTypes';
+import { TmdbWatchProviderInfo, TmdbWatchProvidersResponse } from './tmdbTypes';
 
 // --- Internal Availability Model ---
 
@@ -39,17 +39,15 @@ const COUNTRY_NAMES: Record<string, string> = {
 
 const getCountryName = (code: string): string => COUNTRY_NAMES[code] || code;
 
-const hasNetflix = (providers: TmdbWatchProviderDetails[] = []): boolean => {
+const hasNetflix = (providers: TmdbWatchProviderInfo[] = []): boolean => {
     return providers.some(p => p.provider_name === NETFLIX_PROVIDER_NAME);
 }
 
 const getFreeOrAdsProviders = (
-    adsProviders: TmdbWatchProviderDetails[] = [],
-    freeProviders: TmdbWatchProviderDetails[] = []
+    flatrateProviders: TmdbWatchProviderInfo[] = []
 ): string[] => {
     const providers = new Set<string>();
-    adsProviders.forEach(p => providers.add(p.provider_name));
-    freeProviders.forEach(p => providers.add(p.provider_name));
+    flatrateProviders.forEach(p => providers.add(p.provider_name));
     return Array.from(providers).sort();
 }
 
@@ -67,15 +65,15 @@ export const mapAvailability = (tmdbProviders: TmdbWatchProvidersResponse): Avai
         const countryData = tmdbResults[countryCode];
         const allProviders = [
             ...(countryData?.flatrate || []),
-            ...(countryData?.ads || []),
-            ...(countryData?.free || []),
+            // ...(countryData?.ads || []), // Removed
+            // ...(countryData?.free || []), // Removed
         ];
 
         preferredCountries.push({
             countryCode,
             countryName: getCountryName(countryCode),
             hasNetflix: hasNetflix(allProviders),
-            freeOrAdsProviders: getFreeOrAdsProviders(countryData?.ads, countryData?.free),
+            freeOrAdsProviders: getFreeOrAdsProviders(countryData?.flatrate), // Changed
             watchLink: countryData?.link,
         });
         processedPreferred.add(countryCode);
@@ -90,8 +88,8 @@ export const mapAvailability = (tmdbProviders: TmdbWatchProvidersResponse): Avai
         const countryData = tmdbResults[countryCode];
         const allProviders = [
             ...(countryData?.flatrate || []),
-            ...(countryData?.ads || []),
-            ...(countryData?.free || []),
+            // ...(countryData?.ads || []), // Removed
+            // ...(countryData?.free || []), // Removed
             ...(countryData?.buy || []),
             ...(countryData?.rent || []),
         ];
@@ -101,7 +99,7 @@ export const mapAvailability = (tmdbProviders: TmdbWatchProvidersResponse): Avai
                 countryCode,
                 countryName: getCountryName(countryCode),
                 hasNetflix: hasNetflix(allProviders),
-                freeOrAdsProviders: getFreeOrAdsProviders(countryData?.ads, countryData?.free),
+                freeOrAdsProviders: getFreeOrAdsProviders(countryData?.flatrate), // Changed
                 watchLink: countryData?.link,
             });
         }
