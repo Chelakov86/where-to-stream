@@ -44,7 +44,9 @@ const AvailabilityTable = ({
           <tr className="bg-gray-900">
             <th className="py-2 px-4 border-b border-gray-700 text-left">Country</th>
             <th className="py-2 px-4 border-b border-gray-700 text-left">Netflix</th>
-            <th className="py-2 px-4 border-b border-gray-700 text-left">Other Streaming Services</th>
+            <th className="py-2 px-4 border-b border-gray-700 text-left">
+              Other Streaming Services
+            </th>
             <th className="py-2 px-4 border-b border-gray-700 text-left">Link</th>
           </tr>
         </thead>
