@@ -5,10 +5,12 @@ import SearchForm from './components/SearchForm';
 import { ResultsList } from './components/ResultsList';
 import ResultDetails from './components/ResultDetails';
 import ErrorBanner from './components/ErrorBanner';
-import { TMDBResult } from './types';
+import SearchHistory from './components/SearchHistory';
+import { TMDBResult, SearchParams } from './types';
 import { useGenres } from './hooks/useGenres';
 import { useAutocomplete } from './hooks/useAutocomplete';
 import { useSearch } from './hooks/useSearch';
+import { useSearchHistory } from './hooks/useSearchHistory';
 
 const AUTOCOMPLETE_LIST_ID = 'search-autocomplete-list';
 
@@ -25,6 +27,7 @@ export default function Home() {
   const { genres, isLoading: isGenresLoading, error: genresError } = useGenres();
   const { autocompleteSuggestions, handleAutocompleteRequest, clearAutocomplete } =
     useAutocomplete(showError);
+  const { history, addToHistory, clearHistory, removeFromHistory } = useSearchHistory();
   const { results, page, totalPages, searchQuery, isSearching, handleSearch, handlePageChange } =
     useSearch(showError);
 
@@ -44,13 +47,30 @@ export default function Home() {
     [handleSearch, clearAutocomplete]
   );
 
+  const handleSelectHistoryItem = useCallback(
+    (id: number, type: 'movie' | 'tv') => {
+      // Find the history item to get title and year
+      const historyItem = history.find((item) => item.id === id && item.type === type);
+      if (historyItem) {
+        // Add to history again (will move to top)
+        addToHistory(historyItem.id, historyItem.type, historyItem.title, historyItem.year);
+      }
+      setSelectedTitle({ id, type });
+    },
+    [history, addToHistory]
+  );
+
   const handleSelectSuggestion = (item: TMDBResult) => {
     clearAutocomplete();
     setSelectedTitle({ id: item.id, type: item.type });
+    // Add to history when selecting a suggestion
+    addToHistory(item.id, item.type, item.title, item.year);
   };
 
   const handleSelectResult = (result: TMDBResult) => {
     setSelectedTitle({ id: result.id, type: result.type });
+    // Add to history when selecting a result
+    addToHistory(result.id, result.type, result.title, result.year);
   };
 
   const handleDismissError = () => {
@@ -105,6 +125,12 @@ export default function Home() {
         autocompleteItems={autocompleteSuggestions}
         onAutocompleteSelect={handleSelectSuggestion}
         onAutocompleteClose={clearAutocomplete}
+      />
+      <SearchHistory
+        history={history}
+        onSelectTitle={handleSelectHistoryItem}
+        onRemoveItem={removeFromHistory}
+        onClearHistory={clearHistory}
       />
       <div className="mt-8 space-y-8">
         <div ref={resultDetailsRef}>

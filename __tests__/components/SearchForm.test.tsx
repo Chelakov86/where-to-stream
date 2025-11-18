@@ -18,10 +18,10 @@ describe('SearchForm', () => {
     expect(screen.getByPlaceholderText('Search for a movie or series')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Show Filters/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument();
-    
+
     // Filters are hidden by default, so click to show them
     fireEvent.click(screen.getByRole('button', { name: /Show Filters/ }));
-    
+
     expect(screen.getByLabelText('Type')).toBeInTheDocument();
     expect(screen.getByLabelText('From Year')).toBeInTheDocument();
     expect(screen.getByLabelText('To Year')).toBeInTheDocument();
@@ -48,10 +48,10 @@ describe('SearchForm', () => {
     fireEvent.change(screen.getByPlaceholderText('Search for a movie or series'), {
       target: { value: 'Inception' },
     });
-    
+
     // Show filters first
     fireEvent.click(screen.getByRole('button', { name: /Show Filters/ }));
-    
+
     fireEvent.change(screen.getByLabelText('Type'), {
       target: { value: 'movie' },
     });
@@ -130,7 +130,7 @@ describe('SearchForm', () => {
 
     // Show filters first
     fireEvent.click(screen.getByRole('button', { name: /Show Filters/ }));
-    
+
     expect(screen.getByText('Loading filters...')).toBeInTheDocument();
   });
 

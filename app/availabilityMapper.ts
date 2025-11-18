@@ -65,8 +65,7 @@ const NETFLIX_ADS_PROVIDER_NAME = 'Netflix Standard with Ads';
 const hasNetflix = (providers: TmdbWatchProviderInfo[] = []): boolean => {
   return providers.some(
     (p) =>
-      p.provider_name === NETFLIX_PROVIDER_NAME ||
-      p.provider_name === NETFLIX_ADS_PROVIDER_NAME
+      p.provider_name === NETFLIX_PROVIDER_NAME || p.provider_name === NETFLIX_ADS_PROVIDER_NAME
   );
 };
 
