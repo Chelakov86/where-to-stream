@@ -346,9 +346,9 @@ export class HomePage extends BasePage {
    * Clear all search history
    */
   async clearSearchHistory(): Promise<void> {
-    await this.clearHistoryButton.click();
     // Handle confirmation dialog
     this.page.once('dialog', (dialog) => dialog.accept());
+    await this.clearHistoryButton.click();
   }
 
   /**

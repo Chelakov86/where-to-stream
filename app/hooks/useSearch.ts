@@ -41,8 +41,13 @@ export function useSearch(onError?: (message: string | null) => void) {
 
       const queryParams = new URLSearchParams({
         mode: 'full',
-        ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, String(value)])),
         page: String(newPage),
+      });
+
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
+        }
       });
 
       try {

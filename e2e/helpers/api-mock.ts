@@ -42,7 +42,7 @@ export async function mockSearch(
   results: typeof sampleSearchResults = sampleSearchResults,
   options: MockOptions = {}
 ): Promise<void> {
-  await page.route('**/api/search**', async (route: Route) => {
+  await page.route('**/api/search*', async (route: Route) => {
     const url = new URL(route.request().url());
     const mode = url.searchParams.get('mode') || 'full';
     const query = url.searchParams.get('query') || '';

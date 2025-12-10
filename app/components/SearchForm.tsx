@@ -35,8 +35,9 @@ const SearchForm: React.FC<SearchFormProps> = ({
   const [minRating, setMinRating] = useState(5);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [showFilters, setShowFilters] = useState(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const errorMessageId = 'search-form-query-error';
 
   useEffect(() => {
@@ -49,8 +50,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        formRef.current &&
-        !formRef.current.contains(event.target as Node) &&
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node) &&
         onAutocompleteClose
       ) {
         onAutocompleteClose();
@@ -134,11 +135,10 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
   return (
     <form
-      ref={formRef}
       onSubmit={handleSubmit}
       className="space-y-4 p-4 bg-gray-800 text-white rounded-lg"
     >
-      <div className="relative">
+      <div ref={wrapperRef} className="relative">
         <label htmlFor="query" className="sr-only">
           Search for a movie or series
         </label>
@@ -151,13 +151,14 @@ const SearchForm: React.FC<SearchFormProps> = ({
           onChange={handleQueryChange}
           onKeyDown={handleInputKeyDown}
           placeholder="Search for a movie or series"
-          className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+          className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
           aria-autocomplete="list"
           aria-haspopup="listbox"
           aria-controls={autocompleteListId}
           aria-expanded={autocompleteItems.length > 0}
           aria-describedby={error ? errorMessageId : undefined}
           autoComplete="off"
+          aria-label="Search query"
         />
         {error && (
           <p id={errorMessageId} className="text-red-500 text-sm mt-1" role="alert">
@@ -165,7 +166,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           </p>
         )}
         {autocompleteItems.length > 0 && onAutocompleteSelect && onAutocompleteClose && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1">
+          <div className="mt-1 border border-gray-600 rounded bg-gray-800">
             <AutocompleteList
               id={autocompleteListId}
               items={autocompleteItems}
@@ -186,6 +187,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           className="w-full p-2 bg-gray-700 hover:bg-gray-600 rounded font-medium text-sm flex items-center justify-between"
           aria-expanded={showFilters}
           aria-controls="filter-section"
+          aria-label={showFilters ? 'Hide search filters' : 'Show search filters'}
         >
           <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
           <span className="text-lg">{showFilters ? '−' : '+'}</span>
@@ -202,6 +204,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
               id="type"
               name="type"
               className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+              aria-label="Filter by content type"
             >
               <option value="all">All</option>
               <option value="movie">Movies only</option>
@@ -218,7 +221,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
               name="yearFrom"
               type="number"
               placeholder="2000"
-              className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
+              aria-label="Filter by start year"
             />
           </div>
 
@@ -231,7 +235,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
               name="yearTo"
               type="number"
               placeholder="2024"
-              className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
+              aria-label="Filter by end year"
             />
           </div>
 
@@ -243,6 +248,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
               id="language"
               name="language"
               className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+              aria-label="Filter by language"
             >
               <option value="">Any</option>
               <option value="en">EN</option>
@@ -288,6 +294,10 @@ const SearchForm: React.FC<SearchFormProps> = ({
             value={minRating}
             className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
             onChange={(event) => setMinRating(Number(event.target.value))}
+            aria-label="Filter by minimum rating"
+            aria-valuemin={0}
+            aria-valuemax={10}
+            aria-valuenow={minRating}
           />
         </div>
       </div>

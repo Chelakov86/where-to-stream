@@ -136,7 +136,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
                   <button
                     type="button"
                     onClick={() => onRemoveItem(index)}
-                    className="ml-2 px-2 py-1 text-xs bg-gray-600 hover:bg-red-600 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="ml-2 px-2 py-1 text-xs bg-gray-600 hover:bg-red-600 rounded opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                     aria-label={`Remove ${formatTitle(item)}`}
                   >
                     ×

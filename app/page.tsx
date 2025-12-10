@@ -156,7 +156,7 @@ export default function Home() {
             </p>
           ) : shouldShowInitialPrompt ? (
             <p className="mt-4 text-gray-300">
-              Search for a movie or series to see where it’s streaming.
+              Search for a movie or series to see where it's streaming.
             </p>
           ) : null}
         </section>
