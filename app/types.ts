@@ -58,3 +58,11 @@ export interface TitleDetails {
     otherCountries: CountryAvailability[];
   };
 }
+
+export interface SearchHistoryItem {
+  id: number;
+  type: 'movie' | 'tv';
+  title: string;
+  year?: number;
+  timestamp: number; // Unix timestamp
+}

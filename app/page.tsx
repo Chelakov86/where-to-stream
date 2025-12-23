@@ -1,130 +1,76 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import SearchForm from './components/SearchForm';
 import { ResultsList } from './components/ResultsList';
 import ResultDetails from './components/ResultDetails';
 import ErrorBanner from './components/ErrorBanner';
-import { Genre, SearchParams, TMDBResult } from './types';
+import SearchHistory from './components/SearchHistory';
+import { TMDBResult, SearchParams } from './types';
+import { useGenres } from './hooks/useGenres';
+import { useAutocomplete } from './hooks/useAutocomplete';
+import { useSearch } from './hooks/useSearch';
+import { useSearchHistory } from './hooks/useSearchHistory';
 
-const GLOBAL_ERROR_MESSAGE =
-  'We’re having trouble fetching data right now. Please try again later.';
 const AUTOCOMPLETE_LIST_ID = 'search-autocomplete-list';
 
 export default function Home() {
-  const [genres, setGenres] = useState<Genre[]>([]);
-  const [isGenresLoading, setIsGenresLoading] = useState(false);
-  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<TMDBResult[]>([]);
-  const [results, setResults] = useState<TMDBResult[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [selectedTitle, setSelectedTitle] = useState<{ id: number; type: 'movie' | 'tv' } | null>(
     null
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<SearchParams | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
   const resultDetailsRef = useRef<HTMLDivElement | null>(null);
 
+  const showError = useCallback((message: string | null) => setErrorMessage(message), []);
   const clearError = useCallback(() => setErrorMessage(null), []);
-  const showError = useCallback((message: string) => setErrorMessage(message), []);
 
+  const { genres, isLoading: isGenresLoading, error: genresError } = useGenres();
+  const { autocompleteSuggestions, handleAutocompleteRequest, clearAutocomplete } =
+    useAutocomplete(showError);
+  const { history, addToHistory, clearHistory, removeFromHistory } = useSearchHistory();
+  const { results, page, totalPages, searchQuery, isSearching, handleSearch, handlePageChange } =
+    useSearch(showError);
+
+  // Show genres error if present
   useEffect(() => {
-    const fetchGenres = async () => {
-      setIsGenresLoading(true);
-      try {
-        const response = await fetch('/api/genres');
-        if (!response.ok) {
-          throw new Error('Failed to fetch genres');
-        }
-        const data = await response.json();
-        // API returns { movie: Genre[], tv: Genre[] }, combine and deduplicate by id
-        const allGenres = [...(data.movie || []), ...(data.tv || [])];
-        const uniqueGenres = Array.from(
-          new Map(allGenres.map((genre) => [genre.id, genre])).values()
-        );
-        setGenres(Array.isArray(uniqueGenres) ? uniqueGenres : []);
-        clearError();
-      } catch (err) {
-        setGenres([]);
-        showError(GLOBAL_ERROR_MESSAGE);
-      } finally {
-        setIsGenresLoading(false);
-      }
-    };
-    fetchGenres();
-  }, [clearError, showError]);
-
-  const handleAutocompleteRequest = useCallback(
-    async (query: string) => {
-      if (query.trim().length < 2) {
-        setAutocompleteSuggestions([]);
-        return;
-      }
-      try {
-        const response = await fetch(
-          `/api/search?mode=autocomplete&query=${encodeURIComponent(query)}`
-        );
-        if (!response.ok) {
-          throw new Error('Failed to fetch autocomplete suggestions');
-        }
-        const data = await response.json();
-        setAutocompleteSuggestions(data.results);
-      } catch (err) {
-        setAutocompleteSuggestions([]);
-        showError(GLOBAL_ERROR_MESSAGE);
-      }
-    },
-    [showError]
-  );
-
-  const handleSearch = useCallback(
-    async (params: SearchParams, newPage = 1) => {
-      setAutocompleteSuggestions([]);
-      setSelectedTitle(null);
-      setSearchQuery(params);
-      setPage(newPage);
-      setIsSearching(true);
-
-      const queryParams = new URLSearchParams({
-        mode: 'full',
-        ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, String(value)])),
-        page: String(newPage),
-      });
-
-      try {
-        const response = await fetch(`/api/search?${queryParams.toString()}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch search results');
-        }
-        const data = await response.json();
-        setResults(Array.isArray(data.results) ? data.results : []);
-        setTotalPages(typeof data.total_pages === 'number' ? data.total_pages : 1);
-        clearError();
-      } catch (err) {
-        setResults([]);
-        setTotalPages(1);
-        showError(GLOBAL_ERROR_MESSAGE);
-      } finally {
-        setIsSearching(false);
-      }
-    },
-    [clearError, showError]
-  );
-
-  const handlePageChange = (nextPage: number) => {
-    if (searchQuery) {
-      handleSearch(searchQuery, nextPage);
+    if (genresError) {
+      showError(genresError);
     }
-  };
+  }, [genresError, showError]);
+
+  const handleSearchWithClear = useCallback(
+    async (params: Parameters<typeof handleSearch>[0], newPage?: number) => {
+      clearAutocomplete();
+      setSelectedTitle(null);
+      await handleSearch(params, newPage);
+    },
+    [handleSearch, clearAutocomplete]
+  );
+
+  const handleSelectHistoryItem = useCallback(
+    (id: number, type: 'movie' | 'tv') => {
+      // Find the history item to get title and year
+      const historyItem = history.find((item) => item.id === id && item.type === type);
+      if (historyItem) {
+        // Add to history again (will move to top)
+        addToHistory(historyItem.id, historyItem.type, historyItem.title, historyItem.year);
+      }
+      setSelectedTitle({ id, type });
+    },
+    [history, addToHistory]
+  );
 
   const handleSelectSuggestion = (item: TMDBResult) => {
-    setAutocompleteSuggestions([]);
+    clearAutocomplete();
     setSelectedTitle({ id: item.id, type: item.type });
+    // Add to history when selecting a suggestion
+    addToHistory(item.id, item.type, item.title, item.year);
   };
 
   const handleSelectResult = (result: TMDBResult) => {
     setSelectedTitle({ id: result.id, type: result.type });
+    // Add to history when selecting a result
+    addToHistory(result.id, result.type, result.title, result.year);
   };
 
   const handleDismissError = () => {
@@ -134,7 +80,7 @@ export default function Home() {
   const handleDetailsError = useCallback(
     (message: string | null) => {
       if (message) {
-        showError(GLOBAL_ERROR_MESSAGE);
+        showError(message);
       } else {
         clearError();
       }
@@ -174,11 +120,17 @@ export default function Home() {
         genres={genres}
         isGenresLoading={isGenresLoading}
         onAutocompleteRequest={handleAutocompleteRequest}
-        onSearch={handleSearch}
+        onSearch={handleSearchWithClear}
         autocompleteListId={AUTOCOMPLETE_LIST_ID}
         autocompleteItems={autocompleteSuggestions}
         onAutocompleteSelect={handleSelectSuggestion}
-        onAutocompleteClose={() => setAutocompleteSuggestions([])}
+        onAutocompleteClose={clearAutocomplete}
+      />
+      <SearchHistory
+        history={history}
+        onSelectTitle={handleSelectHistoryItem}
+        onRemoveItem={removeFromHistory}
+        onClearHistory={clearHistory}
       />
       <div className="mt-8 space-y-8">
         <div ref={resultDetailsRef}>
@@ -204,7 +156,7 @@ export default function Home() {
             </p>
           ) : shouldShowInitialPrompt ? (
             <p className="mt-4 text-gray-300">
-              Search for a movie or series to see where it’s streaming.
+              Search for a movie or series to see where it's streaming.
             </p>
           ) : null}
         </section>

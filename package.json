@@ -11,7 +11,14 @@
     "format": "npx prettier --write .",
     "format:check": "npx prettier --check .",
     "test": "cross-env NODE_ENV=test npx jest",
-    "test:watch": "cross-env NODE_ENV=test npx jest --watch"
+    "test:watch": "cross-env NODE_ENV=test npx jest --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:chromium": "playwright test --project=chromium",
+    "test:e2e:report": "playwright show-report",
+    "test:all": "npm run test && npm run test:e2e"
   },
   "repository": {
     "type": "git",
@@ -34,6 +41,7 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4.1.17",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -41,6 +49,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "autoprefixer": "^10.4.22",
+    "baseline-browser-mapping": "^2.9.5",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.1",

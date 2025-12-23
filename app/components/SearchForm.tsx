@@ -34,7 +34,10 @@ const SearchForm: React.FC<SearchFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [minRating, setMinRating] = useState(5);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [showFilters, setShowFilters] = useState(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const errorMessageId = 'search-form-query-error';
 
   useEffect(() => {
@@ -42,6 +45,24 @@ const SearchForm: React.FC<SearchFormProps> = ({
       setHighlightedIndex(-1);
     }
   }, [autocompleteItems.length]);
+
+  // Handle click outside to close autocomplete
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node) &&
+        onAutocompleteClose
+      ) {
+        onAutocompleteClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onAutocompleteClose]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -113,8 +134,11 @@ const SearchForm: React.FC<SearchFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-gray-800 text-white rounded-lg">
-      <div className="relative">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 p-4 bg-gray-800 text-white rounded-lg"
+    >
+      <div ref={wrapperRef} className="relative">
         <label htmlFor="query" className="sr-only">
           Search for a movie or series
         </label>
@@ -127,13 +151,14 @@ const SearchForm: React.FC<SearchFormProps> = ({
           onChange={handleQueryChange}
           onKeyDown={handleInputKeyDown}
           placeholder="Search for a movie or series"
-          className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+          className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
           aria-autocomplete="list"
           aria-haspopup="listbox"
           aria-controls={autocompleteListId}
           aria-expanded={autocompleteItems.length > 0}
           aria-describedby={error ? errorMessageId : undefined}
           autoComplete="off"
+          aria-label="Search query"
         />
         {error && (
           <p id={errorMessageId} className="text-red-500 text-sm mt-1" role="alert">
@@ -141,7 +166,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           </p>
         )}
         {autocompleteItems.length > 0 && onAutocompleteSelect && onAutocompleteClose && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1">
+          <div className="mt-1 border border-gray-600 rounded bg-gray-800">
             <AutocompleteList
               id={autocompleteListId}
               items={autocompleteItems}
@@ -155,102 +180,126 @@ const SearchForm: React.FC<SearchFormProps> = ({
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div>
-          <label htmlFor="type" className="block text-sm font-medium">
-            Type
-          </label>
-          <select
-            id="type"
-            name="type"
-            className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
-          >
-            <option value="all">All</option>
-            <option value="movie">Movies only</option>
-            <option value="tv">Series only</option>
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="yearFrom" className="block text-sm font-medium">
-            From Year
-          </label>
-          <input
-            id="yearFrom"
-            name="yearFrom"
-            type="number"
-            placeholder="2000"
-            className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="yearTo" className="block text-sm font-medium">
-            To Year
-          </label>
-          <input
-            id="yearTo"
-            name="yearTo"
-            type="number"
-            placeholder="2024"
-            className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="language" className="block text-sm font-medium">
-            Language
-          </label>
-          <select
-            id="language"
-            name="language"
-            className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
-          >
-            <option value="">Any</option>
-            <option value="en">EN</option>
-            <option value="de">DE</option>
-          </select>
-        </div>
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowFilters(!showFilters)}
+          className="w-full p-2 bg-gray-700 hover:bg-gray-600 rounded font-medium text-sm flex items-center justify-between"
+          aria-expanded={showFilters}
+          aria-controls="filter-section"
+          aria-label={showFilters ? 'Hide search filters' : 'Show search filters'}
+        >
+          <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+          <span className="text-lg">{showFilters ? '−' : '+'}</span>
+        </button>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium">Genres</label>
-        {isGenresLoading ? (
-          <p className="mt-2 text-sm text-gray-400">Loading filters...</p>
-        ) : Array.isArray(genres) && genres.length > 0 ? (
-          <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
-            {genres.map((genre) => (
-              <label key={genre.id} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="genre"
-                  value={genre.id}
-                  className="form-checkbox h-5 w-5 rounded border-gray-600 bg-gray-700"
-                />
-                <span>{genre.name}</span>
-              </label>
-            ))}
+      <div id="filter-section" className={`space-y-4 ${showFilters ? '' : 'hidden'}`}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <label htmlFor="type" className="block text-sm font-medium">
+              Type
+            </label>
+            <select
+              id="type"
+              name="type"
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+              aria-label="Filter by content type"
+            >
+              <option value="all">All</option>
+              <option value="movie">Movies only</option>
+              <option value="tv">Series only</option>
+            </select>
           </div>
-        ) : (
-          <p className="mt-2 text-sm text-gray-400">No genres available</p>
-        )}
-      </div>
 
-      <div>
-        <label htmlFor="minRating" className="block text-sm font-medium">
-          Minimum Rating: <span>{minRating}</span>
-        </label>
-        <input
-          id="minRating"
-          name="minRating"
-          type="range"
-          min="0"
-          max="10"
-          step="0.5"
-          value={minRating}
-          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-          onChange={(event) => setMinRating(Number(event.target.value))}
-        />
+          <div>
+            <label htmlFor="yearFrom" className="block text-sm font-medium">
+              From Year
+            </label>
+            <input
+              id="yearFrom"
+              name="yearFrom"
+              type="number"
+              placeholder="2000"
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
+              aria-label="Filter by start year"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="yearTo" className="block text-sm font-medium">
+              To Year
+            </label>
+            <input
+              id="yearTo"
+              name="yearTo"
+              type="number"
+              placeholder="2024"
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
+              aria-label="Filter by end year"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="language" className="block text-sm font-medium">
+              Language
+            </label>
+            <select
+              id="language"
+              name="language"
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+              aria-label="Filter by language"
+            >
+              <option value="">Any</option>
+              <option value="en">EN</option>
+              <option value="de">DE</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Genres</label>
+          {isGenresLoading ? (
+            <p className="mt-2 text-sm text-gray-400">Loading filters...</p>
+          ) : Array.isArray(genres) && genres.length > 0 ? (
+            <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
+              {genres.map((genre) => (
+                <label key={genre.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="genre"
+                    value={genre.id}
+                    className="form-checkbox h-5 w-5 rounded border-gray-600 bg-gray-700"
+                  />
+                  <span>{genre.name}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-gray-400">No genres available</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="minRating" className="block text-sm font-medium">
+            Minimum Rating: <span>{minRating}</span>
+          </label>
+          <input
+            id="minRating"
+            name="minRating"
+            type="range"
+            min="0"
+            max="10"
+            step="0.5"
+            value={minRating}
+            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+            onChange={(event) => setMinRating(Number(event.target.value))}
+            aria-label="Filter by minimum rating"
+            aria-valuemin={0}
+            aria-valuemax={10}
+            aria-valuenow={minRating}
+          />
+        </div>
       </div>
 
       <button type="submit" className="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded font-bold">

@@ -25,7 +25,7 @@ const buildOkResponse = (data: unknown) => ({
   json: async () => data,
 });
 
-const globalErrorMessage = 'We’re having trouble fetching data right now. Please try again later.';
+const globalErrorMessage = "We're having trouble fetching data right now. Please try again later.";
 
 const scrollIntoViewMock = jest.fn();
 
@@ -119,7 +119,7 @@ jest.mock('../app/components/ResultDetails', () => ({
       {title ? `Details for ${title.type} ${title.id}` : null}
       <button
         type="button"
-        onClick={() => onError?.('Details request failed')}
+        onClick={() => onError?.(globalErrorMessage)}
         data-testid="details-error-trigger"
       >
         Simulate details error

@@ -35,29 +35,60 @@ const AvailabilityTable = ({
 }: {
   title: string;
   countries: CountryAvailability[];
-}) => (
-  <div className="mt-4">
-    <h4 className="text-lg font-semibold text-white mb-2">{title}</h4>
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-gray-800 border border-gray-700" aria-label={title}>
+}) => {
+  const isOtherCountries = title === 'Other Countries';
+
+  return (
+    <div className="mt-4">
+      <h4 className="text-lg font-semibold text-white mb-2">{title}</h4>
+      <table
+        className="w-full bg-gray-800 border border-gray-700 table-fixed"
+        aria-label={title}
+        style={{ tableLayout: 'fixed' }}
+      >
+        <colgroup>
+          <col style={{ width: '25%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '45%' }} />
+          <col style={{ width: '15%' }} />
+        </colgroup>
         <thead>
           <tr className="bg-gray-900">
-            <th className="py-2 px-4 border-b border-gray-700 text-left">Country</th>
-            <th className="py-2 px-4 border-b border-gray-700 text-left">Netflix</th>
-            <th className="py-2 px-4 border-b border-gray-700 text-left">Free / Ads</th>
-            <th className="py-2 px-4 border-b border-gray-700 text-left">Link</th>
+            <th
+              className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+            >
+              Country
+            </th>
+            <th
+              className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+            >
+              Netflix
+            </th>
+            <th
+              className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+            >
+              Other Streaming Services
+            </th>
+            <th
+              className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+            >
+              Link
+            </th>
           </tr>
         </thead>
         <tbody>
           {countries.map((country) => (
             <tr key={country.countryCode} className="hover:bg-gray-700">
-              <td className="py-2 px-4 border-b border-gray-600">
+              <td className="py-2 px-4 border-b border-gray-600 truncate">
                 {countryFlagMapping[country.countryCode] || ''} {country.countryName}
               </td>
               <td className="py-2 px-4 border-b border-gray-600">
                 {country.hasNetflix ? 'Yes' : 'No'}
               </td>
-              <td className="py-2 px-4 border-b border-gray-600">
+              <td
+                className="py-2 px-4 border-b border-gray-600 truncate"
+                title={country.freeOrAdsProviders.join(', ')}
+              >
                 {country.freeOrAdsProviders.join(', ')}
               </td>
               <td className="py-2 px-4 border-b border-gray-600">
@@ -77,10 +108,10 @@ const AvailabilityTable = ({
         </tbody>
       </table>
     </div>
-  </div>
-);
+  );
+};
 
-const ERROR_MESSAGE = 'We’re having trouble fetching data right now. Please try again later.';
+const ERROR_MESSAGE = "We're having trouble fetching data right now. Please try again later.";
 
 const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => {
   const [status, setStatus] = useState<Status>('loading');
@@ -175,7 +206,7 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
         {!hasAvailability ? (
           <p className="mt-4 text-gray-400">No streaming availability found.</p>
         ) : (
-          <>
+          <div className="-mx-6 px-6">
             {details.availability.preferredCountries.length > 0 && (
               <AvailabilityTable
                 title="Available in Your Region"
@@ -188,7 +219,7 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
                 countries={details.availability.otherCountries}
               />
             )}
-          </>
+          </div>
         )}
       </div>
     </section>

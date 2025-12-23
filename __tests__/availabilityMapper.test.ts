@@ -61,7 +61,8 @@ describe('mapAvailability', () => {
     expect(usData).toBeDefined();
     expect(usData?.countryName).toBe('United States');
     expect(usData?.hasNetflix).toBe(true);
-    expect(usData?.freeOrAdsProviders).toEqual(['Netflix']);
+    // Netflix should not appear in freeOrAdsProviders since it has its own column
+    expect(usData?.freeOrAdsProviders).toEqual([]);
     expect(usData?.watchLink).toContain('locale=US');
 
     const gbData = result.preferredCountries.find((c) => c.countryCode === 'GB');
@@ -88,7 +89,8 @@ describe('mapAvailability', () => {
     expect(frData.countryCode).toBe('FR');
     expect(frData.countryName).toBe('France');
     expect(frData.hasNetflix).toBe(true);
-    expect(frData.freeOrAdsProviders).toEqual(['Netflix']);
+    // Netflix should not appear in freeOrAdsProviders since it has its own column
+    expect(frData.freeOrAdsProviders).toEqual([]);
   });
 
   it('should handle only non-preferred countries having availability', () => {
@@ -153,15 +155,67 @@ describe('mapAvailability', () => {
     expect(result.otherCountries).toHaveLength(0);
   });
 
+  it('should exclude Netflix Standard with Ads from freeOrAdsProviders', () => {
+    const tmdbProviders: TmdbWatchProvidersResponse = {
+      id: 1,
+      results: {
+        US: {
+          link: 'https://www.themoviedb.org/movie/1/watch?locale=US',
+          flatrate: [
+            { provider_id: 8, provider_name: 'Netflix', logo_path: '', display_priority: 0 },
+            {
+              provider_id: 1773,
+              provider_name: 'Netflix Standard with Ads',
+              logo_path: '',
+              display_priority: 0,
+            },
+            { provider_id: 2, provider_name: 'Tubi TV', logo_path: '', display_priority: 0 },
+          ],
+        },
+      },
+    };
+
+    const result = mapAvailability(tmdbProviders);
+    const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
+    expect(usData).toBeDefined();
+    expect(usData?.hasNetflix).toBe(true);
+    // Both Netflix and Netflix Standard with Ads should be excluded from freeOrAdsProviders
+    expect(usData?.freeOrAdsProviders).toEqual(['Tubi TV']);
+  });
+
+  it('should detect Netflix Standard with Ads as Netflix availability', () => {
+    const tmdbProviders: TmdbWatchProvidersResponse = {
+      id: 1,
+      results: {
+        US: {
+          link: 'https://www.themoviedb.org/movie/1/watch?locale=US',
+          flatrate: [
+            {
+              provider_id: 1773,
+              provider_name: 'Netflix Standard with Ads',
+              logo_path: '',
+              display_priority: 0,
+            },
+          ],
+        },
+      },
+    };
+
+    const result = mapAvailability(tmdbProviders);
+    const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
+    expect(usData).toBeDefined();
+    expect(usData?.hasNetflix).toBe(true);
+    // Netflix Standard with Ads should be excluded from freeOrAdsProviders
+    expect(usData?.freeOrAdsProviders).toEqual([]);
+  });
+
   it('should not list other countries if they only have buy/rent providers (no Netflix or free services)', () => {
     const tmdbProviders: TmdbWatchProvidersResponse = {
       id: 1,
       results: {
         IT: {
           link: 'https://www.themoviedb.org/movie/1/watch?locale=IT',
-          buy: [
-            { provider_id: 2, provider_name: 'Apple TV', logo_path: '', display_priority: 0 },
-          ],
+          buy: [{ provider_id: 2, provider_name: 'Apple TV', logo_path: '', display_priority: 0 }],
           rent: [
             { provider_id: 3, provider_name: 'Google Play', logo_path: '', display_priority: 0 },
           ],
