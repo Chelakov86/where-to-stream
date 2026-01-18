@@ -15,7 +15,7 @@ export const ResultsList: React.FC<ResultsListProps> = ({
 
   return (
     <div className="space-y-4" aria-live="polite">
-      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-0" role="list">
+      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-0" role="list">
         {results.map((result) => (
           <li key={`${result.type}-${result.id}`} className="list-none">
             <ResultItem result={result} onSelectResult={onSelectResult} />

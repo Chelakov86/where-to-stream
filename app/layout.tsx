@@ -10,6 +10,11 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'WhereToStream',
   description: 'Find where movies and TV shows are streaming',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    viewportFit: 'cover',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -19,7 +24,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ErrorBoundary>
           <div className="flex flex-col min-h-screen">
             <Header />
-            <main className="flex-grow container mx-auto px-4 py-8">{children}</main>
+            <main className="flex-grow container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl">
+              {children}
+            </main>
             <Footer />
           </div>
         </ErrorBoundary>

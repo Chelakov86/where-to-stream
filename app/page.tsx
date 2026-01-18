@@ -110,10 +110,12 @@ export default function Home() {
   }, [selectedTitle]);
 
   return (
-    <main className="min-h-screen p-8">
+    <main className="min-h-screen p-4 sm:p-6 md:p-8">
       {errorMessage && <ErrorBanner message={errorMessage} onDismiss={handleDismissError} />}
-      <h1 className="text-4xl font-bold text-accent-primary">WhereToStream</h1>
-      <p className="mt-4 text-text-secondary">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-accent-primary">
+        WhereToStream
+      </h1>
+      <p className="mt-3 sm:mt-4 text-sm sm:text-base text-text-secondary">
         Find where your favorite movies and TV shows are streaming
       </p>
       <SearchForm

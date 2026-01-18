@@ -40,9 +40,51 @@ const AvailabilityTable = ({
 
   return (
     <div className="mt-4">
-      <h4 className="text-lg font-semibold text-white mb-2">{title}</h4>
+      <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">{title}</h4>
+
+      {/* Mobile: Card layout */}
+      <div className="block md:hidden space-y-3">
+        {countries.map((country) => (
+          <div
+            key={country.countryCode}
+            className="bg-gray-700 p-3 rounded-lg border border-gray-600"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-semibold text-white">
+                {countryFlagMapping[country.countryCode] || ''} {country.countryName}
+              </span>
+              {country.watchLink && (
+                <a
+                  href={country.watchLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:underline text-sm font-medium"
+                >
+                  Watch →
+                </a>
+              )}
+            </div>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Netflix:</span>
+                <span className="text-white">{country.hasNetflix ? 'Yes' : 'No'}</span>
+              </div>
+              {country.freeOrAdsProviders.length > 0 && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-400 flex-shrink-0">Other Services:</span>
+                  <span className="text-white text-right">
+                    {country.freeOrAdsProviders.join(', ')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: Table layout */}
       <table
-        className="w-full bg-gray-800 border border-gray-700 table-fixed"
+        className="hidden md:table w-full bg-gray-800 border border-gray-700 table-fixed"
         aria-label={title}
         style={{ tableLayout: 'fixed' }}
       >
@@ -167,11 +209,11 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
 
   return (
     <section
-      className="bg-gray-800 text-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto"
+      className="bg-gray-800 text-white rounded-lg shadow-lg p-4 sm:p-5 md:p-6 max-w-4xl mx-auto"
       aria-labelledby={titleHeadingId}
       role="region"
     >
-      <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex flex-col md:flex-row gap-4 sm:gap-5 md:gap-6">
         <div className="md:w-1/3">
           <img
             src={details.posterUrl}
@@ -180,7 +222,7 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
           />
         </div>
         <div className="md:w-2/3">
-          <h2 id={titleHeadingId} className="text-4xl font-bold">
+          <h2 id={titleHeadingId} className="text-2xl sm:text-3xl md:text-4xl font-bold">
             {details.title}
           </h2>
           <div className="flex items-center space-x-4 text-gray-400 mt-2">
@@ -199,8 +241,8 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
         </div>
       </div>
 
-      <div className="mt-8">
-        <h3 className="text-2xl font-bold border-b-2 border-gray-700 pb-2">
+      <div className="mt-6 sm:mt-8">
+        <h3 className="text-xl sm:text-2xl font-bold border-b-2 border-gray-700 pb-2">
           Streaming Availability
         </h3>
         {!hasAvailability ? (
