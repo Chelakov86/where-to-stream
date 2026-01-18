@@ -136,7 +136,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 p-4 bg-gray-800 text-white rounded-lg"
+      className="space-y-4 p-3 sm:p-4 bg-gray-800 text-white rounded-lg"
     >
       <div ref={wrapperRef} className="relative">
         <label htmlFor="query" className="sr-only">
@@ -195,7 +195,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
       </div>
 
       <div id="filter-section" className={`space-y-4 ${showFilters ? '' : 'hidden'}`}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <div>
             <label htmlFor="type" className="block text-sm font-medium">
               Type
@@ -262,7 +262,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           {isGenresLoading ? (
             <p className="mt-2 text-sm text-gray-400">Loading filters...</p>
           ) : Array.isArray(genres) && genres.length > 0 ? (
-            <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
               {genres.map((genre) => (
                 <label key={genre.id} className="flex items-center space-x-2">
                   <input

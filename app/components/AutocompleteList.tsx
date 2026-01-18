@@ -102,7 +102,7 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
     <ul
       id={id}
       ref={listRef}
-      className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-96 overflow-y-auto"
+      className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
       role="listbox"
       tabIndex={-1}
       onKeyDown={handleKeyDown}

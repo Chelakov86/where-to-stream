@@ -29,29 +29,29 @@ export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }
   return (
     <article
       aria-labelledby={titleId}
-      className="bg-gray-800 rounded-lg shadow-md p-4 flex space-x-4"
+      className="bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4"
       role="article"
     >
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 mx-auto sm:mx-0">
         {posterPath ? (
           <Image
             src={posterPath}
             alt={`${title} poster`}
             width={100}
             height={150}
-            className="rounded-md"
+            className="rounded-md w-20 sm:w-24 md:w-[100px] h-auto"
           />
         ) : (
           <div
             data-testid="poster-placeholder"
-            className="w-[100px] h-[150px] bg-gray-700 rounded-md flex items-center justify-center"
+            className="w-20 sm:w-24 md:w-[100px] h-[120px] sm:h-[135px] md:h-[150px] bg-gray-700 rounded-md flex items-center justify-center"
           >
-            <span className="text-gray-500 text-sm">No Image</span>
+            <span className="text-gray-500 text-xs sm:text-sm">No Image</span>
           </div>
         )}
       </div>
       <div className="flex-grow">
-        <h3 id={titleId} className="text-xl font-bold">
+        <h3 id={titleId} className="text-lg sm:text-xl font-bold">
           {title} {year && `(${year})`}
         </h3>
         <div className="flex items-center space-x-2 mt-1">
