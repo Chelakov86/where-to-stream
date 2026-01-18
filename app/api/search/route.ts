@@ -5,6 +5,7 @@ import { TmdbSearchResult, TmdbSearchResponse } from '@/app/tmdbTypes';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { NormalizedSearchResult } from '@/app/types';
 import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
+import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
 
 /**
  * API route handler for searching movies and TV shows.
@@ -205,6 +206,34 @@ const mapSearchParamsToTvParams = (params: SearchParams): SearchTvParams => {
 };
 
 export async function GET(req: NextRequest) {
+  // Rate limiting - 100 requests per 15 minutes per IP
+  const identifier = getClientIdentifier(req);
+  const rateLimitResult = checkRateLimit(identifier, {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 100,
+  });
+
+  if (!rateLimitResult.allowed) {
+    const resetDate = new Date(rateLimitResult.resetTime);
+    const retryAfterSeconds = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+
+    return NextResponse.json(
+      {
+        error: 'Rate limit exceeded. Please try again later.',
+        resetTime: resetDate.toISOString(),
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': retryAfterSeconds.toString(),
+          'X-RateLimit-Limit': '100',
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': resetDate.toISOString(),
+        },
+      }
+    );
+  }
+
   const params = parseSearchParams(req.nextUrl.searchParams);
 
   if (!params.query) {
@@ -258,7 +287,15 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    return NextResponse.json(response);
+    // Add rate limit headers to successful response
+    const resetDate = new Date(rateLimitResult.resetTime);
+    return NextResponse.json(response, {
+      headers: {
+        'X-RateLimit-Limit': '100',
+        'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+        'X-RateLimit-Reset': resetDate.toISOString(),
+      },
+    });
   } catch (error) {
     if (error instanceof TmdbError) {
       return NextResponse.json(
