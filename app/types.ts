@@ -26,6 +26,7 @@ export interface ResultsListProps {
   results: NormalizedSearchResult[];
   page: number;
   totalPages: number;
+  isLoading?: boolean;
   onPageChange: (nextPage: number) => void;
   onSelectResult: (result: NormalizedSearchResult) => void;
 }

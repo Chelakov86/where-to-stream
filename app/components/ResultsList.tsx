@@ -1,14 +1,31 @@
 import React from 'react';
 import { ResultItem } from './ResultItem';
+import { ResultItemSkeleton } from './Skeleton';
 import { ResultsListProps } from '@/app/types';
 
 export const ResultsList: React.FC<ResultsListProps> = ({
   results,
   page,
   totalPages,
+  isLoading = false,
   onPageChange,
   onSelectResult,
 }) => {
+  // Show loading skeletons
+  if (isLoading) {
+    return (
+      <div className="space-y-4" aria-busy="true" aria-live="polite">
+        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-0" role="list">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <li key={i} className="list-none">
+              <ResultItemSkeleton />
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
   if (results.length === 0) {
     return <p className="text-center text-gray-400">No results found.</p>;
   }

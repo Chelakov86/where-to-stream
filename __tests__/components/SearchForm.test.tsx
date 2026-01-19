@@ -16,11 +16,11 @@ describe('SearchForm', () => {
     render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
 
     expect(screen.getByPlaceholderText('Search for a movie or series')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Show Filters/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Show search filters/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument();
 
     // Filters are hidden by default, so click to show them
-    fireEvent.click(screen.getByRole('button', { name: /Show Filters/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Show search filters/i }));
 
     expect(screen.getByLabelText('Type')).toBeInTheDocument();
     expect(screen.getByLabelText('From Year')).toBeInTheDocument();
@@ -37,7 +37,7 @@ describe('SearchForm', () => {
     render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
 
     expect(
-      screen.getByRole('textbox', { name: /search for a movie or series/i })
+      screen.getByRole('textbox', { name: /search query/i })
     ).toBeInTheDocument();
   });
 
@@ -50,7 +50,7 @@ describe('SearchForm', () => {
     });
 
     // Show filters first
-    fireEvent.click(screen.getByRole('button', { name: /Show Filters/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Show search filters/i }));
 
     fireEvent.change(screen.getByLabelText('Type'), {
       target: { value: 'movie' },
@@ -88,7 +88,7 @@ describe('SearchForm', () => {
     const user = userEvent.setup();
     render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
 
-    const queryInput = screen.getByRole('textbox', { name: /search for a movie or series/i });
+    const queryInput = screen.getByRole('textbox', { name: /search query/i });
     await user.type(queryInput, 'Inception{enter}');
 
     expect(handleSearch).toHaveBeenCalledWith(
@@ -129,7 +129,7 @@ describe('SearchForm', () => {
     render(<SearchForm genres={[]} onSearch={jest.fn()} isGenresLoading />);
 
     // Show filters first
-    fireEvent.click(screen.getByRole('button', { name: /Show Filters/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Show search filters/i }));
 
     expect(screen.getByText('Loading filters...')).toBeInTheDocument();
   });
@@ -148,7 +148,7 @@ describe('SearchForm', () => {
       />
     );
 
-    const queryInput = screen.getByRole('textbox', { name: /search for a movie or series/i });
+    const queryInput = screen.getByRole('textbox', { name: /search query/i });
     expect(queryInput).toHaveAttribute('aria-controls', 'test-list');
     expect(queryInput).toHaveAttribute('aria-expanded', 'true');
     expect(queryInput).toHaveAttribute('aria-haspopup', 'listbox');

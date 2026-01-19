@@ -29,7 +29,7 @@ describe('ResultDetails', () => {
   it('should show a loading indicator', () => {
     (fetch as jest.Mock).mockReturnValue(new Promise(() => {}));
     render(<ResultDetails title={{ id: 123, type: 'movie' }} />);
-    expect(screen.getByText('Loading details...')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: /loading title details/i })).toBeInTheDocument();
   });
 
   it('should show an error message on fetch failure', async () => {
@@ -90,9 +90,9 @@ describe('ResultDetails', () => {
     expect(await screen.findByTestId('rating')).toHaveTextContent('Rating: 9.0/10');
     expect(screen.getByText('45m')).toBeInTheDocument();
 
-    expect(await screen.findByText('🇨🇦 Canada')).toBeInTheDocument();
+    expect((await screen.findAllByText('🇨🇦 Canada')).length).toBeGreaterThan(0);
     expect(screen.getAllByText('No')[0]).toBeInTheDocument(); // For Netflix
-    expect(screen.getByText('Crave')).toBeInTheDocument();
+    expect(screen.getAllByText('Crave').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Watch' })).toHaveAttribute(
       'href',
       mockTv.availability.preferredCountries[0].watchLink

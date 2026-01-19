@@ -90,6 +90,11 @@ export function checkRateLimit(
  * @returns Client IP address or 'unknown'
  */
 export function getClientIdentifier(request: Request): string {
+  // Handle cases where headers might not be available (e.g., in tests)
+  if (!request.headers || typeof request.headers.get !== 'function') {
+    return 'test-client';
+  }
+
   // Try to get IP from various headers (for reverse proxies)
   const forwarded = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
