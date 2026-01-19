@@ -57,13 +57,13 @@ export interface EnhancedError {
 export function getErrorMessage(error: unknown): string {
   // Handle TMDB-specific errors
   if (error instanceof TmdbError) {
-    if (error.statusCode === 404) {
+    if (error.status === 404) {
       return ERROR_MESSAGES.NOT_FOUND;
     }
-    if (error.statusCode === 429) {
+    if (error.status === 429) {
       return ERROR_MESSAGES.RATE_LIMIT;
     }
-    if (error.statusCode >= 500) {
+    if (error.status >= 500) {
       return ERROR_MESSAGES.SERVER_ERROR;
     }
     return ERROR_MESSAGES.TMDB_ERROR;
@@ -111,7 +111,7 @@ export function getEnhancedError(error: unknown): EnhancedError {
       message: getErrorMessage(error),
       category: ErrorCategory.API,
       originalError: error,
-      statusCode: error.statusCode,
+      statusCode: error.status,
     };
   }
 
