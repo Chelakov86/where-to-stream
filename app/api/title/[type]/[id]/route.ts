@@ -9,6 +9,8 @@ import { mapAvailability, AvailabilityResult } from '@/app/availabilityMapper';
 import { TmdbError } from '@/app/tmdbClient';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
+import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
+import { logger } from '@/app/utils/logger';
 
 /**
  * API route handler for fetching detailed information about a specific movie or TV show.
@@ -49,6 +51,34 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ type: string; id: string }> | { type: string; id: string } }
 ) {
+  // Rate limiting - 50 requests per 15 minutes per IP (lower than search)
+  const identifier = getClientIdentifier(req);
+  const rateLimitResult = checkRateLimit(identifier, {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 50,
+  });
+
+  if (!rateLimitResult.allowed) {
+    const resetDate = new Date(rateLimitResult.resetTime);
+    const retryAfterSeconds = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+
+    return NextResponse.json(
+      {
+        error: 'Rate limit exceeded. Please try again later.',
+        resetTime: resetDate.toISOString(),
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': retryAfterSeconds.toString(),
+          'X-RateLimit-Limit': '50',
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': resetDate.toISOString(),
+        },
+      }
+    );
+  }
+
   const resolvedParams = await Promise.resolve(params);
   const { type, id } = resolvedParams;
 
@@ -120,7 +150,15 @@ export async function GET(
     // This groups countries, detects Netflix availability, and extracts free/ad-supported providers
     normalizedTitle.availability = mapAvailability(watchProvidersResponse);
 
-    return NextResponse.json(normalizedTitle);
+    // Add rate limit headers to successful response
+    const resetDate = new Date(rateLimitResult.resetTime);
+    return NextResponse.json(normalizedTitle, {
+      headers: {
+        'X-RateLimit-Limit': '50',
+        'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+        'X-RateLimit-Reset': resetDate.toISOString(),
+      },
+    });
   } catch (error) {
     if (error instanceof TmdbError) {
       return NextResponse.json(
@@ -128,11 +166,11 @@ export async function GET(
         { status: mapTmdbErrorToHttpStatus(error) }
       );
     } else if (error instanceof Error) {
-      console.error(`API Error for /api/title/${type}/${id}:`, error);
+      logger.error(`API Error for /api/title/${type}/${id}`, { error: error.message });
       return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
     // Fallback for unknown errors
-    console.error(`Unknown error for /api/title/${type}/${id}:`, error);
+    logger.error(`Unknown error for /api/title/${type}/${id}`, { error });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

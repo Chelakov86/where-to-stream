@@ -144,11 +144,12 @@ export default function Home() {
               Searching...
             </div>
           )}
-          {results.length > 0 ? (
+          {isSearching || results.length > 0 ? (
             <ResultsList
               results={results}
               page={page}
               totalPages={totalPages}
+              isLoading={isSearching}
               onPageChange={handlePageChange}
               onSelectResult={handleSelectResult}
             />

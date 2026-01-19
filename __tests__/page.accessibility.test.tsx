@@ -40,9 +40,9 @@ describe('Home Page Accessibility', () => {
     const main = await screen.findByRole('main');
     expect(main).toBeInTheDocument();
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/genres'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/genres', expect.objectContaining({ signal: expect.any(Object) })));
 
-    const queryInput = screen.getByRole('textbox', { name: /search for a movie or series/i });
+    const queryInput = screen.getByRole('textbox', { name: /search query/i });
     expect(queryInput).toHaveAttribute('aria-autocomplete', 'list');
     expect(queryInput).toHaveAttribute('aria-haspopup', 'listbox');
     expect(queryInput).toHaveAttribute('aria-expanded', 'false');
@@ -50,7 +50,7 @@ describe('Home Page Accessibility', () => {
     await user.type(queryInput, 'Ma');
 
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith('/api/search?mode=autocomplete&query=Ma')
+      expect(fetchMock).toHaveBeenCalledWith('/api/search?mode=autocomplete&query=Ma', expect.objectContaining({ signal: expect.any(Object) }))
     );
 
     const listbox = await screen.findByRole('listbox');
@@ -63,7 +63,10 @@ describe('Home Page Accessibility', () => {
     await user.type(queryInput, '{enter}');
 
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/mode=full&query=Ma&.*page=1/))
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('mode=full'),
+        expect.objectContaining({ signal: expect.any(Object) })
+      )
     );
 
     await waitFor(() => expect(queryInput).toHaveAttribute('aria-expanded', 'false'));

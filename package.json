@@ -33,11 +33,9 @@
   "homepage": "https://github.com/Chelakov86/where-to-stream#readme",
   "dependencies": {
     "@types/node": "^24.10.0",
-    "@types/react": "^18.3.26",
-    "@types/react-dom": "^18.3.7",
     "next": "^16.0.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
@@ -48,6 +46,8 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.22",
     "baseline-browser-mapping": "^2.9.5",
     "cross-env": "^10.1.0",

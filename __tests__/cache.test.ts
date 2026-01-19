@@ -6,9 +6,9 @@ describe('cache', () => {
   });
 
   describe('getCache', () => {
-    it('should return undefined for non-existent key', () => {
+    it('should return null for non-existent key', () => {
       const result = getCache('non-existent-key');
-      expect(result).toBeUndefined();
+      expect(result).toBeNull();
     });
 
     it('should return the stored value before expiry', () => {
@@ -17,14 +17,14 @@ describe('cache', () => {
       expect(result).toBe('test-value');
     });
 
-    it('should return undefined for expired key', async () => {
+    it('should return null for expired key', async () => {
       setCache('expired-key', 'expired-value', 1);
 
       // Wait for the cache entry to expire
       await new Promise((resolve) => setTimeout(resolve, 1100));
 
       const result = getCache('expired-key');
-      expect(result).toBeUndefined();
+      expect(result).toBeNull();
     });
 
     it('should remove expired entry from cache', async () => {
@@ -33,13 +33,13 @@ describe('cache', () => {
       // Wait for the cache entry to expire
       await new Promise((resolve) => setTimeout(resolve, 1100));
 
-      // First call should return undefined and remove the entry
+      // First call should return null and remove the entry
       const result1 = getCache('expired-key');
-      expect(result1).toBeUndefined();
+      expect(result1).toBeNull();
 
-      // Second call should also return undefined (entry was removed)
+      // Second call should also return null (entry was removed)
       const result2 = getCache('expired-key');
-      expect(result2).toBeUndefined();
+      expect(result2).toBeNull();
     });
   });
 
@@ -106,7 +106,7 @@ describe('cache', () => {
       await new Promise((resolve) => setTimeout(resolve, 200));
 
       const result = getCache('short-ttl-key');
-      expect(result).toBeUndefined();
+      expect(result).toBeNull();
     });
 
     it('should maintain separate entries for different keys', () => {

@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { CountryAvailability, TitleDetails, Genre } from '@/app/types';
+import { ResultDetailsSkeleton } from './Skeleton';
 
 interface ResultDetailsProps {
   title: {
@@ -190,7 +192,7 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
   }, [id, onError, type]);
 
   if (status === 'loading') {
-    return <div className="p-8 text-center text-gray-400">Loading details...</div>;
+    return <ResultDetailsSkeleton />;
   }
 
   if (status === 'error') {
@@ -215,10 +217,13 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
     >
       <div className="flex flex-col md:flex-row gap-4 sm:gap-5 md:gap-6">
         <div className="md:w-1/3">
-          <img
+          <Image
             src={details.posterUrl}
             alt={`Poster for ${details.title}`}
-            className="rounded-lg w-full"
+            width={300}
+            height={450}
+            className="rounded-lg w-full h-auto"
+            priority
           />
         </div>
         <div className="md:w-2/3">
