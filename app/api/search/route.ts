@@ -6,6 +6,7 @@ import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { NormalizedSearchResult } from '@/app/types';
 import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
+import { logger } from '@/app/utils/logger';
 
 /**
  * API route handler for searching movies and TV shows.
@@ -303,7 +304,7 @@ export async function GET(req: NextRequest) {
         { status: mapTmdbErrorToHttpStatus(error) }
       );
     }
-    console.error('Search API Error:', error);
+    logger.error('Search API Error', { error });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

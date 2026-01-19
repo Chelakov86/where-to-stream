@@ -10,6 +10,7 @@ import { TmdbError } from '@/app/tmdbClient';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
+import { logger } from '@/app/utils/logger';
 
 /**
  * API route handler for fetching detailed information about a specific movie or TV show.
@@ -165,11 +166,11 @@ export async function GET(
         { status: mapTmdbErrorToHttpStatus(error) }
       );
     } else if (error instanceof Error) {
-      console.error(`API Error for /api/title/${type}/${id}:`, error);
+      logger.error(`API Error for /api/title/${type}/${id}`, { error: error.message });
       return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
     // Fallback for unknown errors
-    console.error(`Unknown error for /api/title/${type}/${id}:`, error);
+    logger.error(`Unknown error for /api/title/${type}/${id}`, { error });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
