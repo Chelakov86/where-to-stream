@@ -19,7 +19,7 @@ describe('mapAvailability', () => {
     expect(result.preferredCountries).toHaveLength(PREFERRED_COUNTRIES.length);
     result.preferredCountries.forEach((c) => {
       expect(c.hasNetflix).toBe(false);
-      expect(c.freeOrAdsProviders).toEqual([]);
+      expect(c.allStreamingProviders).toEqual([]);
       expect(c.watchLink).toBeUndefined();
     });
     expect(result.otherCountries).toEqual([]);
@@ -61,27 +61,27 @@ describe('mapAvailability', () => {
     expect(usData).toBeDefined();
     expect(usData?.countryName).toBe('United States');
     expect(usData?.hasNetflix).toBe(true);
-    // Netflix should not appear in freeOrAdsProviders since it has its own column
-    expect(usData?.freeOrAdsProviders).toEqual([]);
+    // Netflix should now appear in allStreamingProviders
+    expect(usData?.allStreamingProviders).toEqual(['Netflix']);
     expect(usData?.watchLink).toContain('locale=US');
 
     const gbData = result.preferredCountries.find((c) => c.countryCode === 'GB');
     expect(gbData).toBeDefined();
     expect(gbData?.countryName).toBe('United Kingdom');
     expect(gbData?.hasNetflix).toBe(false);
-    expect(gbData?.freeOrAdsProviders).toEqual([]);
+    expect(gbData?.allStreamingProviders).toEqual([]);
 
     const deData = result.preferredCountries.find((c) => c.countryCode === 'DE');
     expect(deData).toBeDefined();
     expect(deData?.countryName).toBe('Germany');
     expect(deData?.hasNetflix).toBe(false);
-    expect(deData?.freeOrAdsProviders).toEqual([]);
+    expect(deData?.allStreamingProviders).toEqual([]);
 
     const caData = result.preferredCountries.find((c) => c.countryCode === 'CA');
     expect(caData).toBeDefined();
     expect(caData?.countryName).toBe('Canada');
     expect(caData?.hasNetflix).toBe(false);
-    expect(caData?.freeOrAdsProviders).toEqual([]);
+    expect(caData?.allStreamingProviders).toEqual([]);
 
     // Check other countries
     expect(result.otherCountries).toHaveLength(1);
@@ -89,8 +89,8 @@ describe('mapAvailability', () => {
     expect(frData.countryCode).toBe('FR');
     expect(frData.countryName).toBe('France');
     expect(frData.hasNetflix).toBe(true);
-    // Netflix should not appear in freeOrAdsProviders since it has its own column
-    expect(frData.freeOrAdsProviders).toEqual([]);
+    // Netflix should now appear in allStreamingProviders
+    expect(frData.allStreamingProviders).toEqual(['Netflix']);
   });
 
   it('should handle only non-preferred countries having availability', () => {
@@ -114,7 +114,7 @@ describe('mapAvailability', () => {
     expect(result.preferredCountries).toHaveLength(4);
     result.preferredCountries.forEach((c) => {
       expect(c.hasNetflix).toBe(false);
-      expect(c.freeOrAdsProviders).toEqual([]);
+      expect(c.allStreamingProviders).toEqual([]);
     });
 
     expect(result.otherCountries).toHaveLength(1);
@@ -138,7 +138,7 @@ describe('mapAvailability', () => {
 
     const result = mapAvailability(tmdbProviders);
     const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
-    expect(usData?.freeOrAdsProviders).toEqual(['Freevee', 'Tubi TV']);
+    expect(usData?.allStreamingProviders).toEqual(['Freevee', 'Tubi TV']);
   });
 
   it('should not list other countries if they have no providers', () => {
@@ -155,7 +155,7 @@ describe('mapAvailability', () => {
     expect(result.otherCountries).toHaveLength(0);
   });
 
-  it('should exclude Netflix Standard with Ads from freeOrAdsProviders', () => {
+  it('should include all streaming providers including Netflix variants', () => {
     const tmdbProviders: TmdbWatchProvidersResponse = {
       id: 1,
       results: {
@@ -179,8 +179,8 @@ describe('mapAvailability', () => {
     const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
     expect(usData).toBeDefined();
     expect(usData?.hasNetflix).toBe(true);
-    // Both Netflix and Netflix Standard with Ads should be excluded from freeOrAdsProviders
-    expect(usData?.freeOrAdsProviders).toEqual(['Tubi TV']);
+    // All streaming providers should be included, sorted alphabetically
+    expect(usData?.allStreamingProviders).toEqual(['Netflix', 'Netflix Standard with Ads', 'Tubi TV']);
   });
 
   it('should detect Netflix Standard with Ads as Netflix availability', () => {
@@ -205,8 +205,8 @@ describe('mapAvailability', () => {
     const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
     expect(usData).toBeDefined();
     expect(usData?.hasNetflix).toBe(true);
-    // Netflix Standard with Ads should be excluded from freeOrAdsProviders
-    expect(usData?.freeOrAdsProviders).toEqual([]);
+    // Netflix Standard with Ads should be included in allStreamingProviders
+    expect(usData?.allStreamingProviders).toEqual(['Netflix Standard with Ads']);
   });
 
   it('should not list other countries if they only have buy/rent providers (no Netflix or free services)', () => {
