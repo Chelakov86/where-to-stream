@@ -18,8 +18,8 @@ describe('mapAvailability', () => {
 
     expect(result.preferredCountries).toHaveLength(PREFERRED_COUNTRIES.length);
     result.preferredCountries.forEach((c) => {
-      expect(c.hasNetflix).toBe(false);
-      expect(c.freeOrAdsProviders).toEqual([]);
+      expect(c.freeProviders).toEqual([]);
+      expect(c.paidProviders).toEqual([]);
       expect(c.watchLink).toBeUndefined();
     });
     expect(result.otherCountries).toEqual([]);
@@ -60,37 +60,37 @@ describe('mapAvailability', () => {
     const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
     expect(usData).toBeDefined();
     expect(usData?.countryName).toBe('United States');
-    expect(usData?.hasNetflix).toBe(true);
-    // Netflix should not appear in freeOrAdsProviders since it has its own column
-    expect(usData?.freeOrAdsProviders).toEqual([]);
+    expect(usData?.freeProviders).toEqual([]);
+    // Netflix is a paid service (flatrate category)
+    expect(usData?.paidProviders).toEqual(['Netflix']);
     expect(usData?.watchLink).toContain('locale=US');
 
     const gbData = result.preferredCountries.find((c) => c.countryCode === 'GB');
     expect(gbData).toBeDefined();
     expect(gbData?.countryName).toBe('United Kingdom');
-    expect(gbData?.hasNetflix).toBe(false);
-    expect(gbData?.freeOrAdsProviders).toEqual([]);
+    expect(gbData?.freeProviders).toEqual([]);
+    expect(gbData?.paidProviders).toEqual([]);
 
     const deData = result.preferredCountries.find((c) => c.countryCode === 'DE');
     expect(deData).toBeDefined();
     expect(deData?.countryName).toBe('Germany');
-    expect(deData?.hasNetflix).toBe(false);
-    expect(deData?.freeOrAdsProviders).toEqual([]);
+    expect(deData?.freeProviders).toEqual([]);
+    expect(deData?.paidProviders).toEqual([]);
 
     const caData = result.preferredCountries.find((c) => c.countryCode === 'CA');
     expect(caData).toBeDefined();
     expect(caData?.countryName).toBe('Canada');
-    expect(caData?.hasNetflix).toBe(false);
-    expect(caData?.freeOrAdsProviders).toEqual([]);
+    expect(caData?.freeProviders).toEqual([]);
+    expect(caData?.paidProviders).toEqual([]);
 
     // Check other countries
     expect(result.otherCountries).toHaveLength(1);
     const frData = result.otherCountries[0];
     expect(frData.countryCode).toBe('FR');
     expect(frData.countryName).toBe('France');
-    expect(frData.hasNetflix).toBe(true);
-    // Netflix should not appear in freeOrAdsProviders since it has its own column
-    expect(frData.freeOrAdsProviders).toEqual([]);
+    expect(frData.freeProviders).toEqual([]);
+    // Netflix is a paid service (flatrate category)
+    expect(frData.paidProviders).toEqual(['Netflix']);
   });
 
   it('should handle only non-preferred countries having availability', () => {
@@ -113,23 +113,31 @@ describe('mapAvailability', () => {
 
     expect(result.preferredCountries).toHaveLength(4);
     result.preferredCountries.forEach((c) => {
-      expect(c.hasNetflix).toBe(false);
-      expect(c.freeOrAdsProviders).toEqual([]);
+      expect(c.freeProviders).toEqual([]);
+      expect(c.paidProviders).toEqual([]);
     });
 
     expect(result.otherCountries).toHaveLength(1);
     expect(result.otherCountries[0].countryCode).toBe('JP');
     expect(result.otherCountries[0].countryName).toBe('Japan');
+    expect(result.otherCountries[0].freeProviders).toEqual([]);
+    expect(result.otherCountries[0].paidProviders).toEqual(['Netflix']);
   });
 
-  it('should correctly identify unique and sorted free/ads providers', () => {
+  it('should correctly categorize free and paid providers', () => {
     const tmdbProviders: TmdbWatchProvidersResponse = {
       id: 1,
       results: {
         US: {
           link: 'https://www.themoviedb.org/movie/1/watch?locale=US',
           flatrate: [
+            { provider_id: 8, provider_name: 'Netflix', logo_path: '', display_priority: 0 },
+            { provider_id: 337, provider_name: 'Disney Plus', logo_path: '', display_priority: 0 },
+          ],
+          ads: [
             { provider_id: 2, provider_name: 'Tubi TV', logo_path: '', display_priority: 0 },
+          ],
+          free: [
             { provider_id: 1, provider_name: 'Freevee', logo_path: '', display_priority: 0 },
           ],
         },
@@ -138,7 +146,10 @@ describe('mapAvailability', () => {
 
     const result = mapAvailability(tmdbProviders);
     const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
-    expect(usData?.freeOrAdsProviders).toEqual(['Freevee', 'Tubi TV']);
+    // Free providers come from ads and free categories, sorted alphabetically
+    expect(usData?.freeProviders).toEqual(['Freevee', 'Tubi TV']);
+    // Paid providers come from flatrate category, sorted alphabetically
+    expect(usData?.paidProviders).toEqual(['Disney Plus', 'Netflix']);
   });
 
   it('should not list other countries if they have no providers', () => {
@@ -155,7 +166,7 @@ describe('mapAvailability', () => {
     expect(result.otherCountries).toHaveLength(0);
   });
 
-  it('should exclude Netflix Standard with Ads from freeOrAdsProviders', () => {
+  it('should include all provider variants in paid providers', () => {
     const tmdbProviders: TmdbWatchProvidersResponse = {
       id: 1,
       results: {
@@ -169,7 +180,7 @@ describe('mapAvailability', () => {
               logo_path: '',
               display_priority: 0,
             },
-            { provider_id: 2, provider_name: 'Tubi TV', logo_path: '', display_priority: 0 },
+            { provider_id: 337, provider_name: 'Disney Plus', logo_path: '', display_priority: 0 },
           ],
         },
       },
@@ -178,12 +189,12 @@ describe('mapAvailability', () => {
     const result = mapAvailability(tmdbProviders);
     const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
     expect(usData).toBeDefined();
-    expect(usData?.hasNetflix).toBe(true);
-    // Both Netflix and Netflix Standard with Ads should be excluded from freeOrAdsProviders
-    expect(usData?.freeOrAdsProviders).toEqual(['Tubi TV']);
+    expect(usData?.freeProviders).toEqual([]);
+    // All paid providers should be included, sorted alphabetically
+    expect(usData?.paidProviders).toEqual(['Disney Plus', 'Netflix', 'Netflix Standard with Ads']);
   });
 
-  it('should detect Netflix Standard with Ads as Netflix availability', () => {
+  it('should include Netflix Standard with Ads in paid providers', () => {
     const tmdbProviders: TmdbWatchProvidersResponse = {
       id: 1,
       results: {
@@ -204,12 +215,12 @@ describe('mapAvailability', () => {
     const result = mapAvailability(tmdbProviders);
     const usData = result.preferredCountries.find((c) => c.countryCode === 'US');
     expect(usData).toBeDefined();
-    expect(usData?.hasNetflix).toBe(true);
-    // Netflix Standard with Ads should be excluded from freeOrAdsProviders
-    expect(usData?.freeOrAdsProviders).toEqual([]);
+    expect(usData?.freeProviders).toEqual([]);
+    // Netflix Standard with Ads should be included in paidProviders
+    expect(usData?.paidProviders).toEqual(['Netflix Standard with Ads']);
   });
 
-  it('should not list other countries if they only have buy/rent providers (no Netflix or free services)', () => {
+  it('should not list other countries if they only have buy/rent providers (no streaming services)', () => {
     const tmdbProviders: TmdbWatchProvidersResponse = {
       id: 1,
       results: {
@@ -219,30 +230,38 @@ describe('mapAvailability', () => {
           rent: [
             { provider_id: 3, provider_name: 'Google Play', logo_path: '', display_priority: 0 },
           ],
-          // No flatrate (Netflix or free services)
+          // No flatrate, ads, or free providers
         },
         ES: {
           link: 'https://www.themoviedb.org/movie/1/watch?locale=ES',
           flatrate: [
             { provider_id: 337, provider_name: 'Disney Plus', logo_path: '', display_priority: 0 },
           ],
-          // Has flatrate provider (free service), should be included
+          // Has flatrate provider (paid service), should be included
         },
         BR: {
           link: 'https://www.themoviedb.org/movie/1/watch?locale=BR',
-          flatrate: [
-            { provider_id: 8, provider_name: 'Netflix', logo_path: '', display_priority: 0 },
+          ads: [
+            { provider_id: 613, provider_name: 'Pluto TV', logo_path: '', display_priority: 0 },
           ],
-          // Has Netflix, should be included
+          // Has free ad-supported service, should be included
         },
       },
     };
     const result = mapAvailability(tmdbProviders);
-    // Should only include ES (has free service) and BR (has Netflix), not IT (only buy/rent)
+    // Should only include ES (has paid service) and BR (has free service), not IT (only buy/rent)
     expect(result.otherCountries).toHaveLength(2);
     const countryCodes = result.otherCountries.map((c) => c.countryCode);
     expect(countryCodes).toContain('ES');
     expect(countryCodes).toContain('BR');
     expect(countryCodes).not.toContain('IT');
+
+    const esData = result.otherCountries.find((c) => c.countryCode === 'ES');
+    expect(esData?.freeProviders).toEqual([]);
+    expect(esData?.paidProviders).toEqual(['Disney Plus']);
+
+    const brData = result.otherCountries.find((c) => c.countryCode === 'BR');
+    expect(brData?.freeProviders).toEqual(['Pluto TV']);
+    expect(brData?.paidProviders).toEqual([]);
   });
 });

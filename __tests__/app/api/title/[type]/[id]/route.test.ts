@@ -106,8 +106,8 @@ describe('GET /api/title/[type]/[id]', () => {
         {
           countryCode: 'US',
           countryName: 'United States',
-          hasNetflix: true,
-          freeOrAdsProviders: ['Netflix'],
+          freeProviders: [],
+          paidProviders: ['Netflix'],
           watchLink: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
         },
       ],
@@ -166,8 +166,8 @@ describe('GET /api/title/[type]/[id]', () => {
           {
             countryCode: 'US',
             countryName: 'United States',
-            hasNetflix: true,
-            freeOrAdsProviders: ['Netflix'],
+            freeProviders: [],
+            paidProviders: ['Netflix'],
             watchLink: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
           },
         ],
@@ -182,8 +182,8 @@ describe('GET /api/title/[type]/[id]', () => {
         {
           countryCode: 'US',
           countryName: 'United States',
-          hasNetflix: true,
-          freeOrAdsProviders: ['HBO Max'],
+          freeProviders: [],
+          paidProviders: ['HBO Max'],
           watchLink: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
         },
       ],
@@ -229,8 +229,8 @@ describe('GET /api/title/[type]/[id]', () => {
           {
             countryCode: 'US',
             countryName: 'United States',
-            hasNetflix: true,
-            freeOrAdsProviders: ['HBO Max'],
+            freeProviders: [],
+            paidProviders: ['HBO Max'],
             watchLink: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
           },
         ],

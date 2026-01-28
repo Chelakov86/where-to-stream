@@ -25,8 +25,8 @@ export const mockMovie: TitleDetails = {
       {
         countryCode: 'US',
         countryName: 'United States',
-        hasNetflix: true,
-        freeOrAdsProviders: ['Hulu', 'Max'],
+        freeProviders: ['Pluto TV', 'Tubi'],
+        paidProviders: ['Hulu', 'Max', 'Netflix'],
         watchLink: 'https://example.com/watch/movie/us',
       },
     ],
@@ -34,8 +34,8 @@ export const mockMovie: TitleDetails = {
       {
         countryCode: 'GB',
         countryName: 'United Kingdom',
-        hasNetflix: false,
-        freeOrAdsProviders: [],
+        freeProviders: [],
+        paidProviders: [],
         watchLink: 'https://example.com/watch/movie/gb',
       },
     ],
@@ -60,8 +60,8 @@ export const mockTv: TitleDetails = {
       {
         countryCode: 'CA',
         countryName: 'Canada',
-        hasNetflix: false,
-        freeOrAdsProviders: ['Crave'],
+        freeProviders: [],
+        paidProviders: ['Crave'],
         watchLink: 'https://example.com/watch/tv/ca',
       },
     ],

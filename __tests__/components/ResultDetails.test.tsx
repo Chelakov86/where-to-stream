@@ -70,8 +70,9 @@ describe('ResultDetails', () => {
       'href',
       mockMovie.availability.preferredCountries[0].watchLink
     );
-    expect(within(preferredTable).getByText('Yes')).toBeInTheDocument();
-    expect(within(preferredTable).getByText('Hulu, Max')).toBeInTheDocument();
+    // Check for free and paid providers
+    expect(within(preferredTable).getByText('Pluto TV, Tubi')).toBeInTheDocument();
+    expect(within(preferredTable).getByText('Hulu, Max, Netflix')).toBeInTheDocument();
 
     const otherTable = await screen.findByRole('table', { name: 'Other Countries' });
     const otherLink = within(otherTable).getByRole('link', { name: 'Watch' });
@@ -91,7 +92,8 @@ describe('ResultDetails', () => {
     expect(screen.getByText('45m')).toBeInTheDocument();
 
     expect((await screen.findAllByText('🇨🇦 Canada')).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('No')[0]).toBeInTheDocument(); // For Netflix
+    // Canada has no free providers (shows "-") and Crave as paid provider
+    expect(screen.getAllByText('-').length).toBeGreaterThan(0); // For empty free providers
     expect(screen.getAllByText('Crave').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Watch' })).toHaveAttribute(
       'href',

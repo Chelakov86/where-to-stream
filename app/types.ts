@@ -39,8 +39,8 @@ export interface Genre {
 export interface CountryAvailability {
   countryCode: string;
   countryName: string;
-  hasNetflix: boolean;
-  freeOrAdsProviders: string[];
+  freeProviders: string[];
+  paidProviders: string[];
   watchLink?: string;
 }
 

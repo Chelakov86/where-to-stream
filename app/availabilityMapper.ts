@@ -2,28 +2,23 @@
  * Availability Mapper Module
  *
  * Transforms TMDB watch provider data into a structured availability model
- * that groups countries by preference and normalizes provider information.
+ * that groups countries by preference and categorizes providers by type.
  *
  * Key Features:
  * - Groups countries into "preferred" (DE, GB, US, CA) and "other" categories
- * - Detects Netflix availability by provider name matching
- * - Extracts free/ad-supported providers from flatrate providers
+ * - Separates providers into free (ads, free) and paid (flatrate) categories
  * - Maps country codes to full country names with fallback to code
  * - Always includes preferred countries in results (even if no providers)
  *
  * Assumptions:
- * - Netflix detection: Uses provider name matching ("Netflix"). A more robust
- *   solution could use TMDB provider IDs (e.g., 8, 1773) but name matching
- *   is simpler and works for most cases.
+ * - Free providers: Includes providers from `ads` and `free` categories (ad-supported and free services)
+ * - Paid providers: Includes providers from `flatrate` category (subscription services like Netflix, Disney+, etc.)
  * - Preferred countries order: Fixed order [DE, GB, US, CA] as defined in config.
  *   This order is preserved in the output.
  * - Country name mapping: Uses ISO 3166-1 alpha-2 codes. If a code is not found
  *   in the mapping, the code itself is used as the display name.
- * - Free/ad-supported providers: Currently extracted from the `flatrate` category
- *   only. The `ads` and `free` categories from TMDB are not included in the
- *   current implementation.
- * - Other countries: Only included if they have at least one provider (Netflix
- *   or free/ad-supported). Countries with only buy/rent options are excluded.
+ * - Other countries: Only included if they have at least one streaming service.
+ *   Countries with only buy/rent options are excluded.
  */
 
 import { PREFERRED_COUNTRIES } from './config';
@@ -35,8 +30,8 @@ import { getCountryName } from './utils/countries';
 export interface CountryAvailability {
   countryCode: string;
   countryName: string;
-  hasNetflix: boolean;
-  freeOrAdsProviders: string[];
+  freeProviders: string[];
+  paidProviders: string[];
   watchLink?: string;
 }
 
@@ -45,47 +40,37 @@ export interface AvailabilityResult {
   otherCountries: CountryAvailability[];
 }
 
-// --- Constants ---
-
-/**
- * Netflix provider names for detection.
- * Note: A more robust solution could use TMDB provider IDs (e.g., 8, 1773),
- * but name matching is simpler and works for most cases.
- */
-const NETFLIX_PROVIDER_NAME = 'Netflix';
-const NETFLIX_ADS_PROVIDER_NAME = 'Netflix Standard with Ads';
-
 // --- Helper Functions ---
 
 /**
- * Checks if Netflix is available in the given provider list.
- * Uses provider name matching (case-sensitive).
- * Detects both "Netflix" and "Netflix Standard with Ads" as Netflix options.
+ * Extracts unique provider names from free provider categories (ads and free) and returns them sorted.
+ * Free providers include ad-supported services and completely free services.
  */
-const hasNetflix = (providers: TmdbWatchProviderInfo[] = []): boolean => {
-  return providers.some(
-    (p) =>
-      p.provider_name === NETFLIX_PROVIDER_NAME || p.provider_name === NETFLIX_ADS_PROVIDER_NAME
-  );
+const getFreeProviders = (
+  adsProviders: TmdbWatchProviderInfo[] = [],
+  freeProviders: TmdbWatchProviderInfo[] = []
+): string[] => {
+  const providers = new Set<string>();
+
+  // Combine ads and free categories
+  [...adsProviders, ...freeProviders].forEach((p) => {
+    providers.add(p.provider_name);
+  });
+
+  return Array.from(providers).sort();
 };
 
 /**
- * Extracts unique provider names from flatrate providers and returns them sorted.
- * This represents free/ad-supported streaming providers.
- * Note: Currently only uses flatrate category; ads and free categories are not included.
- * Excludes Netflix and Netflix Standard with Ads since they're shown in a dedicated column.
+ * Extracts unique provider names from paid provider categories (flatrate) and returns them sorted.
+ * Paid providers are subscription-based streaming services.
  */
-const getFreeOrAdsProviders = (flatrateProviders: TmdbWatchProviderInfo[] = []): string[] => {
+const getPaidProviders = (flatrateProviders: TmdbWatchProviderInfo[] = []): string[] => {
   const providers = new Set<string>();
+
   flatrateProviders.forEach((p) => {
-    // Exclude Netflix and Netflix Standard with Ads since they're shown in a dedicated column
-    if (
-      p.provider_name !== NETFLIX_PROVIDER_NAME &&
-      p.provider_name !== NETFLIX_ADS_PROVIDER_NAME
-    ) {
-      providers.add(p.provider_name);
-    }
+    providers.add(p.provider_name);
   });
+
   return Array.from(providers).sort();
 };
 
@@ -96,7 +81,7 @@ const getFreeOrAdsProviders = (flatrateProviders: TmdbWatchProviderInfo[] = []):
  *
  * Processing steps:
  * 1. Process preferred countries (DE, GB, US, CA) in order - always included even if no providers
- * 2. Process other countries - only included if they have Netflix or free/ad-supported providers
+ * 2. Process other countries - only included if they have streaming services (flatrate, ads, or free)
  * 3. Sort other countries alphabetically by country name
  *
  * @param tmdbProviders - Raw watch providers response from TMDB API
@@ -113,13 +98,14 @@ export const mapAvailability = (tmdbProviders: TmdbWatchProvidersResponse): Avai
   for (const countryCode of PREFERRED_COUNTRIES) {
     const countryData = tmdbResults[countryCode];
     const flatrateProviders = countryData?.flatrate || [];
-    const allProviders = [...flatrateProviders];
+    const adsProviders = countryData?.ads || [];
+    const freeProviders = countryData?.free || [];
 
     preferredCountries.push({
       countryCode,
       countryName: getCountryName(countryCode),
-      hasNetflix: hasNetflix(allProviders),
-      freeOrAdsProviders: getFreeOrAdsProviders(flatrateProviders),
+      freeProviders: getFreeProviders(adsProviders, freeProviders),
+      paidProviders: getPaidProviders(flatrateProviders),
       watchLink: countryData?.link,
     });
     processedPreferred.add(countryCode);
@@ -133,23 +119,19 @@ export const mapAvailability = (tmdbProviders: TmdbWatchProvidersResponse): Avai
 
     const countryData = tmdbResults[countryCode];
     const flatrateProviders = countryData?.flatrate || [];
-    // Check all provider categories for Netflix detection
-    const allProviders = [
-      ...flatrateProviders,
-      ...(countryData?.buy || []),
-      ...(countryData?.rent || []),
-    ];
+    const adsProviders = countryData?.ads || [];
+    const freeProviders = countryData?.free || [];
 
-    // Only include countries with Netflix or free/ad-supported services
-    const hasNetflixAvailability = hasNetflix(allProviders);
-    const freeProviders = getFreeOrAdsProviders(flatrateProviders);
+    // Only include countries with streaming services (flatrate, ads, or free)
+    const free = getFreeProviders(adsProviders, freeProviders);
+    const paid = getPaidProviders(flatrateProviders);
 
-    if (hasNetflixAvailability || freeProviders.length > 0) {
+    if (free.length > 0 || paid.length > 0) {
       otherCountries.push({
         countryCode,
         countryName: getCountryName(countryCode),
-        hasNetflix: hasNetflixAvailability,
-        freeOrAdsProviders: freeProviders,
+        freeProviders: free,
+        paidProviders: paid,
         watchLink: countryData?.link,
       });
     }

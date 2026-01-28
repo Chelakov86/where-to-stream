@@ -28,7 +28,9 @@ import { logger } from '@/app/utils/logger';
  * Returns a normalized title object with:
  * - Basic metadata (id, type, title, originalTitle, year, genres, overview, rating, posterUrl, runtime)
  * - Availability information grouped by preferred countries (DE, GB, US, CA) and other countries
- *   - Each country entry includes: countryCode, countryName, hasNetflix, freeOrAdsProviders, watchLink
+ *   - Each country entry includes: countryCode, countryName, freeProviders, paidProviders, watchLink
+ *   - Free providers: Ad-supported and free services
+ *   - Paid providers: Subscription-based services
  *
  * The endpoint fetches details and watch providers in parallel for performance.
  */
@@ -147,7 +149,7 @@ export async function GET(
     }
 
     // Map TMDB watch providers to our availability model
-    // This groups countries, detects Netflix availability, and extracts free/ad-supported providers
+    // This groups countries and categorizes providers into free (ads, free) and paid (flatrate)
     normalizedTitle.availability = mapAvailability(watchProvidersResponse);
 
     // Add rate limit headers to successful response

@@ -67,15 +67,19 @@ const AvailabilityTable = ({
               )}
             </div>
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Netflix:</span>
-                <span className="text-white">{country.hasNetflix ? 'Yes' : 'No'}</span>
-              </div>
-              {country.freeOrAdsProviders.length > 0 && (
+              {country.freeProviders.length > 0 && (
                 <div className="flex justify-between gap-3">
-                  <span className="text-gray-400 flex-shrink-0">Other Services:</span>
+                  <span className="text-gray-400 flex-shrink-0">Free:</span>
                   <span className="text-white text-right">
-                    {country.freeOrAdsProviders.join(', ')}
+                    {country.freeProviders.join(', ')}
+                  </span>
+                </div>
+              )}
+              {country.paidProviders.length > 0 && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-400 flex-shrink-0">Paid:</span>
+                  <span className="text-white text-right">
+                    {country.paidProviders.join(', ')}
                   </span>
                 </div>
               )}
@@ -91,10 +95,10 @@ const AvailabilityTable = ({
         style={{ tableLayout: 'fixed' }}
       >
         <colgroup>
-          <col style={{ width: '25%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '45%' }} />
-          <col style={{ width: '15%' }} />
+          <col style={{ width: '20%' }} />
+          <col style={{ width: '35%' }} />
+          <col style={{ width: '35%' }} />
+          <col style={{ width: '10%' }} />
         </colgroup>
         <thead>
           <tr className="bg-gray-900">
@@ -106,12 +110,12 @@ const AvailabilityTable = ({
             <th
               className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
             >
-              Netflix
+              Free Providers
             </th>
             <th
               className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
             >
-              Other Streaming Services
+              Paid Providers
             </th>
             <th
               className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
@@ -126,14 +130,17 @@ const AvailabilityTable = ({
               <td className="py-2 px-4 border-b border-gray-600 truncate">
                 {countryFlagMapping[country.countryCode] || ''} {country.countryName}
               </td>
-              <td className="py-2 px-4 border-b border-gray-600">
-                {country.hasNetflix ? 'Yes' : 'No'}
+              <td
+                className="py-2 px-4 border-b border-gray-600 truncate"
+                title={country.freeProviders.join(', ')}
+              >
+                {country.freeProviders.length > 0 ? country.freeProviders.join(', ') : '-'}
               </td>
               <td
                 className="py-2 px-4 border-b border-gray-600 truncate"
-                title={country.freeOrAdsProviders.join(', ')}
+                title={country.paidProviders.join(', ')}
               >
-                {country.freeOrAdsProviders.join(', ')}
+                {country.paidProviders.length > 0 ? country.paidProviders.join(', ') : '-'}
               </td>
               <td className="py-2 px-4 border-b border-gray-600">
                 {country.watchLink && (
