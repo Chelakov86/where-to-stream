@@ -49,7 +49,10 @@ const AvailabilityTable = ({
           >
             <div className="flex items-center justify-between mb-2">
               <span className="font-semibold text-white">
-                {getCountryFlag(country.countryCode)} {country.countryName}
+                <span className="inline-block mr-1" style={{ fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif' }}>
+                  {getCountryFlag(country.countryCode)}
+                </span>
+                {country.countryName}
               </span>
               {country.watchLink && (
                 <a
@@ -120,7 +123,10 @@ const AvailabilityTable = ({
           {countries.map((country) => (
             <tr key={country.countryCode} className="hover:bg-gray-700">
               <td className="py-2 px-4 border-b border-gray-600 truncate">
-                {getCountryFlag(country.countryCode)} {country.countryName}
+                <span className="inline-block mr-1" style={{ fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif' }}>
+                  {getCountryFlag(country.countryCode)}
+                </span>
+                {country.countryName}
               </td>
               <td
                 className="py-2 px-4 border-b border-gray-600"

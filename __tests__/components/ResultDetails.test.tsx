@@ -91,7 +91,9 @@ describe('ResultDetails', () => {
     expect(await screen.findByTestId('rating')).toHaveTextContent('Rating: 9.0/10');
     expect(screen.getByText('45m')).toBeInTheDocument();
 
-    expect((await screen.findAllByText('🇨🇦 Canada')).length).toBeGreaterThan(0);
+    // Check for Canada - emoji and name may be in separate elements
+    expect((await screen.findAllByText(/Canada/)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('🇨🇦')).length).toBeGreaterThan(0);
     // Canada has no free providers (shows "-") and Crave as paid provider
     expect(screen.getAllByText('-').length).toBeGreaterThan(0); // For empty free providers
     expect(screen.getAllByText('Crave').length).toBeGreaterThan(0);
