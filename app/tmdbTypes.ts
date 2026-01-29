@@ -112,6 +112,8 @@ export interface TmdbCountryWatchProviders {
   flatrate?: TmdbWatchProviderInfo[];
   rent?: TmdbWatchProviderInfo[];
   buy?: TmdbWatchProviderInfo[];
+  ads?: TmdbWatchProviderInfo[];
+  free?: TmdbWatchProviderInfo[];
 }
 
 export interface TmdbWatchProvidersResponse {

@@ -12,15 +12,15 @@ The WhereToStream application has **basic responsive design implementation** but
 
 ### Overall Assessment
 
-| Category | Status | Grade |
-|----------|--------|-------|
-| Responsive Grid Layouts | ✅ Partial | B |
-| Responsive Typography | ❌ Missing | F |
-| Responsive Spacing | ❌ Missing | F |
-| Mobile-First Approach | ⚠️ Inconsistent | C |
-| Touch-Friendly UI | ⚠️ Needs Work | C |
-| Breakpoint Coverage | ⚠️ Limited | D |
-| Table Responsiveness | ❌ Missing | F |
+| Category                | Status          | Grade |
+| ----------------------- | --------------- | ----- |
+| Responsive Grid Layouts | ✅ Partial      | B     |
+| Responsive Typography   | ❌ Missing      | F     |
+| Responsive Spacing      | ❌ Missing      | F     |
+| Mobile-First Approach   | ⚠️ Inconsistent | C     |
+| Touch-Friendly UI       | ⚠️ Needs Work   | C     |
+| Breakpoint Coverage     | ⚠️ Limited      | D     |
+| Table Responsiveness    | ❌ Missing      | F     |
 
 **Key Finding:** Only `md:` (768px) and `lg:` (1024px) breakpoints are used. The `sm:` (640px), `xl:` (1280px), and `2xl:` (1536px) breakpoints are completely unused.
 
@@ -33,18 +33,18 @@ The WhereToStream application has **basic responsive design implementation** but
 **File:** `app/components/ResultItem.tsx:32`
 
 **Current Implementation:**
+
 ```tsx
 <article className="bg-gray-800 rounded-lg shadow-md p-4 flex space-x-4">
   <div className="flex-shrink-0">
-    <Image width={100} height={150} />  {/* 100px poster */}
+    <Image width={100} height={150} /> {/* 100px poster */}
   </div>
-  <div className="flex-grow">
-    {/* Content cramped in remaining space */}
-  </div>
+  <div className="flex-grow">{/* Content cramped in remaining space */}</div>
 </article>
 ```
 
 **Problem:**
+
 - On 320px phones: 100px poster + 16px padding + 16px gap = **~180px for all content**
 - Title, year, type badge, genres, rating, and button all squeezed into tiny space
 - Text wrapping causes excessive vertical height
@@ -53,22 +53,18 @@ The WhereToStream application has **basic responsive design implementation** but
 **Impact:** Users on mobile devices experience severely cramped, hard-to-read cards
 
 **Recommended Fix:**
+
 ```tsx
 <article className="bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4">
   <div className="flex-shrink-0 mx-auto sm:mx-0">
-    <Image
-      width={100}
-      height={150}
-      className="w-20 sm:w-24 md:w-[100px] h-auto"
-    />
+    <Image width={100} height={150} className="w-20 sm:w-24 md:w-[100px] h-auto" />
   </div>
-  <div className="flex-grow">
-    {/* Content now has full width on mobile */}
-  </div>
+  <div className="flex-grow">{/* Content now has full width on mobile */}</div>
 </article>
 ```
 
 **Benefits:**
+
 - Mobile: Poster centered above content (full width available)
 - Tablet/Desktop: Horizontal layout as before
 - Responsive padding and gap sizing
@@ -80,19 +76,21 @@ The WhereToStream application has **basic responsive design implementation** but
 **File:** `app/components/ResultDetails.tsx:44-109`
 
 **Current Implementation:**
+
 ```tsx
 <table className="w-full bg-gray-800 border border-gray-700 table-fixed">
   <colgroup>
-    <col style={{ width: '25%' }} />  {/* 80px on 320px screen */}
-    <col style={{ width: '15%' }} />  {/* 48px */}
-    <col style={{ width: '45%' }} />  {/* 144px */}
-    <col style={{ width: '15%' }} />  {/* 48px */}
+    <col style={{ width: '25%' }} /> {/* 80px on 320px screen */}
+    <col style={{ width: '15%' }} /> {/* 48px */}
+    <col style={{ width: '45%' }} /> {/* 144px */}
+    <col style={{ width: '15%' }} /> {/* 48px */}
   </colgroup>
   {/* Table content */}
 </table>
 ```
 
 **Problem:**
+
 - Fixed column widths create horizontal scrolling on mobile
 - "Other Streaming Services" column (144px) truncates text
 - Table headers too cramped for touch interaction
@@ -103,7 +101,9 @@ The WhereToStream application has **basic responsive design implementation** but
 **Recommended Fix:** Convert to card-based layout on mobile
 
 ```tsx
-{/* Mobile: Card layout */}
+{
+  /* Mobile: Card layout */
+}
 <div className="block md:hidden space-y-3">
   {countries.map((country) => (
     <div key={country.countryCode} className="bg-gray-700 p-4 rounded-lg">
@@ -131,15 +131,18 @@ The WhereToStream application has **basic responsive design implementation** but
       </div>
     </div>
   ))}
-</div>
+</div>;
 
-{/* Desktop: Table layout */}
+{
+  /* Desktop: Table layout */
+}
 <table className="hidden md:table w-full bg-gray-800 border border-gray-700">
   {/* Existing table implementation */}
-</table>
+</table>;
 ```
 
 **Benefits:**
+
 - Mobile: Easy-to-read card layout, no horizontal scrolling
 - Desktop: Traditional table view maintained
 - Better use of vertical space on mobile
@@ -153,17 +156,18 @@ The WhereToStream application has **basic responsive design implementation** but
 
 **Current Problems:**
 
-| Component | Location | Current Class | Mobile Issue | Recommended Fix |
-|-----------|----------|---------------|--------------|-----------------|
-| Page heading | page.tsx:115 | `text-4xl` | Too large (36px) | `text-2xl sm:text-3xl md:text-4xl` |
-| ResultDetails heading | ResultDetails.tsx:183 | `text-4xl` | Too large | `text-2xl sm:text-3xl md:text-4xl` |
-| Header logo | Header.tsx:7 | `text-2xl` | Could be responsive | `text-lg sm:text-xl md:text-2xl` |
-| ResultItem title | ResultItem.tsx:54 | `text-xl` | Acceptable | `text-lg sm:text-xl` |
-| Section headings | ResultDetails.tsx:203 | `text-2xl` | Could be smaller | `text-xl sm:text-2xl` |
+| Component             | Location              | Current Class | Mobile Issue        | Recommended Fix                    |
+| --------------------- | --------------------- | ------------- | ------------------- | ---------------------------------- |
+| Page heading          | page.tsx:115          | `text-4xl`    | Too large (36px)    | `text-2xl sm:text-3xl md:text-4xl` |
+| ResultDetails heading | ResultDetails.tsx:183 | `text-4xl`    | Too large           | `text-2xl sm:text-3xl md:text-4xl` |
+| Header logo           | Header.tsx:7          | `text-2xl`    | Could be responsive | `text-lg sm:text-xl md:text-2xl`   |
+| ResultItem title      | ResultItem.tsx:54     | `text-xl`     | Acceptable          | `text-lg sm:text-xl`               |
+| Section headings      | ResultDetails.tsx:203 | `text-2xl`    | Could be smaller    | `text-xl sm:text-2xl`              |
 
 **Impact:** Excessive font sizes waste screen space on mobile, forcing more scrolling
 
 **Recommended Approach:**
+
 - Use 3-tier responsive sizing: base (mobile), sm: (tablet), md: (desktop)
 - Reduce base sizes by 1-2 steps from current values
 - Maintain visual hierarchy across all screen sizes
@@ -178,17 +182,18 @@ The WhereToStream application has **basic responsive design implementation** but
 
 **Current Problems:**
 
-| Component | Location | Current Padding | Mobile Waste | Recommended Fix |
-|-----------|----------|-----------------|--------------|-----------------|
-| Page main | page.tsx:113 | `p-8` (32px) | 64px total width | `p-4 sm:p-6 md:p-8` |
-| Main layout | layout.tsx:22 | `px-4 py-8` | 64px vertical | `px-3 sm:px-4 py-6 sm:py-8` |
-| SearchForm | SearchForm.tsx:139 | `p-4` | Acceptable | `p-3 sm:p-4` |
-| ResultDetails section | ResultDetails.tsx:170 | `p-6` (24px) | 48px total | `p-4 sm:p-5 md:p-6` |
-| ResultItem | ResultItem.tsx:32 | `p-4` | Acceptable | `p-3 sm:p-4` |
+| Component             | Location              | Current Padding | Mobile Waste     | Recommended Fix             |
+| --------------------- | --------------------- | --------------- | ---------------- | --------------------------- |
+| Page main             | page.tsx:113          | `p-8` (32px)    | 64px total width | `p-4 sm:p-6 md:p-8`         |
+| Main layout           | layout.tsx:22         | `px-4 py-8`     | 64px vertical    | `px-3 sm:px-4 py-6 sm:py-8` |
+| SearchForm            | SearchForm.tsx:139    | `p-4`           | Acceptable       | `p-3 sm:p-4`                |
+| ResultDetails section | ResultDetails.tsx:170 | `p-6` (24px)    | 48px total       | `p-4 sm:p-5 md:p-6`         |
+| ResultItem            | ResultItem.tsx:32     | `p-4`           | Acceptable       | `p-3 sm:p-4`                |
 
 **Impact:** On 320px screen, p-8 padding consumes 64px (20% of screen width)
 
 **Example Fix for page.tsx:**
+
 ```tsx
 <main className="min-h-screen p-4 sm:p-6 md:p-8">
 ```
@@ -202,6 +207,7 @@ The WhereToStream application has **basic responsive design implementation** but
 **Problem:** No explicit viewport configuration in the HTML head
 
 **Current Implementation:**
+
 ```tsx
 export const metadata: Metadata = {
   title: 'WhereToStream',
@@ -210,6 +216,7 @@ export const metadata: Metadata = {
 ```
 
 **Recommended Fix:**
+
 ```tsx
 export const metadata: Metadata = {
   title: 'WhereToStream',
@@ -223,6 +230,7 @@ export const metadata: Metadata = {
 ```
 
 **Benefits:**
+
 - Ensures proper mobile rendering
 - Prevents unwanted zooming/scaling
 - Handles notched devices (iPhone X+) properly
@@ -234,21 +242,25 @@ export const metadata: Metadata = {
 **File:** `app/components/SearchForm.tsx:265`
 
 **Current Implementation:**
+
 ```tsx
 <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
 ```
 
 **Problem:**
+
 - 2 columns on mobile = ~140px per column (on 320px screen)
 - Checkbox + label + genre name cramped
 - Difficult to tap on small screens
 
 **Recommended Fix:**
+
 ```tsx
 <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
 ```
 
 **Benefits:**
+
 - Mobile: Full-width genre items (easy to read and tap)
 - Small tablets: 2 columns
 - Desktop: 4-6 columns as before
@@ -263,12 +275,12 @@ export const metadata: Metadata = {
 
 **Recommendations:**
 
-| Component | Current | Recommended |
-|-----------|---------|-------------|
-| ResultsList grid | `gap-4` | `gap-2 sm:gap-3 md:gap-4` |
-| ResultDetails flex | `gap-6` | `gap-4 sm:gap-5 md:gap-6` |
-| SearchForm filters | `gap-4` | `gap-3 sm:gap-4` |
-| ResultItem flex | `space-x-4` | Switch to `gap-3 sm:gap-4` |
+| Component          | Current     | Recommended                |
+| ------------------ | ----------- | -------------------------- |
+| ResultsList grid   | `gap-4`     | `gap-2 sm:gap-3 md:gap-4`  |
+| ResultDetails flex | `gap-6`     | `gap-4 sm:gap-5 md:gap-6`  |
+| SearchForm filters | `gap-4`     | `gap-3 sm:gap-4`           |
+| ResultItem flex    | `space-x-4` | Switch to `gap-3 sm:gap-4` |
 
 **Benefit:** Better space utilization on mobile devices
 
@@ -279,15 +291,17 @@ export const metadata: Metadata = {
 **File:** `app/components/AutocompleteList.tsx:105`
 
 **Current:**
+
 ```tsx
-className="... max-h-96 overflow-y-auto"
+className = '... max-h-96 overflow-y-auto';
 ```
 
-**Problem:** 384px (96 * 4) is excessive on mobile screens
+**Problem:** 384px (96 \* 4) is excessive on mobile screens
 
 **Recommended Fix:**
+
 ```tsx
-className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
+className = '... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto';
 ```
 
 ---
@@ -297,6 +311,7 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 **Issue:** Only `md:` and `lg:` breakpoints are used throughout the codebase
 
 **Missing Breakpoints:**
+
 - `sm: 640px` ❌ - Important for larger phones and small tablets
 - `xl: 1280px` ❌ - Large desktop screens
 - `2xl: 1536px` ❌ - Ultra-wide screens
@@ -310,6 +325,7 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 **File:** `app/components/SearchForm.tsx:198`
 
 **Current:**
+
 ```tsx
 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 ```
@@ -317,11 +333,13 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 **Issue:** 4 filter fields in 2 columns on mobile = cramped
 
 **Recommended Fix:**
+
 ```tsx
 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
 ```
 
 **Benefits:**
+
 - Mobile: Full-width fields (easier to tap and read)
 - Tablet: 2 columns
 - Desktop: 4 columns
@@ -335,6 +353,7 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 **Recommendation:** Ensure all interactive elements are at least 44px × 44px
 
 **Current Issues:**
+
 - Form inputs with `p-2` (8px padding) = ~36px height
 - Some buttons may fall below 44px threshold
 
@@ -347,6 +366,7 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 **Current:** Fixed image widths (100px poster in ResultItem)
 
 **Recommendation:**
+
 ```tsx
 <Image
   width={100}
@@ -363,6 +383,7 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 **File:** `app/layout.tsx:22`
 
 **Current:**
+
 ```tsx
 <main className="flex-grow container mx-auto px-4 py-8">
 ```
@@ -370,6 +391,7 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 **Issue:** `container` utility doesn't have explicit max-width constraints
 
 **Recommendation:** Add max-width for ultra-wide screens
+
 ```tsx
 <main className="flex-grow container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl">
 ```
@@ -378,17 +400,17 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 
 ## Implementation Priority Matrix
 
-| Priority | Issue | Component(s) Affected | Estimated Effort | User Impact |
-|----------|-------|----------------------|------------------|-------------|
-| 🔴 CRITICAL | ResultItem horizontal layout | ResultItem.tsx | 30 min | Very High |
-| 🔴 HIGH | Availability table responsiveness | ResultDetails.tsx | 1-2 hours | High |
-| 🔴 HIGH | Responsive typography | 6 files | 45 min | High |
-| 🟡 MEDIUM | Excessive padding | 5 files | 30 min | Medium |
-| 🟡 MEDIUM | Viewport meta tag | layout.tsx | 5 min | Medium |
-| 🟡 MEDIUM | Genre grid density | SearchForm.tsx | 10 min | Medium |
-| 🟢 LOW | Gap spacing | 4 files | 20 min | Low |
-| 🟢 LOW | AutocompleteList height | AutocompleteList.tsx | 5 min | Low |
-| 🟢 LOW | Filter layout | SearchForm.tsx | 10 min | Low |
+| Priority    | Issue                             | Component(s) Affected | Estimated Effort | User Impact |
+| ----------- | --------------------------------- | --------------------- | ---------------- | ----------- |
+| 🔴 CRITICAL | ResultItem horizontal layout      | ResultItem.tsx        | 30 min           | Very High   |
+| 🔴 HIGH     | Availability table responsiveness | ResultDetails.tsx     | 1-2 hours        | High        |
+| 🔴 HIGH     | Responsive typography             | 6 files               | 45 min           | High        |
+| 🟡 MEDIUM   | Excessive padding                 | 5 files               | 30 min           | Medium      |
+| 🟡 MEDIUM   | Viewport meta tag                 | layout.tsx            | 5 min            | Medium      |
+| 🟡 MEDIUM   | Genre grid density                | SearchForm.tsx        | 10 min           | Medium      |
+| 🟢 LOW      | Gap spacing                       | 4 files               | 20 min           | Low         |
+| 🟢 LOW      | AutocompleteList height           | AutocompleteList.tsx  | 5 min            | Low         |
+| 🟢 LOW      | Filter layout                     | SearchForm.tsx        | 10 min           | Low         |
 
 **Total Estimated Effort:** 4-6 hours
 
@@ -397,6 +419,7 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 ## Recommended Implementation Order
 
 ### Phase 1: Quick Wins (1 hour)
+
 1. Add viewport meta tag (5 min)
 2. Fix genre grid (10 min)
 3. Fix filter layout (10 min)
@@ -404,11 +427,13 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 5. Add responsive typography (45 min)
 
 ### Phase 2: Critical Layout Fixes (2-3 hours)
+
 1. Fix ResultItem layout (30 min)
 2. Implement responsive availability table (1-2 hours)
 3. Update gap spacing (20 min)
 
 ### Phase 3: Polish (1 hour)
+
 1. AutocompleteList height (5 min)
 2. Touch target sizes (30 min)
 3. Image optimization (20 min)
@@ -420,15 +445,15 @@ className="... max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
 
 ### Breakpoints to Test
 
-| Breakpoint | Width | Device Examples |
-|------------|-------|-----------------|
-| Mobile Small | 320px | iPhone SE, older Android |
-| Mobile Medium | 375px | iPhone 12/13/14 |
-| Mobile Large | 414px | iPhone 12/13/14 Pro Max |
-| Tablet Portrait | 768px | iPad, Android tablets |
-| Tablet Landscape | 1024px | iPad landscape |
-| Desktop | 1280px | Standard laptop |
-| Large Desktop | 1920px | Desktop monitor |
+| Breakpoint       | Width  | Device Examples          |
+| ---------------- | ------ | ------------------------ |
+| Mobile Small     | 320px  | iPhone SE, older Android |
+| Mobile Medium    | 375px  | iPhone 12/13/14          |
+| Mobile Large     | 414px  | iPhone 12/13/14 Pro Max  |
+| Tablet Portrait  | 768px  | iPad, Android tablets    |
+| Tablet Landscape | 1024px | iPad landscape           |
+| Desktop          | 1280px | Standard laptop          |
+| Large Desktop    | 1920px | Desktop monitor          |
 
 ### Test Scenarios
 
@@ -512,9 +537,7 @@ const Header = () => {
   return (
     <header className="bg-gray-800 p-3 sm:p-4">
       <div className="container mx-auto max-w-7xl">
-        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-400">
-          WhereToStream
-        </h1>
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-400">WhereToStream</h1>
       </div>
     </header>
   );
@@ -567,12 +590,14 @@ return (
 ## Accessibility Impact
 
 ### Positive Changes
+
 - ✅ Larger touch targets on mobile (44px minimum)
 - ✅ Better text readability with responsive typography
 - ✅ Reduced horizontal scrolling improves screen reader experience
 - ✅ Card-based layout easier to navigate with assistive technology
 
 ### Maintain
+
 - ✅ All ARIA labels and semantic HTML
 - ✅ Keyboard navigation support
 - ✅ Focus management
@@ -583,16 +608,19 @@ return (
 ## Performance Considerations
 
 ### Image Optimization
+
 - Use responsive image sizes to reduce bandwidth on mobile
 - Implement `sizes` attribute for proper image loading
 - Consider WebP format with JPEG fallback
 
 ### CSS Bundle Size
+
 - Adding responsive classes is minimal (~2-3KB)
 - Use Tailwind's JIT mode (already enabled)
 - No performance impact expected
 
 ### Layout Shift (CLS)
+
 - Fixed layout changes may improve CLS score
 - Ensure proper aspect ratios for images
 - Reserve space for dynamic content
