@@ -15,7 +15,10 @@ export const ResultsList: React.FC<ResultsListProps> = ({
   if (isLoading) {
     return (
       <div className="space-y-4" aria-busy="true" aria-live="polite">
-        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-0" role="list">
+        <ul
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-0"
+          role="list"
+        >
           {Array.from({ length: 8 }).map((_, i) => (
             <li key={i} className="list-none">
               <ResultItemSkeleton />

@@ -36,9 +36,7 @@ describe('SearchForm', () => {
     const handleSearch = jest.fn();
     render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
 
-    expect(
-      screen.getByRole('textbox', { name: /search query/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /search query/i })).toBeInTheDocument();
   });
 
   it('calls onSearch with all form values on submit', () => {

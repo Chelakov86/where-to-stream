@@ -175,12 +175,20 @@ describe('Home Page', () => {
 
     render(<Home />);
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres', expect.objectContaining({ signal: expect.any(Object) })));
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/genres',
+        expect.objectContaining({ signal: expect.any(Object) })
+      )
+    );
 
     fireEvent.click(screen.getByText('Autocomplete'));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/search?mode=autocomplete&query=test', expect.objectContaining({ signal: expect.any(Object) }));
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/search?mode=autocomplete&query=test',
+        expect.objectContaining({ signal: expect.any(Object) })
+      );
       expect(screen.getByTestId('autocomplete-list')).toBeInTheDocument();
       expect(screen.getByText('Test Movie')).toBeInTheDocument();
     });
@@ -194,7 +202,12 @@ describe('Home Page', () => {
 
     render(<Home />);
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres', expect.objectContaining({ signal: expect.any(Object) })));
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/genres',
+        expect.objectContaining({ signal: expect.any(Object) })
+      )
+    );
 
     fireEvent.click(screen.getByText('Search'));
 
@@ -220,7 +233,12 @@ describe('Home Page', () => {
 
     render(<Home />);
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres', expect.objectContaining({ signal: expect.any(Object) })));
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/genres',
+        expect.objectContaining({ signal: expect.any(Object) })
+      )
+    );
 
     fireEvent.click(screen.getByText('Search'));
 
@@ -239,7 +257,12 @@ describe('Home Page', () => {
 
     render(<Home />);
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres', expect.objectContaining({ signal: expect.any(Object) })));
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/genres',
+        expect.objectContaining({ signal: expect.any(Object) })
+      )
+    );
 
     fireEvent.click(screen.getByText('Search'));
 
@@ -262,7 +285,12 @@ describe('Home Page', () => {
 
     render(<Home />);
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres', expect.objectContaining({ signal: expect.any(Object) })));
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/genres',
+        expect.objectContaining({ signal: expect.any(Object) })
+      )
+    );
 
     fireEvent.click(screen.getByText('Search'));
 
@@ -287,7 +315,12 @@ describe('Home Page', () => {
 
     render(<Home />);
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/genres', expect.objectContaining({ signal: expect.any(Object) })));
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/genres',
+        expect.objectContaining({ signal: expect.any(Object) })
+      )
+    );
 
     fireEvent.click(screen.getByText('Search'));
 

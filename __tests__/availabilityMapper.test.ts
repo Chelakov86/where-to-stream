@@ -134,12 +134,8 @@ describe('mapAvailability', () => {
             { provider_id: 8, provider_name: 'Netflix', logo_path: '', display_priority: 0 },
             { provider_id: 337, provider_name: 'Disney Plus', logo_path: '', display_priority: 0 },
           ],
-          ads: [
-            { provider_id: 2, provider_name: 'Tubi TV', logo_path: '', display_priority: 0 },
-          ],
-          free: [
-            { provider_id: 1, provider_name: 'Freevee', logo_path: '', display_priority: 0 },
-          ],
+          ads: [{ provider_id: 2, provider_name: 'Tubi TV', logo_path: '', display_priority: 0 }],
+          free: [{ provider_id: 1, provider_name: 'Freevee', logo_path: '', display_priority: 0 }],
         },
       },
     };

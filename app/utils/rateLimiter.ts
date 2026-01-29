@@ -23,21 +23,24 @@ interface RateLimitEntry {
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 // Cleanup old entries every 5 minutes to prevent memory leaks
-setInterval(() => {
-  const now = Date.now();
-  let cleaned = 0;
+setInterval(
+  () => {
+    const now = Date.now();
+    let cleaned = 0;
 
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.resetTime < now) {
-      rateLimitStore.delete(key);
-      cleaned++;
+    for (const [key, entry] of rateLimitStore.entries()) {
+      if (entry.resetTime < now) {
+        rateLimitStore.delete(key);
+        cleaned++;
+      }
     }
-  }
 
-  if (cleaned > 0) {
-    console.log(`[RateLimit] Cleaned up ${cleaned} expired entries`);
-  }
-}, 5 * 60 * 1000);
+    if (cleaned > 0) {
+      console.log(`[RateLimit] Cleaned up ${cleaned} expired entries`);
+    }
+  },
+  5 * 60 * 1000
+);
 
 /**
  * Check if a request should be rate limited
@@ -45,10 +48,7 @@ setInterval(() => {
  * @param config Rate limit configuration
  * @returns Rate limit result
  */
-export function checkRateLimit(
-  identifier: string,
-  config: RateLimitConfig
-): RateLimitResult {
+export function checkRateLimit(identifier: string, config: RateLimitConfig): RateLimitResult {
   const now = Date.now();
   const entry = rateLimitStore.get(identifier);
 

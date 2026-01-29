@@ -10,8 +10,7 @@ import { TmdbError } from '@/app/tmdbClient';
  */
 export const ERROR_MESSAGES = {
   // Network errors
-  NETWORK_ERROR:
-    'Unable to connect. Please check your internet connection and try again.',
+  NETWORK_ERROR: 'Unable to connect. Please check your internet connection and try again.',
   TIMEOUT: 'Request took too long. Please try again.',
 
   // API errors
@@ -167,10 +166,7 @@ export function shouldDisplayError(error: unknown): boolean {
  * @param context - Additional context about where error occurred
  * @returns Formatted error string for logging
  */
-export function formatErrorForLogging(
-  error: unknown,
-  context?: Record<string, unknown>
-): string {
+export function formatErrorForLogging(error: unknown, context?: Record<string, unknown>): string {
   const enhanced = getEnhancedError(error);
 
   let logMessage = `[${enhanced.category.toUpperCase()}] ${enhanced.message}`;

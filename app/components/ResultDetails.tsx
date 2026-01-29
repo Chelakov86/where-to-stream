@@ -70,17 +70,13 @@ const AvailabilityTable = ({
               {country.freeProviders.length > 0 && (
                 <div className="flex justify-between gap-3">
                   <span className="text-gray-400 flex-shrink-0">Free:</span>
-                  <span className="text-white text-right">
-                    {country.freeProviders.join(', ')}
-                  </span>
+                  <span className="text-white text-right">{country.freeProviders.join(', ')}</span>
                 </div>
               )}
               {country.paidProviders.length > 0 && (
                 <div className="flex justify-between gap-3">
                   <span className="text-gray-400 flex-shrink-0">Paid:</span>
-                  <span className="text-white text-right">
-                    {country.paidProviders.join(', ')}
-                  </span>
+                  <span className="text-white text-right">{country.paidProviders.join(', ')}</span>
                 </div>
               )}
             </div>

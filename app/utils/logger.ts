@@ -38,9 +38,7 @@ class Logger {
   constructor() {
     // Get minimum log level from environment, default to 'info'
     const envLevel = (process.env.LOG_LEVEL || 'info').toLowerCase();
-    this.minLevel = this.levels.includes(envLevel as LogLevel)
-      ? (envLevel as LogLevel)
-      : 'info';
+    this.minLevel = this.levels.includes(envLevel as LogLevel) ? (envLevel as LogLevel) : 'info';
   }
 
   /**

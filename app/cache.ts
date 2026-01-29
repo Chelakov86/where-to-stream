@@ -127,22 +127,25 @@ class LRUCache {
    * @private
    */
   private startCleanupInterval(): NodeJS.Timeout {
-    return setInterval(() => {
-      const now = Date.now();
-      let cleaned = 0;
+    return setInterval(
+      () => {
+        const now = Date.now();
+        let cleaned = 0;
 
-      for (const [key, entry] of this.cache.entries()) {
-        if (entry.expiry < now) {
-          this.cache.delete(key);
-          cleaned++;
+        for (const [key, entry] of this.cache.entries()) {
+          if (entry.expiry < now) {
+            this.cache.delete(key);
+            cleaned++;
+          }
         }
-      }
 
-      if (cleaned > 0) {
-        console.log(`[Cache] Cleaned up ${cleaned} expired entries`);
-        this.stats.size = this.cache.size;
-      }
-    }, 5 * 60 * 1000); // Run every 5 minutes
+        if (cleaned > 0) {
+          console.log(`[Cache] Cleaned up ${cleaned} expired entries`);
+          this.stats.size = this.cache.size;
+        }
+      },
+      5 * 60 * 1000
+    ); // Run every 5 minutes
   }
 
   /**
@@ -155,9 +158,7 @@ class LRUCache {
 
 // Singleton cache instance
 // Max size can be configured via environment variable
-const cacheInstance = new LRUCache(
-  parseInt(process.env.CACHE_MAX_SIZE || '1000', 10)
-);
+const cacheInstance = new LRUCache(parseInt(process.env.CACHE_MAX_SIZE || '1000', 10));
 
 /**
  * Get value from cache

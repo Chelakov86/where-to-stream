@@ -40,7 +40,12 @@ describe('Home Page Accessibility', () => {
     const main = await screen.findByRole('main');
     expect(main).toBeInTheDocument();
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/genres', expect.objectContaining({ signal: expect.any(Object) })));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/genres',
+        expect.objectContaining({ signal: expect.any(Object) })
+      )
+    );
 
     const queryInput = screen.getByRole('textbox', { name: /search query/i });
     expect(queryInput).toHaveAttribute('aria-autocomplete', 'list');
@@ -50,7 +55,10 @@ describe('Home Page Accessibility', () => {
     await user.type(queryInput, 'Ma');
 
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith('/api/search?mode=autocomplete&query=Ma', expect.objectContaining({ signal: expect.any(Object) }))
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/search?mode=autocomplete&query=Ma',
+        expect.objectContaining({ signal: expect.any(Object) })
+      )
     );
 
     const listbox = await screen.findByRole('listbox');

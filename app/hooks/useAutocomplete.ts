@@ -65,9 +65,12 @@ export function useAutocomplete(onError?: (message: string) => void) {
 
   // Create debounced version of fetch
   const debouncedFetch = useRef<(query: string) => void>(
-    debounce(((query: string) => {
-      fetchSuggestions(query);
-    }) as (...args: unknown[]) => unknown, DEBOUNCE_DELAY_MS)
+    debounce(
+      ((query: string) => {
+        fetchSuggestions(query);
+      }) as (...args: unknown[]) => unknown,
+      DEBOUNCE_DELAY_MS
+    )
   ).current;
 
   const handleAutocompleteRequest = useCallback(

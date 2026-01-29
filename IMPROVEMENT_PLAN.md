@@ -36,21 +36,25 @@ This document provides a comprehensive improvement plan for the WhereToStream ap
 ## Priority Levels
 
 ### 🔴 Critical (P0)
+
 **Timeline**: Immediate (Week 1)
 **Impact**: Security vulnerabilities, data loss, system instability
 **Effort**: 3-4 days
 
 ### 🟡 High Priority (P1)
+
 **Timeline**: Week 2-3
 **Impact**: User experience, reliability, code quality
 **Effort**: 4-5 days
 
 ### 🟢 Medium Priority (P2)
+
 **Timeline**: Week 4-6
 **Impact**: Enhanced UX, better maintainability
 **Effort**: 5-6 days
 
 ### 🔵 Low Priority (P3)
+
 **Timeline**: Future iterations
 **Impact**: Nice-to-have features, future-proofing
 **Effort**: 3-4 days
@@ -67,6 +71,7 @@ This document provides a comprehensive improvement plan for the WhereToStream ap
 **Files**: `next.config.js`
 
 #### Current State
+
 No security headers configured, leaving application vulnerable to common web attacks.
 
 #### Implementation Steps
@@ -86,36 +91,37 @@ const nextConfig = {
         headers: [
           {
             key: 'X-DNS-Prefetch-Control',
-            value: 'on'
+            value: 'on',
           },
           {
             key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload'
+            value: 'max-age=63072000; includeSubDomains; preload',
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'X-XSS-Protection',
-            value: '1; mode=block'
+            value: '1; mode=block',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
+            value: 'strict-origin-when-cross-origin',
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://image.tmdb.org https://www.themoviedb.org; font-src 'self'; connect-src 'self' https://api.themoviedb.org; frame-ancestors 'none';"
-          }
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://image.tmdb.org https://www.themoviedb.org; font-src 'self'; connect-src 'self' https://api.themoviedb.org; frame-ancestors 'none';",
+          },
         ],
       },
     ];
@@ -146,12 +152,14 @@ curl -I http://localhost:3000
    - Document why specific CSP directives are needed
 
 #### Testing
+
 - [ ] Verify all headers appear in response
 - [ ] Test application functionality remains intact
 - [ ] Use https://securityheaders.com to validate configuration
 - [ ] Test in all supported browsers
 
 #### Success Criteria
+
 - A+ rating on securityheaders.com
 - No console CSP violation errors
 - All features work correctly
@@ -166,6 +174,7 @@ curl -I http://localhost:3000
 **Files**: `app/api/search/route.ts`, `app/api/title/[type]/[id]/route.ts`, new `app/middleware.ts`
 
 #### Current State
+
 No rate limiting allows unlimited API requests, risking TMDB quota exhaustion and potential abuse.
 
 #### Implementation Steps
@@ -188,14 +197,17 @@ interface RateLimitEntry {
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 // Cleanup old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.resetTime < now) {
-      rateLimitStore.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, entry] of rateLimitStore.entries()) {
+      if (entry.resetTime < now) {
+        rateLimitStore.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000
+);
 
 export function checkRateLimit(
   identifier: string,
@@ -291,10 +303,7 @@ export async function GET(request: Request) {
 
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
 
-export async function GET(
-  request: Request,
-  context: { params: { type: string; id: string } }
-) {
+export async function GET(request: Request, context: { params: { type: string; id: string } }) {
   // Rate limiting - 50 requests per 15 minutes per IP (lower than search)
   const identifier = getClientIdentifier(request);
   const rateLimitResult = checkRateLimit(identifier, {
@@ -335,9 +344,7 @@ const response = await fetch(url);
 if (response.status === 429) {
   const data = await response.json();
   const retryAfter = response.headers.get('Retry-After');
-  setError(
-    `Too many requests. Please wait ${retryAfter} seconds before trying again.`
-  );
+  setError(`Too many requests. Please wait ${retryAfter} seconds before trying again.`);
   return;
 }
 ```
@@ -373,7 +380,7 @@ describe('rateLimiter', () => {
     const config = { windowMs: 100, maxRequests: 1 };
     checkRateLimit('test-ip-3', config);
 
-    await new Promise(resolve => setTimeout(resolve, 150));
+    await new Promise((resolve) => setTimeout(resolve, 150));
 
     const result = checkRateLimit('test-ip-3', config);
     expect(result.allowed).toBe(true);
@@ -401,6 +408,7 @@ export const RATE_LIMIT_CONFIG = {
 ```
 
 #### Testing
+
 - [ ] Test rate limit enforcement
 - [ ] Verify 429 responses include correct headers
 - [ ] Test rate limit reset after window expires
@@ -408,6 +416,7 @@ export const RATE_LIMIT_CONFIG = {
 - [ ] Verify frontend displays rate limit errors correctly
 
 #### Success Criteria
+
 - Rate limits enforced on all API routes
 - Proper 429 responses with retry-after headers
 - Frontend gracefully handles rate limit errors
@@ -423,6 +432,7 @@ export const RATE_LIMIT_CONFIG = {
 **Files**: `app/cache.ts`
 
 #### Current State
+
 In-memory cache grows unbounded with no eviction strategy, potentially causing memory issues.
 
 #### Implementation Steps
@@ -528,29 +538,30 @@ class LRUCache {
 
   private startCleanupInterval(): void {
     // Clean up expired entries every 5 minutes
-    setInterval(() => {
-      const now = Date.now();
-      let cleaned = 0;
+    setInterval(
+      () => {
+        const now = Date.now();
+        let cleaned = 0;
 
-      for (const [key, entry] of this.cache.entries()) {
-        if (entry.expiry < now) {
-          this.cache.delete(key);
-          cleaned++;
+        for (const [key, entry] of this.cache.entries()) {
+          if (entry.expiry < now) {
+            this.cache.delete(key);
+            cleaned++;
+          }
         }
-      }
 
-      if (cleaned > 0) {
-        console.log(`Cache cleanup: removed ${cleaned} expired entries`);
-        this.stats.size = this.cache.size;
-      }
-    }, 5 * 60 * 1000);
+        if (cleaned > 0) {
+          console.log(`Cache cleanup: removed ${cleaned} expired entries`);
+          this.stats.size = this.cache.size;
+        }
+      },
+      5 * 60 * 1000
+    );
   }
 }
 
 // Singleton instance
-const cacheInstance = new LRUCache(
-  parseInt(process.env.CACHE_MAX_SIZE || '1000')
-);
+const cacheInstance = new LRUCache(parseInt(process.env.CACHE_MAX_SIZE || '1000'));
 
 export function getCache<T>(key: string): T | null {
   return cacheInstance.get<T>(key);
@@ -584,9 +595,10 @@ import { getCacheStats } from '@/app/cache';
 export async function GET() {
   const stats = getCacheStats();
 
-  const hitRate = stats.hits + stats.misses > 0
-    ? (stats.hits / (stats.hits + stats.misses) * 100).toFixed(2)
-    : 0;
+  const hitRate =
+    stats.hits + stats.misses > 0
+      ? ((stats.hits / (stats.hits + stats.misses)) * 100).toFixed(2)
+      : 0;
 
   return NextResponse.json({
     ...stats,
@@ -652,6 +664,7 @@ describe('Cache LRU eviction', () => {
 ```
 
 #### Testing
+
 - [ ] Test LRU eviction works correctly
 - [ ] Test cleanup interval removes expired entries
 - [ ] Test cache stats are accurate
@@ -659,6 +672,7 @@ describe('Cache LRU eviction', () => {
 - [ ] Monitor memory usage under load
 
 #### Success Criteria
+
 - Cache size never exceeds configured maximum
 - Expired entries are cleaned up automatically
 - Cache hit rate > 70% for typical usage
@@ -674,6 +688,7 @@ describe('Cache LRU eviction', () => {
 **Files**: `app/tmdbClient.ts`
 
 #### Current State
+
 API calls fail immediately on network errors or rate limits without retry, causing unnecessary user-facing errors.
 
 #### Implementation Steps
@@ -701,12 +716,10 @@ export async function withRetry<T>(
   fn: () => Promise<T>,
   config: Partial<RetryConfig> = {}
 ): Promise<T> {
-  const {
-    maxRetries,
-    initialDelayMs,
-    maxDelayMs,
-    retryableStatusCodes,
-  } = { ...DEFAULT_RETRY_CONFIG, ...config };
+  const { maxRetries, initialDelayMs, maxDelayMs, retryableStatusCodes } = {
+    ...DEFAULT_RETRY_CONFIG,
+    ...config,
+  };
 
   let lastError: Error;
 
@@ -728,10 +741,7 @@ export async function withRetry<T>(
       }
 
       // Calculate delay with exponential backoff
-      const delay = Math.min(
-        initialDelayMs * Math.pow(2, attempt),
-        maxDelayMs
-      );
+      const delay = Math.min(initialDelayMs * Math.pow(2, attempt), maxDelayMs);
 
       // Add jitter to prevent thundering herd
       const jitter = Math.random() * 0.3 * delay;
@@ -767,7 +777,7 @@ function isRetryableError(error: unknown, retryableStatusCodes: number[]): boole
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 ```
 
@@ -791,10 +801,7 @@ export class TmdbError extends Error {
   }
 }
 
-async function tmdbFetch<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function tmdbFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const apiKey = getTmdbApiKey();
   const url = new URL(endpoint, TMDB_BASE_URL);
   url.searchParams.append('api_key', apiKey);
@@ -812,11 +819,7 @@ async function tmdbFetch<T>(
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new TmdbError(
-            response.status,
-            response.statusText,
-            errorData.status_message
-          );
+          throw new TmdbError(response.status, response.statusText, errorData.status_message);
         }
 
         return await response.json();
@@ -887,9 +890,9 @@ describe('withRetry', () => {
   it('should not retry on non-retryable errors', async () => {
     const fn = jest.fn().mockRejectedValue({ statusCode: 404 });
 
-    await expect(
-      withRetry(fn, { maxRetries: 3, initialDelayMs: 10 })
-    ).rejects.toMatchObject({ statusCode: 404 });
+    await expect(withRetry(fn, { maxRetries: 3, initialDelayMs: 10 })).rejects.toMatchObject({
+      statusCode: 404,
+    });
 
     expect(fn).toHaveBeenCalledTimes(1);
   });
@@ -897,9 +900,9 @@ describe('withRetry', () => {
   it('should give up after max retries', async () => {
     const fn = jest.fn().mockRejectedValue({ statusCode: 503 });
 
-    await expect(
-      withRetry(fn, { maxRetries: 2, initialDelayMs: 10 })
-    ).rejects.toMatchObject({ statusCode: 503 });
+    await expect(withRetry(fn, { maxRetries: 2, initialDelayMs: 10 })).rejects.toMatchObject({
+      statusCode: 503,
+    });
 
     expect(fn).toHaveBeenCalledTimes(3); // 1 initial + 2 retries
   });
@@ -907,6 +910,7 @@ describe('withRetry', () => {
 ```
 
 #### Testing
+
 - [ ] Test successful retry after transient failure
 - [ ] Test non-retryable errors fail immediately
 - [ ] Test max retries respected
@@ -914,6 +918,7 @@ describe('withRetry', () => {
 - [ ] Test jitter prevents thundering herd
 
 #### Success Criteria
+
 - Transient errors (429, 503) automatically retry
 - Non-retryable errors (404, 400) fail immediately
 - Exponential backoff prevents API flooding
@@ -931,6 +936,7 @@ describe('withRetry', () => {
 **Files**: `app/hooks/useAutocomplete.ts`, `app/components/SearchForm.tsx`
 
 #### Current State
+
 Rapid typing triggers multiple parallel API calls, wasting resources and potentially causing race conditions.
 
 #### Implementation Steps
@@ -1116,6 +1122,7 @@ describe('useAutocomplete debouncing', () => {
 ```
 
 #### Testing
+
 - [ ] Test debouncing delays API calls
 - [ ] Test rapid typing only triggers one request
 - [ ] Test AbortController cancels previous requests
@@ -1123,6 +1130,7 @@ describe('useAutocomplete debouncing', () => {
 - [ ] Measure API call reduction (should be >70%)
 
 #### Success Criteria
+
 - Autocomplete API calls reduced by >70%
 - No duplicate requests for same query
 - Smooth typing experience with no lag
@@ -1277,9 +1285,7 @@ export function useGenres() {
 
   // Combine and deduplicate genres
   const allGenres = Array.from(
-    new Map(
-      [...movieGenres, ...tvGenres].map(genre => [genre.id, genre])
-    ).values()
+    new Map([...movieGenres, ...tvGenres].map((genre) => [genre.id, genre])).values()
   );
 
   return {
@@ -1307,7 +1313,7 @@ describe('useSearch AbortController', () => {
     const abortSpy = jest.spyOn(AbortController.prototype, 'abort');
 
     (global.fetch as jest.Mock).mockImplementation(
-      () => new Promise(resolve => setTimeout(resolve, 1000))
+      () => new Promise((resolve) => setTimeout(resolve, 1000))
     );
 
     const { result } = renderHook(() => useSearch());
@@ -1326,12 +1332,14 @@ describe('useSearch AbortController', () => {
 ```
 
 #### Testing
+
 - [ ] Test AbortController cancels previous requests
 - [ ] Test cleanup on component unmount
 - [ ] Test AbortError doesn't set error state
 - [ ] Test multiple rapid calls handled correctly
 
 #### Success Criteria
+
 - All hooks use AbortController
 - Previous requests cancelled when new ones start
 - No race conditions in results
@@ -1404,11 +1412,7 @@ class Logger {
   }
 
   private format(entry: LogEntry): string {
-    const parts = [
-      `[${entry.timestamp}]`,
-      `[${entry.level.toUpperCase()}]`,
-      entry.message,
-    ];
+    const parts = [`[${entry.timestamp}]`, `[${entry.level.toUpperCase()}]`, entry.message];
 
     if (entry.context) {
       parts.push(JSON.stringify(entry.context, null, 2));
@@ -1440,6 +1444,7 @@ export const logger = new Logger();
 2. **Replace console calls** in all files
 
 Find and replace pattern:
+
 ```bash
 # Find all console.error calls
 grep -r "console.error" app/ --exclude-dir=node_modules
@@ -1460,19 +1465,22 @@ logger.error('TMDB API error', { error });
 ```
 
 Key files to update:
+
 - `app/api/search/route.ts:269`
 - `app/api/title/[type]/[id]/route.ts:131,135`
 - `app/components/ErrorBoundary.tsx:47`
 - `app/utils/searchHistory.ts:61,106,119,135,157`
 
 #### Testing
+
 - [ ] Verify all console calls replaced
 - [ ] Test log levels work correctly
 - [ ] Test context objects logged properly
 - [ ] Verify production logging minimal
 
 #### Success Criteria
-- Zero direct console.* calls in codebase
+
+- Zero direct console.\* calls in codebase
 - Consistent log format across application
 - Log level configurable via environment
 - Easier integration with external logging services
@@ -1489,6 +1497,7 @@ Key files to update:
 **Files**: `app/components/ResultsList.tsx`, `app/components/ResultDetails.tsx`, new skeleton components
 
 #### Current State
+
 Components show simple "Loading..." text, causing jarring transitions.
 
 #### Implementation Steps
@@ -1594,6 +1603,7 @@ export default function ResultsList({ results, isLoading }: ResultsListProps) {
 ```
 
 #### Success Criteria
+
 - Smooth loading transitions
 - Skeletons match actual content layout
 - Better perceived performance
@@ -1662,6 +1672,7 @@ const [imageLoading, setImageLoading] = useState(true);
 ```
 
 #### Success Criteria
+
 - All images use Next.js Image component
 - Automatic image optimization
 - Improved Lighthouse scores
@@ -1686,7 +1697,7 @@ const [imageLoading, setImageLoading] = useState(true);
 export const ERROR_MESSAGES = {
   NETWORK_ERROR: 'Unable to connect. Please check your internet connection and try again.',
   RATE_LIMIT: 'Too many requests. Please wait a moment before trying again.',
-  NOT_FOUND: 'We couldn\'t find what you\'re looking for.',
+  NOT_FOUND: "We couldn't find what you're looking for.",
   SERVER_ERROR: 'Something went wrong on our end. Please try again later.',
   TIMEOUT: 'Request took too long. Please try again.',
   INVALID_INPUT: 'Please check your input and try again.',
@@ -1727,6 +1738,7 @@ catch (err) {
 ```
 
 #### Success Criteria
+
 - Context-specific error messages
 - User-friendly language
 - Actionable guidance when possible
@@ -1808,6 +1820,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 #### Success Criteria
+
 - All interactive elements keyboard accessible
 - Screen reader friendly
 - ARIA labels where appropriate
@@ -1868,6 +1881,7 @@ const ResultDetails = dynamic(() => import('./components/ResultDetails'), {
 Review and remove unused imports/exports throughout codebase.
 
 #### Success Criteria
+
 - Bundle size documented and monitored
 - Main bundle < 200KB gzipped
 - Dynamic imports for heavy components
@@ -1894,20 +1908,24 @@ npm install --save-dev @types/react@19 @types/react-dom@19
 ```
 
 2. **Review breaking changes**
+
 - Check React 19 migration guide
 - Update deprecated APIs
 - Test all components
 
 3. **Update TypeScript types**
+
 - Fix type errors from React 19
 - Update component prop types
 
 4. **Test thoroughly**
+
 - Run all unit tests
 - Run E2E tests
 - Manual testing of all features
 
 #### Success Criteria
+
 - All tests passing
 - No console warnings
 - All features working correctly
@@ -1938,13 +1956,8 @@ npx husky add .husky/pre-commit "npx lint-staged"
 
 {
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md}": [
-      "prettier --write"
-    ]
+    "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,md}": ["prettier --write"]
   }
 }
 ```
@@ -1960,6 +1973,7 @@ npx husky add .husky/pre-commit "npx lint-staged"
 ```
 
 #### Success Criteria
+
 - Hooks run on commit
 - Code automatically formatted
 - Linting enforced
@@ -2025,7 +2039,7 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - TMDB_API_KEY=${TMDB_API_KEY}
     restart: unless-stopped
@@ -2043,6 +2057,7 @@ node_modules
 ```
 
 #### Success Criteria
+
 - Docker build succeeds
 - Container runs successfully
 - Environment variables work
@@ -2143,6 +2158,7 @@ npm install --save-dev swagger-ui-react
 ```
 
 #### Success Criteria
+
 - Complete API specification
 - Swagger UI accessible in dev mode
 - Examples for all endpoints
@@ -2201,12 +2217,13 @@ export const useSearchStore = create<SearchState>((set) => ({
   setError: (error) => set({ error }),
   setTotals: (totalPages, totalResults) => set({ totalPages, totalResults }),
   setParams: (params) => set({ currentParams: params }),
-  clearResults: () => set({
-    results: [],
-    totalPages: 0,
-    totalResults: 0,
-    error: null,
-  }),
+  clearResults: () =>
+    set({
+      results: [],
+      totalPages: 0,
+      totalResults: 0,
+      error: null,
+    }),
 }));
 ```
 
@@ -2225,6 +2242,7 @@ export default function Home() {
 ```
 
 #### Success Criteria
+
 - Reduced prop drilling
 - Centralized state logic
 - Easier testing
@@ -2293,6 +2311,7 @@ Sentry.init({
 ```
 
 #### Success Criteria
+
 - Web Vitals tracked
 - Performance metrics visible
 - Error tracking configured (optional)
@@ -2364,6 +2383,7 @@ export default function Offline() {
 ```
 
 #### Success Criteria
+
 - App installable as PWA
 - Offline page shows when disconnected
 - Basic caching for visited pages
@@ -2481,6 +2501,7 @@ jobs:
 ```
 
 #### Success Criteria
+
 - CI runs on all PRs
 - Automated testing
 - Automated deployment to staging/production
@@ -2492,21 +2513,25 @@ jobs:
 ### Week 1: Critical Priority (P0)
 
 **Days 1-2: Security & Rate Limiting**
+
 - [ ] Task 1: Security Headers (2h)
 - [ ] Task 2: Rate Limiting (4h)
 - [ ] Testing and validation (2h)
 
 **Days 3-4: Performance & Reliability**
+
 - [ ] Task 3: Cache Memory Management (3h)
 - [ ] Task 4: TMDB API Retry Mechanism (3h)
 - [ ] Integration testing (2h)
 
 **Day 5: Testing & Documentation**
+
 - [ ] Write comprehensive tests for P0 tasks
 - [ ] Update documentation
 - [ ] Code review and refinements
 
 **Deliverables:**
+
 - Production-ready security implementation
 - Rate limiting active on all endpoints
 - Stable cache with LRU eviction
@@ -2517,6 +2542,7 @@ jobs:
 ### Week 2-3: High Priority (P1)
 
 **Week 2: Code Quality**
+
 - [ ] Task 5: Request Deduplication (2h)
 - [ ] Task 6: AbortController in Hooks (2h)
 - [ ] Task 7: Consistent Logging (1.5h)
@@ -2524,12 +2550,14 @@ jobs:
 - [ ] Task 8: Dependency Updates Planning (2h)
 
 **Week 3: Implementation & Testing**
+
 - [ ] React 19 upgrade (if approved)
 - [ ] Comprehensive testing
 - [ ] Performance validation
 - [ ] Documentation updates
 
 **Deliverables:**
+
 - Reduced API calls by >70%
 - All hooks using AbortController
 - Unified logging system
@@ -2540,24 +2568,28 @@ jobs:
 ### Week 4-6: Medium Priority (P2)
 
 **Week 4: UX Improvements**
+
 - [ ] Task 8: Loading Skeletons (3h)
 - [ ] Task 9: Image Optimization (2h)
 - [ ] Task 10: Enhanced Error Messages (2h)
 - [ ] Testing and refinement (1h)
 
 **Week 5: Accessibility & Performance**
+
 - [ ] Task 11: Accessibility Enhancements (3h)
 - [ ] Task 12: Bundle Size Optimization (2h)
 - [ ] Accessibility testing (2h)
 - [ ] Performance benchmarking (1h)
 
 **Week 6: Polish & Testing**
+
 - [ ] E2E test updates
 - [ ] Visual regression testing
 - [ ] Performance monitoring
 - [ ] Documentation
 
 **Deliverables:**
+
 - Improved perceived performance
 - Better accessibility scores
 - Optimized bundle size
@@ -2568,17 +2600,20 @@ jobs:
 ### Future Iterations: Low Priority (P3)
 
 **Phase 1: Developer Experience**
+
 - [ ] Task 14: Pre-commit Hooks
 - [ ] Task 15: Docker Configuration
 - [ ] Task 16: API Documentation
 - [ ] Task 20: CI/CD Pipeline
 
 **Phase 2: Advanced Features**
+
 - [ ] Task 17: Centralized State Management
 - [ ] Task 18: Performance Monitoring
 - [ ] Task 19: Offline Support
 
 **Phase 3: Optimization**
+
 - [ ] Task 13: React 19 Upgrade (if not done in P1)
 - [ ] Additional performance optimizations
 - [ ] Advanced monitoring setup
@@ -2590,11 +2625,13 @@ jobs:
 ### Critical Priority (P0) Success Metrics
 
 **Security:**
+
 - [ ] A+ rating on securityheaders.com
 - [ ] Zero CSP violations in production
 - [ ] Rate limiting active with <0.1% false positives
 
 **Performance:**
+
 - [ ] Cache hit rate >70%
 - [ ] Memory usage stable over 24h
 - [ ] API retry reduces user-facing errors by >80%
@@ -2602,6 +2639,7 @@ jobs:
 ### High Priority (P1) Success Metrics
 
 **Code Quality:**
+
 - [ ] Autocomplete API calls reduced >70%
 - [ ] Zero race conditions in testing
 - [ ] All logging centralized
@@ -2610,6 +2648,7 @@ jobs:
 ### Medium Priority (P2) Success Metrics
 
 **User Experience:**
+
 - [ ] Lighthouse Performance score >90
 - [ ] Lighthouse Accessibility score >95
 - [ ] Bundle size <200KB gzipped
@@ -2618,6 +2657,7 @@ jobs:
 ### Low Priority (P3) Success Metrics
 
 **Infrastructure:**
+
 - [ ] Docker build time <5 minutes
 - [ ] CI/CD pipeline <10 minutes
 - [ ] PWA installable on all platforms
@@ -2630,16 +2670,19 @@ jobs:
 ### High Risk Items
 
 **1. React 19 Upgrade**
+
 - **Risk**: Breaking changes, test failures
 - **Mitigation**: Thorough testing, gradual rollout, maintain fallback branch
 - **Contingency**: Delay to future iteration if issues found
 
 **2. Security Headers**
+
 - **Risk**: CSP might break functionality
 - **Mitigation**: Extensive testing, gradual header rollout
 - **Contingency**: Loosen CSP directives if needed
 
 **3. Rate Limiting**
+
 - **Risk**: False positives blocking legitimate users
 - **Mitigation**: Conservative limits, monitoring, adjustment capability
 - **Contingency**: Ability to disable quickly if issues arise
@@ -2647,11 +2690,13 @@ jobs:
 ### Medium Risk Items
 
 **1. Cache Memory Management**
+
 - **Risk**: LRU eviction might impact hit rate
 - **Mitigation**: Tune max size based on monitoring
 - **Contingency**: Increase cache size if needed
 
 **2. State Management Migration**
+
 - **Risk**: Regression in component behavior
 - **Mitigation**: Incremental migration, comprehensive testing
 - **Contingency**: Keep old state management temporarily
@@ -2659,11 +2704,13 @@ jobs:
 ### Low Risk Items
 
 **1. Loading Skeletons**
+
 - **Risk**: Minimal - purely visual enhancement
 - **Mitigation**: User testing
 - **Contingency**: Easy to revert
 
 **2. Pre-commit Hooks**
+
 - **Risk**: Developer friction
 - **Mitigation**: Clear documentation, skip option for emergencies
 - **Contingency**: Make optional
@@ -2703,18 +2750,21 @@ jobs:
 ### Post-Implementation
 
 **Week 1-2 After Launch:**
+
 - Monitor error rates daily
 - Check cache hit rates
 - Review rate limit false positives
 - Gather user feedback
 
 **Monthly:**
+
 - Review bundle size trends
 - Check dependency updates
 - Monitor Web Vitals
 - Review security headers effectiveness
 
 **Quarterly:**
+
 - Comprehensive performance audit
 - Accessibility audit
 - Security review
@@ -2727,6 +2777,7 @@ jobs:
 ### Critical Tasks (P0)
 
 **Security Headers:**
+
 ```bash
 # Revert next.config.js headers
 git revert <commit-hash>
@@ -2734,12 +2785,14 @@ npm run build && npm start
 ```
 
 **Rate Limiting:**
+
 ```typescript
 // Emergency disable
 const RATE_LIMIT_ENABLED = process.env.RATE_LIMIT_ENABLED !== 'false';
 ```
 
 **Cache:**
+
 ```bash
 # Revert to simple cache
 git revert <commit-hash>
@@ -2750,6 +2803,7 @@ git revert <commit-hash>
 ### Rollback Decision Criteria
 
 Initiate rollback if:
+
 - Error rate increases >50%
 - User complaints >10 within 1 hour
 - Critical functionality broken
@@ -2762,12 +2816,14 @@ Initiate rollback if:
 This comprehensive improvement plan provides a structured approach to enhancing the WhereToStream application across security, performance, user experience, and maintainability.
 
 **Key Priorities:**
+
 1. **Week 1**: Security hardening and performance stability (P0)
 2. **Week 2-3**: Code quality and reliability (P1)
 3. **Week 4-6**: User experience enhancements (P2)
 4. **Future**: Infrastructure and advanced features (P3)
 
 **Expected Outcomes:**
+
 - Production-ready security
 - 80% reduction in API errors
 - 70% reduction in unnecessary API calls
@@ -2775,6 +2831,7 @@ This comprehensive improvement plan provides a structured approach to enhancing 
 - Better developer experience with automated tooling
 
 **Next Steps:**
+
 1. Review and approve this plan
 2. Set up project tracking (GitHub Issues/Projects)
 3. Begin Week 1 implementation
@@ -2785,4 +2842,3 @@ This comprehensive improvement plan provides a structured approach to enhancing 
 **Document Status**: Ready for Review
 **Last Updated**: 2026-01-18
 **Version**: 1.0.0
-
