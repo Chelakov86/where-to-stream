@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { CountryAvailability, TitleDetails, Genre } from '@/app/types';
-import { getCountryFlag } from '@/app/utils/countries';
+import { getCountryFlagUrl } from '@/app/utils/countries';
 import { ResultDetailsSkeleton } from './Skeleton';
 
 interface ResultDetailsProps {
@@ -48,10 +48,15 @@ const AvailabilityTable = ({
             className="bg-gray-700 p-3 rounded-lg border border-gray-600"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-white">
-                <span className="inline-block mr-1" style={{ fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif' }}>
-                  {getCountryFlag(country.countryCode)}
-                </span>
+              <span className="font-semibold text-white flex items-center">
+                <Image
+                  src={getCountryFlagUrl(country.countryCode)}
+                  alt={`${country.countryName} flag`}
+                  width={20}
+                  height={15}
+                  className="mr-2 inline-block"
+                  unoptimized
+                />
                 {country.countryName}
               </span>
               {country.watchLink && (
@@ -123,10 +128,17 @@ const AvailabilityTable = ({
           {countries.map((country) => (
             <tr key={country.countryCode} className="hover:bg-gray-700">
               <td className="py-2 px-4 border-b border-gray-600 truncate">
-                <span className="inline-block mr-1" style={{ fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif' }}>
-                  {getCountryFlag(country.countryCode)}
-                </span>
-                {country.countryName}
+                <div className="flex items-center">
+                  <Image
+                    src={getCountryFlagUrl(country.countryCode)}
+                    alt={`${country.countryName} flag`}
+                    width={20}
+                    height={15}
+                    className="mr-2"
+                    unoptimized
+                  />
+                  {country.countryName}
+                </div>
               </td>
               <td
                 className="py-2 px-4 border-b border-gray-600"

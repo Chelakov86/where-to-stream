@@ -27,7 +27,7 @@ describe('ResultDetails', () => {
   });
 
   it('should show a loading indicator', () => {
-    (fetch as jest.Mock).mockReturnValue(new Promise(() => {}));
+    (fetch as jest.Mock).mockReturnValue(new Promise(() => { }));
     render(<ResultDetails title={{ id: 123, type: 'movie' }} />);
     expect(screen.getByRole('status', { name: /loading title details/i })).toBeInTheDocument();
   });
@@ -93,7 +93,14 @@ describe('ResultDetails', () => {
 
     // Check for Canada - emoji and name may be in separate elements
     expect((await screen.findAllByText(/Canada/)).length).toBeGreaterThan(0);
-    expect((await screen.findAllByText('🇨🇦')).length).toBeGreaterThan(0);
+    // Verify flag image is present by alt text
+    const canadaFlags = await screen.findAllByAltText('Canada flag');
+    expect(canadaFlags.length).toBeGreaterThan(0);
+
+    // Check that at least one of them is an image
+    const flagImage = canadaFlags[0] as HTMLImageElement;
+    expect(flagImage.src).toContain('ca.png');
+
     // Canada has no free providers (shows "-") and Crave as paid provider
     expect(screen.getAllByText('-').length).toBeGreaterThan(0); // For empty free providers
     expect(screen.getAllByText('Crave').length).toBeGreaterThan(0);

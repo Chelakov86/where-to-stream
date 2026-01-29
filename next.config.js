@@ -7,6 +7,11 @@ const nextConfig = {
         hostname: 'image.tmdb.org',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'flagcdn.com',
+        pathname: '/**',
+      },
     ],
   },
 
@@ -59,7 +64,7 @@ const nextConfig = {
               "default-src 'self'; " +
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
               "style-src 'self' 'unsafe-inline'; " +
-              "img-src 'self' data: https://image.tmdb.org https://www.themoviedb.org; " +
+              "img-src 'self' data: https://image.tmdb.org https://www.themoviedb.org https://flagcdn.com; " +
               "font-src 'self'; " +
               "connect-src 'self' https://api.themoviedb.org; " +
               "frame-ancestors 'none'; " +

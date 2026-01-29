@@ -278,20 +278,15 @@ export function getCountryName(code: string): string {
 }
 
 /**
- * Converts an ISO 3166-1 alpha-2 country code to a flag emoji.
+ * Returns the URL for the flag image of a given country code.
+ * Uses flagcdn.com for high-quality flag images.
  *
  * @param countryCode - ISO 3166-1 alpha-2 country code (e.g., "US", "GB")
- * @returns The flag emoji or an empty string if the code is invalid.
+ * @returns The URL for the flag image or an empty string if code is invalid.
  */
-export function getCountryFlag(countryCode: string): string {
+export function getCountryFlagUrl(countryCode: string): string {
   if (!countryCode || countryCode.length !== 2) {
     return '';
   }
-
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map((char) => 127397 + char.charCodeAt(0));
-
-  return String.fromCodePoint(...codePoints);
+  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
 }
