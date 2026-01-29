@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchMovies, searchTv, SearchMoviesParams, SearchTvParams } from '@/app/tmdbApi';
+import {
+  searchMovies,
+  searchTv,
+  SearchMoviesParams,
+  SearchTvParams,
+  discoverMovies,
+  discoverTv,
+  DiscoverMoviesParams,
+  DiscoverTvParams,
+} from '@/app/tmdbApi';
 import { TmdbError } from '@/app/tmdbClient';
 import { TmdbSearchResult, TmdbSearchResponse } from '@/app/tmdbTypes';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
@@ -43,7 +52,8 @@ interface SearchParams {
   yearTo?: number;
   language?: string;
   genreIds?: number[];
-  minRating?: number;
+  providerIds?: number[];
+  watchRegion?: string;
   page: number;
   mode: SearchMode;
 }
@@ -129,12 +139,17 @@ const parseSearchParams = (searchParams: URLSearchParams): SearchParams => {
       .filter((id) => !isNaN(id));
   }
 
-  const minRating = searchParams.get('minRating');
-  if (minRating) {
-    const rating = parseFloat(minRating);
-    if (!isNaN(rating) && rating >= 0) {
-      params.minRating = rating;
-    }
+  const providerIds = searchParams.get('providerIds');
+  if (providerIds) {
+    params.providerIds = providerIds
+      .split(',')
+      .map((id) => parseInt(id.trim(), 10))
+      .filter((id) => !isNaN(id));
+  }
+
+  const watchRegion = searchParams.get('watchRegion');
+  if (watchRegion && watchRegion.trim()) {
+    params.watchRegion = watchRegion.trim().toUpperCase();
   }
 
   return params;
@@ -166,10 +181,6 @@ const mapSearchParamsToMovieParams = (params: SearchParams): SearchMoviesParams 
     movieParams.withGenres = params.genreIds.join(',');
   }
 
-  if (params.minRating !== undefined) {
-    movieParams.voteAverageGte = params.minRating;
-  }
-
   return movieParams;
 };
 
@@ -199,11 +210,77 @@ const mapSearchParamsToTvParams = (params: SearchParams): SearchTvParams => {
     tvParams.withGenres = params.genreIds.join(',');
   }
 
-  if (params.minRating !== undefined) {
-    tvParams.voteAverageGte = params.minRating;
+  return tvParams;
+};
+
+/**
+ * Maps search parameters to TMDB API parameters for movie discovery.
+ * Used when provider or country filters are present.
+ */
+const mapSearchParamsToDiscoverMovieParams = (params: SearchParams): DiscoverMoviesParams => {
+  const discoverParams: DiscoverMoviesParams = {
+    page: params.page,
+  };
+
+  // For movies, use yearFrom as the year filter
+  if (params.yearFrom) {
+    discoverParams.year = params.yearFrom;
+  } else if (params.yearTo) {
+    discoverParams.year = params.yearTo;
   }
 
-  return tvParams;
+  if (params.language) {
+    discoverParams.language = params.language;
+  }
+
+  if (params.genreIds && params.genreIds.length > 0) {
+    discoverParams.withGenres = params.genreIds.join(',');
+  }
+
+  if (params.providerIds && params.providerIds.length > 0) {
+    discoverParams.withWatchProviders = params.providerIds.join('|');
+  }
+
+  if (params.watchRegion) {
+    discoverParams.watchRegion = params.watchRegion;
+  }
+
+  return discoverParams;
+};
+
+/**
+ * Maps search parameters to TMDB API parameters for TV discovery.
+ * Used when provider or country filters are present.
+ */
+const mapSearchParamsToDiscoverTvParams = (params: SearchParams): DiscoverTvParams => {
+  const discoverParams: DiscoverTvParams = {
+    page: params.page,
+  };
+
+  // For TV shows, use yearFrom as the firstAirDateYear filter
+  if (params.yearFrom) {
+    discoverParams.firstAirDateYear = params.yearFrom;
+  } else if (params.yearTo) {
+    discoverParams.firstAirDateYear = params.yearTo;
+  }
+
+  if (params.language) {
+    discoverParams.language = params.language;
+  }
+
+  if (params.genreIds && params.genreIds.length > 0) {
+    discoverParams.withGenres = params.genreIds.join(',');
+  }
+
+  if (params.providerIds && params.providerIds.length > 0) {
+    discoverParams.withWatchProviders = params.providerIds.join('|');
+  }
+
+  if (params.watchRegion) {
+    discoverParams.watchRegion = params.watchRegion;
+  }
+
+  return discoverParams;
 };
 
 export async function GET(req: NextRequest) {
@@ -244,48 +321,127 @@ export async function GET(req: NextRequest) {
   try {
     let response: SearchResponse;
 
+    // Determine if we should use discover endpoint
+    const useDiscover =
+      (params.providerIds && params.providerIds.length > 0) || !!params.watchRegion;
+
     if (params.type === 'movie') {
-      const movieParams = mapSearchParamsToMovieParams(params);
-      const tmdbResponse = await searchMovies(movieParams);
-      response = {
-        page: tmdbResponse.page,
-        totalPages: tmdbResponse.total_pages,
-        totalResults: tmdbResponse.total_results,
-        results: tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
-      };
+      if (useDiscover) {
+        const discoverParams = mapSearchParamsToDiscoverMovieParams(params);
+        const tmdbResponse = await discoverMovies(discoverParams);
+
+        // Filter results by query text if provided
+        let results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode));
+        if (params.query) {
+          const queryLower = params.query.toLowerCase();
+          results = results.filter(
+            (r) => r.title?.toLowerCase().includes(queryLower) || false
+          );
+        }
+
+        response = {
+          page: tmdbResponse.page,
+          totalPages: tmdbResponse.total_pages,
+          totalResults: results.length,
+          results: results,
+        };
+      } else {
+        const movieParams = mapSearchParamsToMovieParams(params);
+        const tmdbResponse = await searchMovies(movieParams);
+        response = {
+          page: tmdbResponse.page,
+          totalPages: tmdbResponse.total_pages,
+          totalResults: tmdbResponse.total_results,
+          results: tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
+        };
+      }
     } else if (params.type === 'tv') {
-      const tvParams = mapSearchParamsToTvParams(params);
-      const tmdbResponse = await searchTv(tvParams);
-      response = {
-        page: tmdbResponse.page,
-        totalPages: tmdbResponse.total_pages,
-        totalResults: tmdbResponse.total_results,
-        results: tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
-      };
+      if (useDiscover) {
+        const discoverParams = mapSearchParamsToDiscoverTvParams(params);
+        const tmdbResponse = await discoverTv(discoverParams);
+
+        // Filter results by query text if provided
+        let results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode));
+        if (params.query) {
+          const queryLower = params.query.toLowerCase();
+          results = results.filter(
+            (r) => r.title?.toLowerCase().includes(queryLower) || false
+          );
+        }
+
+        response = {
+          page: tmdbResponse.page,
+          totalPages: tmdbResponse.total_pages,
+          totalResults: results.length,
+          results: results,
+        };
+      } else {
+        const tvParams = mapSearchParamsToTvParams(params);
+        const tmdbResponse = await searchTv(tvParams);
+        response = {
+          page: tmdbResponse.page,
+          totalPages: tmdbResponse.total_pages,
+          totalResults: tmdbResponse.total_results,
+          results: tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
+        };
+      }
     } else {
       // type === 'all': Fetch both movies and TV in parallel, then merge and sort
-      const movieParams = mapSearchParamsToMovieParams(params);
-      const tvParams = mapSearchParamsToTvParams(params);
-      const [movieResponse, tvResponse] = await Promise.all([
-        searchMovies(movieParams),
-        searchTv(tvParams),
-      ]);
+      if (useDiscover) {
+        const discoverMovieParams = mapSearchParamsToDiscoverMovieParams(params);
+        const discoverTvParams = mapSearchParamsToDiscoverTvParams(params);
+        const [movieResponse, tvResponse] = await Promise.all([
+          discoverMovies(discoverMovieParams),
+          discoverTv(discoverTvParams),
+        ]);
 
-      // Combine results from both sources
-      const combinedResults = [
-        ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
-        ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
-      ];
+        // Combine and normalize results
+        let combinedResults = [
+          ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
+          ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
+        ];
 
-      // Sort by popularity (descending) to show most popular results first
-      combinedResults.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        // Filter by query text if provided
+        if (params.query) {
+          const queryLower = params.query.toLowerCase();
+          combinedResults = combinedResults.filter(
+            (r) => r.title?.toLowerCase().includes(queryLower) || false
+          );
+        }
 
-      response = {
-        page: movieResponse.page, // Assuming same page for both
-        totalPages: Math.max(movieResponse.total_pages, tvResponse.total_pages),
-        totalResults: movieResponse.total_results + tvResponse.total_results,
-        results: combinedResults,
-      };
+        // Sort by popularity (descending) to show most popular results first
+        combinedResults.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+
+        response = {
+          page: movieResponse.page, // Assuming same page for both
+          totalPages: Math.max(movieResponse.total_pages, tvResponse.total_pages),
+          totalResults: combinedResults.length,
+          results: combinedResults,
+        };
+      } else {
+        const movieParams = mapSearchParamsToMovieParams(params);
+        const tvParams = mapSearchParamsToTvParams(params);
+        const [movieResponse, tvResponse] = await Promise.all([
+          searchMovies(movieParams),
+          searchTv(tvParams),
+        ]);
+
+        // Combine results from both sources
+        const combinedResults = [
+          ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
+          ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
+        ];
+
+        // Sort by popularity (descending) to show most popular results first
+        combinedResults.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+
+        response = {
+          page: movieResponse.page, // Assuming same page for both
+          totalPages: Math.max(movieResponse.total_pages, tvResponse.total_pages),
+          totalResults: movieResponse.total_results + tvResponse.total_results,
+          results: combinedResults,
+        };
+      }
     }
 
     // Add rate limit headers to successful response

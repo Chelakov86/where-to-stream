@@ -12,6 +12,8 @@ import {
   TmdbTvDetails,
   TmdbWatchProvidersResponse,
   TmdbGenreList,
+  TmdbDiscoverResponse,
+  TmdbProviderListResponse,
 } from './tmdbTypes';
 import { getCache, setCache } from './cache';
 import { CACHE_TTL_SECONDS } from './config';
@@ -32,7 +34,12 @@ import { CACHE_TTL_SECONDS } from './config';
  */
 function generateCacheKey(
   prefix: string,
-  params: Record<string, unknown> | SearchMoviesParams | SearchTvParams
+  params:
+    | Record<string, unknown>
+    | SearchMoviesParams
+    | SearchTvParams
+    | DiscoverMoviesParams
+    | DiscoverTvParams
 ): string {
   // Sort keys to ensure stable ordering
   const sortedParams: Record<string, unknown> = {};
@@ -65,6 +72,30 @@ export interface SearchTvParams {
   language?: string;
   withGenres?: string;
   voteAverageGte?: number;
+}
+
+/**
+ * Discover parameters for movie discovery
+ */
+export interface DiscoverMoviesParams {
+  page?: number;
+  year?: number;
+  language?: string;
+  withGenres?: string;
+  withWatchProviders?: string;
+  watchRegion?: string;
+}
+
+/**
+ * Discover parameters for TV show discovery
+ */
+export interface DiscoverTvParams {
+  page?: number;
+  firstAirDateYear?: number;
+  language?: string;
+  withGenres?: string;
+  withWatchProviders?: string;
+  watchRegion?: string;
 }
 
 /**
@@ -276,6 +307,122 @@ export async function getTvGenres(): Promise<TmdbGenreList> {
   }
 
   const data = await tmdbGet<TmdbGenreList>('/genre/tv/list');
+  setCache(cacheKey, data, 24 * 60 * 60); // 24 hours
+  return data;
+}
+
+/**
+ * Discover movies with filters including provider and country.
+ *
+ * @param params - Discovery parameters including optional provider and country filters
+ * @returns Promise resolving to discover results with pagination info
+ *
+ * @example
+ * ```typescript
+ * const results = await discoverMovies({
+ *   withWatchProviders: '8,9',
+ *   watchRegion: 'US',
+ *   withGenres: '28'
+ * });
+ * ```
+ */
+export async function discoverMovies(params: DiscoverMoviesParams): Promise<TmdbDiscoverResponse> {
+  const cacheKey = generateCacheKey('discover:movie', params);
+  const cached = getCache<TmdbDiscoverResponse>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbDiscoverResponse>('/discover/movie', {
+    page: params.page,
+    year: params.year,
+    language: params.language,
+    with_genres: params.withGenres,
+    with_watch_providers: params.withWatchProviders,
+    watch_region: params.watchRegion,
+  });
+
+  setCache(cacheKey, data, CACHE_TTL_SECONDS);
+  return data;
+}
+
+/**
+ * Discover TV shows with filters including provider and country.
+ *
+ * @param params - Discovery parameters including optional provider and country filters
+ * @returns Promise resolving to discover results with pagination info
+ *
+ * @example
+ * ```typescript
+ * const results = await discoverTv({
+ *   withWatchProviders: '8,9',
+ *   watchRegion: 'US',
+ *   withGenres: '10759'
+ * });
+ * ```
+ */
+export async function discoverTv(params: DiscoverTvParams): Promise<TmdbDiscoverResponse> {
+  const cacheKey = generateCacheKey('discover:tv', params);
+  const cached = getCache<TmdbDiscoverResponse>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbDiscoverResponse>('/discover/tv', {
+    page: params.page,
+    first_air_date_year: params.firstAirDateYear,
+    language: params.language,
+    with_genres: params.withGenres,
+    with_watch_providers: params.withWatchProviders,
+    watch_region: params.watchRegion,
+  });
+
+  setCache(cacheKey, data, CACHE_TTL_SECONDS);
+  return data;
+}
+
+/**
+ * Get the list of available movie watch providers.
+ *
+ * @returns Promise resolving to list of movie providers with IDs and names
+ *
+ * @example
+ * ```typescript
+ * const { results } = await getMovieWatchProvidersList();
+ * // [{ provider_id: 8, provider_name: 'Netflix', ... }, ...]
+ * ```
+ */
+export async function getMovieWatchProvidersList(): Promise<TmdbProviderListResponse> {
+  const cacheKey = 'providers:list:movie';
+  const cached = getCache<TmdbProviderListResponse>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbProviderListResponse>('/watch/providers/movie');
+  setCache(cacheKey, data, 24 * 60 * 60); // 24 hours
+  return data;
+}
+
+/**
+ * Get the list of available TV watch providers.
+ *
+ * @returns Promise resolving to list of TV providers with IDs and names
+ *
+ * @example
+ * ```typescript
+ * const { results } = await getTvWatchProvidersList();
+ * // [{ provider_id: 8, provider_name: 'Netflix', ... }, ...]
+ * ```
+ */
+export async function getTvWatchProvidersList(): Promise<TmdbProviderListResponse> {
+  const cacheKey = 'providers:list:tv';
+  const cached = getCache<TmdbProviderListResponse>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const data = await tmdbGet<TmdbProviderListResponse>('/watch/providers/tv');
   setCache(cacheKey, data, 24 * 60 * 60); // 24 hours
   return data;
 }

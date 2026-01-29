@@ -8,6 +8,7 @@ import ErrorBanner from './components/ErrorBanner';
 import SearchHistory from './components/SearchHistory';
 import { TMDBResult, SearchParams } from './types';
 import { useGenres } from './hooks/useGenres';
+import { useProviders } from './hooks/useProviders';
 import { useAutocomplete } from './hooks/useAutocomplete';
 import { useSearch } from './hooks/useSearch';
 import { useSearchHistory } from './hooks/useSearchHistory';
@@ -25,18 +26,21 @@ export default function Home() {
   const clearError = useCallback(() => setErrorMessage(null), []);
 
   const { genres, isLoading: isGenresLoading, error: genresError } = useGenres();
+  const { providers, isLoading: isProvidersLoading, error: providersError } = useProviders();
   const { autocompleteSuggestions, handleAutocompleteRequest, clearAutocomplete } =
     useAutocomplete(showError);
   const { history, addToHistory, clearHistory, removeFromHistory } = useSearchHistory();
   const { results, page, totalPages, searchQuery, isSearching, handleSearch, handlePageChange } =
     useSearch(showError);
 
-  // Show genres error if present
+  // Show genres or providers error if present
   useEffect(() => {
     if (genresError) {
       showError(genresError);
+    } else if (providersError) {
+      showError(providersError);
     }
-  }, [genresError, showError]);
+  }, [genresError, providersError, showError]);
 
   const handleSearchWithClear = useCallback(
     async (params: Parameters<typeof handleSearch>[0], newPage?: number) => {
@@ -120,7 +124,9 @@ export default function Home() {
       </p>
       <SearchForm
         genres={genres}
+        providers={providers}
         isGenresLoading={isGenresLoading}
+        isProvidersLoading={isProvidersLoading}
         onAutocompleteRequest={handleAutocompleteRequest}
         onSearch={handleSearchWithClear}
         autocompleteListId={AUTOCOMPLETE_LIST_ID}

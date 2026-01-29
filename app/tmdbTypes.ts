@@ -120,3 +120,21 @@ export interface TmdbWatchProvidersResponse {
   id: number;
   results: Record<string, TmdbCountryWatchProviders>;
 }
+
+export interface TmdbProvider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string;
+  display_priority: number;
+}
+
+export interface TmdbProviderListResponse {
+  results: TmdbProvider[];
+}
+
+export interface TmdbDiscoverResponse {
+  page: number;
+  results: TmdbSearchResult[];
+  total_pages: number;
+  total_results: number;
+}

@@ -10,10 +10,16 @@ const mockGenres = [
   { id: 16, name: 'Animation' },
 ];
 
+const mockProviders = [
+  { provider_id: 8, provider_name: 'Netflix', logo_path: '/netflix.jpg' },
+  { provider_id: 9, provider_name: 'Amazon Prime Video', logo_path: '/prime.jpg' },
+  { provider_id: 337, provider_name: 'Disney Plus', logo_path: '/disney.jpg' },
+];
+
 describe('SearchForm', () => {
   it('renders all form fields', () => {
     const handleSearch = jest.fn();
-    render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
+    render(<SearchForm genres={mockGenres} providers={mockProviders} onSearch={handleSearch} />);
 
     expect(screen.getByPlaceholderText('Search for a movie or series')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Show search filters/i })).toBeInTheDocument();
@@ -29,19 +35,20 @@ describe('SearchForm', () => {
     expect(screen.getByRole('checkbox', { name: 'Action' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Adventure' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Animation' })).toBeInTheDocument();
-    expect(screen.getByLabelText(/Minimum Rating/)).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Netflix' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Filter by country availability/)).toBeInTheDocument();
   });
 
   it('associates the query input with its accessible label', () => {
     const handleSearch = jest.fn();
-    render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
+    render(<SearchForm genres={mockGenres} providers={mockProviders} onSearch={handleSearch} />);
 
     expect(screen.getByRole('textbox', { name: /search query/i })).toBeInTheDocument();
   });
 
   it('calls onSearch with all form values on submit', () => {
     const handleSearch = jest.fn();
-    render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
+    render(<SearchForm genres={mockGenres} providers={mockProviders} onSearch={handleSearch} />);
 
     fireEvent.change(screen.getByPlaceholderText('Search for a movie or series'), {
       target: { value: 'Inception' },
@@ -64,8 +71,9 @@ describe('SearchForm', () => {
     });
     fireEvent.click(screen.getByRole('checkbox', { name: 'Action' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Adventure' }));
-    fireEvent.change(screen.getByLabelText(/Minimum Rating/), {
-      target: { value: '8' },
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Netflix' }));
+    fireEvent.change(screen.getByLabelText(/Filter by country availability/), {
+      target: { value: 'US' },
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
@@ -77,14 +85,15 @@ describe('SearchForm', () => {
       yearTo: 2011,
       language: 'en',
       genreIds: [28, 12],
-      minRating: 8,
+      providerIds: [8],
+      watchRegion: 'US',
     });
   });
 
   it('submits the search when pressing Enter on the query input', async () => {
     const handleSearch = jest.fn();
     const user = userEvent.setup();
-    render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
+    render(<SearchForm genres={mockGenres} providers={mockProviders} onSearch={handleSearch} />);
 
     const queryInput = screen.getByRole('textbox', { name: /search query/i });
     await user.type(queryInput, 'Inception{enter}');
@@ -98,7 +107,7 @@ describe('SearchForm', () => {
 
   it('does not call onSearch if query is empty and shows an error', () => {
     const handleSearch = jest.fn();
-    render(<SearchForm genres={mockGenres} onSearch={handleSearch} />);
+    render(<SearchForm genres={mockGenres} providers={mockProviders} onSearch={handleSearch} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
@@ -111,6 +120,7 @@ describe('SearchForm', () => {
     render(
       <SearchForm
         genres={mockGenres}
+        providers={mockProviders}
         onSearch={jest.fn()}
         onAutocompleteRequest={handleAutocomplete}
       />
@@ -124,7 +134,7 @@ describe('SearchForm', () => {
   });
 
   it('shows a loading state for filters when genres are loading', () => {
-    render(<SearchForm genres={[]} onSearch={jest.fn()} isGenresLoading />);
+    render(<SearchForm genres={[]} providers={[]} onSearch={jest.fn()} isGenresLoading />);
 
     // Show filters first
     fireEvent.click(screen.getByRole('button', { name: /Show search filters/i }));
@@ -138,6 +148,7 @@ describe('SearchForm', () => {
     render(
       <SearchForm
         genres={mockGenres}
+        providers={mockProviders}
         onSearch={handleSearch}
         autocompleteListId="test-list"
         autocompleteItems={mockItems}

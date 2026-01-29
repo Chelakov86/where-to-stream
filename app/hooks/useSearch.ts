@@ -55,7 +55,14 @@ export function useSearch(onError?: (message: string | null) => void) {
 
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
+          // Handle arrays (genreIds, providerIds)
+          if (Array.isArray(value)) {
+            if (value.length > 0) {
+              queryParams.append(key, value.join(','));
+            }
+          } else {
+            queryParams.append(key, String(value));
+          }
         }
       });
 

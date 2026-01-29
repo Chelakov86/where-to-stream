@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AutocompleteList, AutocompleteItem } from './AutocompleteList';
+import { COUNTRY_NAMES } from '@/app/utils/countries';
 
 interface SearchFormProps {
   genres: { id: number; name: string }[];
+  providers: { provider_id: number; provider_name: string; logo_path: string }[];
   onSearch: (params: {
     query: string;
     type: 'movie' | 'tv' | 'all';
@@ -10,10 +12,12 @@ interface SearchFormProps {
     yearTo?: number;
     language?: string;
     genreIds?: number[];
-    minRating?: number;
+    providerIds?: number[];
+    watchRegion?: string;
   }) => void;
   onAutocompleteRequest?: (query: string) => void;
   isGenresLoading?: boolean;
+  isProvidersLoading?: boolean;
   autocompleteListId?: string;
   autocompleteItems?: AutocompleteItem[];
   onAutocompleteSelect?: (item: AutocompleteItem) => void;
@@ -22,9 +26,11 @@ interface SearchFormProps {
 
 const SearchForm: React.FC<SearchFormProps> = ({
   genres,
+  providers,
   onSearch,
   onAutocompleteRequest,
   isGenresLoading = false,
+  isProvidersLoading = false,
   autocompleteListId,
   autocompleteItems = [],
   onAutocompleteSelect,
@@ -32,7 +38,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
 }) => {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [minRating, setMinRating] = useState(5);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -74,6 +79,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
     const formData = new FormData(event.currentTarget);
     const selectedGenreIds = formData.getAll('genre').map((id) => parseInt(id as string, 10));
+    const selectedProviderIds = formData.getAll('provider').map((id) => parseInt(id as string, 10));
+    const watchRegion = formData.get('watchRegion') as string;
 
     onSearch({
       query: formData.get('query') as string,
@@ -82,7 +89,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
       yearTo: Number(formData.get('yearTo')) || undefined,
       language: formData.get('language') as string,
       genreIds: selectedGenreIds.length > 0 ? selectedGenreIds : undefined,
-      minRating: Number(formData.get('minRating')) || undefined,
+      providerIds: selectedProviderIds.length > 0 ? selectedProviderIds : undefined,
+      watchRegion: watchRegion || undefined,
     });
   };
 
@@ -281,24 +289,57 @@ const SearchForm: React.FC<SearchFormProps> = ({
         </div>
 
         <div>
-          <label htmlFor="minRating" className="block text-sm font-medium">
-            Minimum Rating: <span>{minRating}</span>
+          <label className="block text-sm font-medium">Streaming Providers</label>
+          {isProvidersLoading ? (
+            <p className="mt-2 text-sm text-gray-400">Loading providers...</p>
+          ) : Array.isArray(providers) && providers.length > 0 ? (
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              {providers.slice(0, 18).map((provider) => (
+                <label key={provider.provider_id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="provider"
+                    value={provider.provider_id}
+                    className="form-checkbox h-5 w-5 rounded border-gray-600 bg-gray-700"
+                  />
+                  <span className="text-sm">{provider.provider_name}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-gray-400">No providers available</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="watchRegion" className="block text-sm font-medium">
+            Filter by country availability
           </label>
-          <input
-            id="minRating"
-            name="minRating"
-            type="range"
-            min="0"
-            max="10"
-            step="0.5"
-            value={minRating}
-            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-            onChange={(event) => setMinRating(Number(event.target.value))}
-            aria-label="Filter by minimum rating"
-            aria-valuemin={0}
-            aria-valuemax={10}
-            aria-valuenow={minRating}
-          />
+          <select
+            id="watchRegion"
+            name="watchRegion"
+            className="mt-2 w-full p-2 bg-gray-700 border border-gray-600 rounded"
+            aria-label="Filter by country availability"
+          >
+            <option value="">Any Country</option>
+            <optgroup label="Popular Countries">
+              <option value="US">United States</option>
+              <option value="GB">United Kingdom</option>
+              <option value="CA">Canada</option>
+              <option value="DE">Germany</option>
+              <option value="FR">France</option>
+              <option value="AU">Australia</option>
+            </optgroup>
+            <optgroup label="All Countries">
+              {Object.entries(COUNTRY_NAMES)
+                .sort((a, b) => a[1].localeCompare(b[1]))
+                .map(([code, name]) => (
+                  <option key={code} value={code}>
+                    {name}
+                  </option>
+                ))}
+            </optgroup>
+          </select>
         </div>
       </div>
 
