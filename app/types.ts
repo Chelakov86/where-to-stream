@@ -54,8 +54,9 @@ export interface TitleDetails {
   posterUrl: string;
   rating: number;
   runtime: number;
+  detectedCountry: string | null; // ISO country code or null if detection failed
   availability: {
-    preferredCountries: CountryAvailability[];
+    userCountry: CountryAvailability | null; // Single country or null
     otherCountries: CountryAvailability[];
   };
 }

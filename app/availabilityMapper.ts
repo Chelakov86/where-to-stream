@@ -2,26 +2,24 @@
  * Availability Mapper Module
  *
  * Transforms TMDB watch provider data into a structured availability model
- * that groups countries by preference and categorizes providers by type.
+ * that shows user's detected country separately and categorizes providers by type.
  *
  * Key Features:
- * - Groups countries into "preferred" (DE, GB, US, CA) and "other" categories
+ * - Detects user's country automatically via HTTP headers
+ * - Shows user's country separately (even if no providers available)
  * - Separates providers into free (ads, free) and paid (flatrate) categories
  * - Maps country codes to full country names with fallback to code
- * - Always includes preferred countries in results (even if no providers)
+ * - Falls back to showing all countries if detection fails
  *
  * Assumptions:
  * - Free providers: Includes providers from `ads` and `free` categories (ad-supported and free services)
  * - Paid providers: Includes providers from `flatrate` category (subscription services like Netflix, Disney+, etc.)
- * - Preferred countries order: Fixed order [DE, GB, US, CA] as defined in config.
- *   This order is preserved in the output.
  * - Country name mapping: Uses ISO 3166-1 alpha-2 codes. If a code is not found
  *   in the mapping, the code itself is used as the display name.
  * - Other countries: Only included if they have at least one streaming service.
  *   Countries with only buy/rent options are excluded.
  */
 
-import { PREFERRED_COUNTRIES } from './config';
 import { TmdbWatchProviderInfo, TmdbWatchProvidersResponse } from './tmdbTypes';
 import { getCountryName } from './utils/countries';
 
@@ -36,7 +34,7 @@ export interface CountryAvailability {
 }
 
 export interface AvailabilityResult {
-  preferredCountries: CountryAvailability[];
+  userCountry: CountryAvailability | null; // Single country or null
   otherCountries: CountryAvailability[];
 }
 
@@ -80,40 +78,46 @@ const getPaidProviders = (flatrateProviders: TmdbWatchProviderInfo[] = []): stri
  * Maps TMDB watch providers response to a structured availability model.
  *
  * Processing steps:
- * 1. Process preferred countries (DE, GB, US, CA) in order - always included even if no providers
- * 2. Process other countries - only included if they have streaming services (flatrate, ads, or free)
- * 3. Sort other countries alphabetically by country name
+ * 1. If userCountryCode is provided and exists in TMDB results:
+ *    - Create userCountry object (even if no providers - will show "not available" message)
+ *    - Exclude this country from otherCountries
+ * 2. If userCountryCode is null or not in TMDB results:
+ *    - Set userCountry to null
+ *    - Include ALL countries with providers in otherCountries
+ * 3. Sort otherCountries alphabetically by country name
  *
  * @param tmdbProviders - Raw watch providers response from TMDB API
- * @returns AvailabilityResult with preferredCountries and otherCountries arrays
+ * @param userCountryCode - User's detected country code (null if detection failed)
+ * @returns AvailabilityResult with userCountry and otherCountries
  */
-export const mapAvailability = (tmdbProviders: TmdbWatchProvidersResponse): AvailabilityResult => {
+export const mapAvailability = (
+  tmdbProviders: TmdbWatchProvidersResponse,
+  userCountryCode: string | null
+): AvailabilityResult => {
   const tmdbResults = tmdbProviders.results || {};
-  const preferredCountries: CountryAvailability[] = [];
+  let userCountry: CountryAvailability | null = null;
   const otherCountries: CountryAvailability[] = [];
 
-  const processedPreferred = new Set<string>();
-
-  // 1. Process preferred countries
-  for (const countryCode of PREFERRED_COUNTRIES) {
-    const countryData = tmdbResults[countryCode];
+  // 1. Process user's country if detected and available in TMDB results
+  if (userCountryCode && tmdbResults[userCountryCode]) {
+    const countryData = tmdbResults[userCountryCode];
     const flatrateProviders = countryData?.flatrate || [];
     const adsProviders = countryData?.ads || [];
     const freeProviders = countryData?.free || [];
 
-    preferredCountries.push({
-      countryCode,
-      countryName: getCountryName(countryCode),
+    userCountry = {
+      countryCode: userCountryCode,
+      countryName: getCountryName(userCountryCode),
       freeProviders: getFreeProviders(adsProviders, freeProviders),
       paidProviders: getPaidProviders(flatrateProviders),
       watchLink: countryData?.link,
-    });
-    processedPreferred.add(countryCode);
+    };
   }
 
-  // 2. Process other countries
+  // 2. Process other countries (exclude user's country if it was processed)
   for (const countryCode in tmdbResults) {
-    if (processedPreferred.has(countryCode)) {
+    // Skip user's country if it was already processed
+    if (userCountryCode && countryCode === userCountryCode) {
       continue;
     }
 
@@ -141,7 +145,7 @@ export const mapAvailability = (tmdbProviders: TmdbWatchProvidersResponse): Avai
   otherCountries.sort((a, b) => a.countryName.localeCompare(b.countryName));
 
   return {
-    preferredCountries,
+    userCountry,
     otherCountries,
   };
 };

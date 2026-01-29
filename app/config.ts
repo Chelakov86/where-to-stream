@@ -5,6 +5,11 @@
 
 export const TMDB_BASE_URL = 'https://api.themoviedb.org/3' as const;
 
+/**
+ * @deprecated No longer used. User's country is now automatically detected via HTTP headers.
+ * See app/utils/countryDetection.ts for the new implementation.
+ * This constant is kept for reference only and will be removed in a future version.
+ */
 export const PREFERRED_COUNTRIES = Object.freeze(['DE', 'GB', 'US', 'CA'] as const);
 
 export const CACHE_TTL_SECONDS = 12 * 60 * 60; // 12 hours

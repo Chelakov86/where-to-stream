@@ -60,19 +60,19 @@ describe('ResultDetails', () => {
     expect(await screen.findByTestId('rating')).toHaveTextContent('Rating: 8.5/10');
     expect(screen.getByText('1h 30m')).toBeInTheDocument();
 
-    const preferredTable = await screen.findByRole('table', {
-      name: 'Available in Your Region',
+    const userCountryTable = await screen.findByRole('table', {
+      name: 'Available in Your Country (United States)',
     });
-    const preferredLink = within(preferredTable).getByRole('link', {
+    const userCountryLink = within(userCountryTable).getByRole('link', {
       name: 'Watch',
     });
-    expect(preferredLink).toHaveAttribute(
+    expect(userCountryLink).toHaveAttribute(
       'href',
-      mockMovie.availability.preferredCountries[0].watchLink
+      mockMovie.availability.userCountry!.watchLink
     );
     // Check for free and paid providers
-    expect(within(preferredTable).getByText('Pluto TV, Tubi')).toBeInTheDocument();
-    expect(within(preferredTable).getByText('Hulu, Max, Netflix')).toBeInTheDocument();
+    expect(within(userCountryTable).getByText('Pluto TV, Tubi')).toBeInTheDocument();
+    expect(within(userCountryTable).getByText('Hulu, Max, Netflix')).toBeInTheDocument();
 
     const otherTable = await screen.findByRole('table', { name: 'Other Countries' });
     const otherLink = within(otherTable).getByRole('link', { name: 'Watch' });
@@ -106,7 +106,7 @@ describe('ResultDetails', () => {
     expect(screen.getAllByText('Crave').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Watch' })).toHaveAttribute(
       'href',
-      mockTv.availability.preferredCountries[0].watchLink
+      mockTv.availability.userCountry!.watchLink
     );
   });
 
@@ -122,8 +122,9 @@ describe('ResultDetails', () => {
   it('should show "No streaming availability found" when availability is empty', async () => {
     const movieWithoutAvailability = {
       ...mockMovie,
+      detectedCountry: null,
       availability: {
-        preferredCountries: [],
+        userCountry: null,
         otherCountries: [],
       },
     };

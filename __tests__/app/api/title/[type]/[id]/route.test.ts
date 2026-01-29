@@ -26,9 +26,16 @@ jest.mock('@/app/availabilityMapper', () => ({
   mapAvailability: jest.fn(),
 }));
 
+// Mock country detection utilities
+jest.mock('@/app/utils/countryDetection', () => ({
+  detectUserCountry: jest.fn(),
+  validateCountryCode: jest.fn(),
+}));
+
 // Import the mocked modules AFTER jest.mock calls
 import * as tmdbApi from '@/app/tmdbApi';
 import * as availabilityMapper from '@/app/availabilityMapper';
+import * as countryDetection from '@/app/utils/countryDetection';
 import { GET } from '@/app/api/title/[type]/[id]/route';
 
 // Now, get references to the mocked functions
@@ -37,6 +44,8 @@ const mockGetMovieWatchProviders = tmdbApi.getMovieWatchProviders as jest.Mock;
 const mockGetTvDetails = tmdbApi.getTvDetails as jest.Mock;
 const mockGetTvWatchProviders = tmdbApi.getTvWatchProviders as jest.Mock;
 const mockMapAvailability = availabilityMapper.mapAvailability as jest.Mock;
+const mockDetectUserCountry = countryDetection.detectUserCountry as jest.Mock;
+const mockValidateCountryCode = countryDetection.validateCountryCode as jest.Mock;
 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
@@ -101,25 +110,31 @@ describe('GET /api/title/[type]/[id]', () => {
         },
       },
     });
+
+    // Default: detect US and validate it
+    mockDetectUserCountry.mockReturnValue('US');
+    mockValidateCountryCode.mockReturnValue('US');
+
     mockMapAvailability.mockReturnValue({
-      preferredCountries: [
-        {
-          countryCode: 'US',
-          countryName: 'United States',
-          freeProviders: [],
-          paidProviders: ['Netflix'],
-          watchLink: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
-        },
-      ],
+      userCountry: {
+        countryCode: 'US',
+        countryName: 'United States',
+        freeProviders: [],
+        paidProviders: ['Netflix'],
+        watchLink: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
+      },
       otherCountries: [],
     });
   });
 
   // Helper to create a mock NextRequest
-  const createMockRequest = (type: string, id: string) => {
+  const createMockRequest = (type: string, id: string, headers: Record<string, string> = {}) => {
     return {
       nextUrl: {
         pathname: `/api/title/${type}/${id}`,
+      },
+      headers: {
+        get: (name: string) => headers[name] || null,
       },
     } as unknown as NextRequest;
   };
@@ -133,22 +148,27 @@ describe('GET /api/title/[type]/[id]', () => {
     expect(response.status).toBe(200);
     expect(mockGetMovieDetails).toHaveBeenCalledWith(550);
     expect(mockGetMovieWatchProviders).toHaveBeenCalledWith(550);
-    expect(mockMapAvailability).toHaveBeenCalledWith({
-      id: 550,
-      results: {
-        US: {
-          link: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
-          flatrate: [
-            {
-              logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
-              provider_id: 8,
-              provider_name: 'Netflix',
-              display_priority: 1,
-            },
-          ],
+    expect(mockDetectUserCountry).toHaveBeenCalledWith(req);
+    expect(mockValidateCountryCode).toHaveBeenCalledWith('US', ['US']);
+    expect(mockMapAvailability).toHaveBeenCalledWith(
+      {
+        id: 550,
+        results: {
+          US: {
+            link: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
+            flatrate: [
+              {
+                logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
+                provider_id: 8,
+                provider_name: 'Netflix',
+                display_priority: 1,
+              },
+            ],
+          },
         },
       },
-    });
+      'US'
+    );
     expect(json).toEqual({
       id: 550,
       type: 'movie',
@@ -161,16 +181,15 @@ describe('GET /api/title/[type]/[id]', () => {
       rating: 8.4,
       posterUrl: `${TMDB_IMAGE_BASE_URL}/pB8BM7pdXLXbZVZC65E3J9xk3LX.jpg`,
       runtime: 139,
+      detectedCountry: 'US',
       availability: {
-        preferredCountries: [
-          {
-            countryCode: 'US',
-            countryName: 'United States',
-            freeProviders: [],
-            paidProviders: ['Netflix'],
-            watchLink: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
-          },
-        ],
+        userCountry: {
+          countryCode: 'US',
+          countryName: 'United States',
+          freeProviders: [],
+          paidProviders: ['Netflix'],
+          watchLink: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
+        },
         otherCountries: [],
       },
     });
@@ -178,15 +197,13 @@ describe('GET /api/title/[type]/[id]', () => {
 
   it('should return normalized TV show details and availability for a valid TV show ID', async () => {
     mockMapAvailability.mockReturnValue({
-      preferredCountries: [
-        {
-          countryCode: 'US',
-          countryName: 'United States',
-          freeProviders: [],
-          paidProviders: ['HBO Max'],
-          watchLink: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
-        },
-      ],
+      userCountry: {
+        countryCode: 'US',
+        countryName: 'United States',
+        freeProviders: [],
+        paidProviders: ['HBO Max'],
+        watchLink: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
+      },
       otherCountries: [],
     });
     const req = createMockRequest('tv', '1399');
@@ -196,22 +213,25 @@ describe('GET /api/title/[type]/[id]', () => {
     expect(response.status).toBe(200);
     expect(mockGetTvDetails).toHaveBeenCalledWith(1399);
     expect(mockGetTvWatchProviders).toHaveBeenCalledWith(1399);
-    expect(mockMapAvailability).toHaveBeenCalledWith({
-      id: 1399,
-      results: {
-        US: {
-          link: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
-          flatrate: [
-            {
-              logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
-              provider_id: 8,
-              provider_name: 'HBO Max',
-              display_priority: 1,
-            },
-          ],
+    expect(mockMapAvailability).toHaveBeenCalledWith(
+      {
+        id: 1399,
+        results: {
+          US: {
+            link: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
+            flatrate: [
+              {
+                logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
+                provider_id: 8,
+                provider_name: 'HBO Max',
+                display_priority: 1,
+              },
+            ],
+          },
         },
       },
-    });
+      'US'
+    );
     expect(json).toEqual({
       id: 1399,
       type: 'tv',
@@ -224,16 +244,15 @@ describe('GET /api/title/[type]/[id]', () => {
       rating: 8.4,
       posterUrl: `${TMDB_IMAGE_BASE_URL}/2OMB0ynKlyXlHZWSnQcBGqL2AER.jpg`,
       runtime: 60, // Assuming episode_run_time[0] for TV
+      detectedCountry: 'US',
       availability: {
-        preferredCountries: [
-          {
-            countryCode: 'US',
-            countryName: 'United States',
-            freeProviders: [],
-            paidProviders: ['HBO Max'],
-            watchLink: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
-          },
-        ],
+        userCountry: {
+          countryCode: 'US',
+          countryName: 'United States',
+          freeProviders: [],
+          paidProviders: ['HBO Max'],
+          watchLink: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
+        },
         otherCountries: [],
       },
     });

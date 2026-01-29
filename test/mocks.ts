@@ -20,22 +20,21 @@ export const mockMovie: TitleDetails = {
   posterUrl: '/path/to/poster.jpg',
   rating: 8.5,
   runtime: 90,
+  detectedCountry: 'US',
   availability: {
-    preferredCountries: [
-      {
-        countryCode: 'US',
-        countryName: 'United States',
-        freeProviders: ['Pluto TV', 'Tubi'],
-        paidProviders: ['Hulu', 'Max', 'Netflix'],
-        watchLink: 'https://example.com/watch/movie/us',
-      },
-    ],
+    userCountry: {
+      countryCode: 'US',
+      countryName: 'United States',
+      freeProviders: ['Pluto TV', 'Tubi'],
+      paidProviders: ['Hulu', 'Max', 'Netflix'],
+      watchLink: 'https://example.com/watch/movie/us',
+    },
     otherCountries: [
       {
         countryCode: 'GB',
         countryName: 'United Kingdom',
         freeProviders: [],
-        paidProviders: [],
+        paidProviders: ['Netflix'],
         watchLink: 'https://example.com/watch/movie/gb',
       },
     ],
@@ -55,16 +54,15 @@ export const mockTv: TitleDetails = {
   posterUrl: '/path/to/another-poster.jpg',
   rating: 9,
   runtime: 45,
+  detectedCountry: 'CA',
   availability: {
-    preferredCountries: [
-      {
-        countryCode: 'CA',
-        countryName: 'Canada',
-        freeProviders: [],
-        paidProviders: ['Crave'],
-        watchLink: 'https://example.com/watch/tv/ca',
-      },
-    ],
+    userCountry: {
+      countryCode: 'CA',
+      countryName: 'Canada',
+      freeProviders: [],
+      paidProviders: ['Crave'],
+      watchLink: 'https://example.com/watch/tv/ca',
+    },
     otherCountries: [],
   },
 };

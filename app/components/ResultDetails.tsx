@@ -221,8 +221,13 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
   }
 
   const hasAvailability =
-    details.availability.preferredCountries.length > 0 ||
-    details.availability.otherCountries.length > 0;
+    details.availability.userCountry !== null || details.availability.otherCountries.length > 0;
+
+  // Check if user country has providers
+  const userCountryHasProviders =
+    details.availability.userCountry &&
+    (details.availability.userCountry.freeProviders.length > 0 ||
+      details.availability.userCountry.paidProviders.length > 0);
 
   const titleHeadingId = `result-details-${details.id}-title`;
 
@@ -271,11 +276,25 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
           <p className="mt-4 text-gray-400">No streaming availability found.</p>
         ) : (
           <div className="-mx-6 px-6">
-            {details.availability.preferredCountries.length > 0 && (
-              <AvailabilityTable
-                title="Available in Your Region"
-                countries={details.availability.preferredCountries}
-              />
+            {/* User's country section - shown if detected */}
+            {details.availability.userCountry && (
+              <>
+                {userCountryHasProviders ? (
+                  <AvailabilityTable
+                    title={`Available in Your Country (${details.availability.userCountry.countryName})`}
+                    countries={[details.availability.userCountry]}
+                  />
+                ) : (
+                  <div className="mt-4">
+                    <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">
+                      Not Available in Your Country ({details.availability.userCountry.countryName})
+                    </h4>
+                    <p className="text-gray-400">
+                      This title is not available for streaming in your country.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
             {details.availability.otherCountries.length > 0 && (
               <AvailabilityTable

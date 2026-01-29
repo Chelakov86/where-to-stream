@@ -11,6 +11,7 @@ import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
 import { logger } from '@/app/utils/logger';
+import { detectUserCountry, validateCountryCode } from '@/app/utils/countryDetection';
 
 /**
  * API route handler for fetching detailed information about a specific movie or TV show.
@@ -19,7 +20,7 @@ import { logger } from '@/app/utils/logger';
  *
  * Fetches comprehensive details including metadata (title, year, genres, overview, rating, runtime)
  * and streaming availability by country. The availability data is processed through the
- * availabilityMapper to normalize provider information and group by preferred countries.
+ * availabilityMapper to normalize provider information and automatically detect the user's country.
  *
  * Path Parameters:
  * - type: "movie" | "tv" (required)
@@ -27,12 +28,16 @@ import { logger } from '@/app/utils/logger';
  *
  * Returns a normalized title object with:
  * - Basic metadata (id, type, title, originalTitle, year, genres, overview, rating, posterUrl, runtime)
- * - Availability information grouped by preferred countries (DE, GB, US, CA) and other countries
+ * - detectedCountry: User's country code (null if detection failed)
+ * - Availability information:
+ *   - userCountry: Single country object for detected location (null if detection failed)
+ *   - otherCountries: All other countries with providers
  *   - Each country entry includes: countryCode, countryName, freeProviders, paidProviders, watchLink
  *   - Free providers: Ad-supported and free services
  *   - Paid providers: Subscription-based services
  *
  * The endpoint fetches details and watch providers in parallel for performance.
+ * Country detection uses HTTP headers from hosting platforms (Vercel, Cloudflare, etc.).
  */
 
 interface NormalizedTitle {
@@ -46,6 +51,7 @@ interface NormalizedTitle {
   rating?: number;
   posterUrl?: string;
   runtime?: number | null;
+  detectedCountry: string | null;
   availability: AvailabilityResult;
 }
 
@@ -119,7 +125,8 @@ export async function GET(
         rating: movieDetails.vote_average,
         posterUrl: buildTmdbImageUrl(movieDetails.poster_path, 'w500'),
         runtime: movieDetails.runtime,
-        availability: { preferredCountries: [], otherCountries: [] },
+        detectedCountry: null,
+        availability: { userCountry: null, otherCountries: [] },
       };
     } else {
       // type === 'tv'
@@ -144,13 +151,20 @@ export async function GET(
         posterUrl: buildTmdbImageUrl(tvDetails.poster_path, 'w500'),
         // Use first episode runtime as representative runtime for TV shows
         runtime: tvDetails.episode_run_time?.[0],
-        availability: { preferredCountries: [], otherCountries: [] },
+        detectedCountry: null,
+        availability: { userCountry: null, otherCountries: [] },
       };
     }
 
-    // Map TMDB watch providers to our availability model
-    // This groups countries and categorizes providers into free (ads, free) and paid (flatrate)
-    normalizedTitle.availability = mapAvailability(watchProvidersResponse);
+    // Detect user's country from request headers
+    const detectedCountry = detectUserCountry(req);
+    const availableCountries = Object.keys(watchProvidersResponse.results || {});
+    const validatedCountry = validateCountryCode(detectedCountry, availableCountries);
+
+    // Map TMDB watch providers to our availability model with user's country
+    // This separates user's country (if detected) from other countries
+    normalizedTitle.detectedCountry = validatedCountry;
+    normalizedTitle.availability = mapAvailability(watchProvidersResponse, validatedCountry);
 
     // Add rate limit headers to successful response
     const resetDate = new Date(rateLimitResult.resetTime);
