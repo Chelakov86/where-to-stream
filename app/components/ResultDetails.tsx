@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { CountryAvailability, TitleDetails, Genre } from '@/app/types';
+import { getCountryFlag } from '@/app/utils/countries';
 import { ResultDetailsSkeleton } from './Skeleton';
 
 interface ResultDetailsProps {
@@ -15,12 +16,7 @@ interface ResultDetailsProps {
 
 type Status = 'loading' | 'error' | 'success';
 
-const countryFlagMapping: Record<string, string> = {
-  DE: '🇩🇪',
-  GB: '🇬🇧',
-  US: '🇺🇸',
-  CA: '🇨🇦',
-};
+
 
 const formatRuntime = (runtime: number) => {
   const hours = Math.floor(runtime / 60);
@@ -53,7 +49,7 @@ const AvailabilityTable = ({
           >
             <div className="flex items-center justify-between mb-2">
               <span className="font-semibold text-white">
-                {countryFlagMapping[country.countryCode] || ''} {country.countryName}
+                {getCountryFlag(country.countryCode)} {country.countryName}
               </span>
               {country.watchLink && (
                 <a
@@ -124,16 +120,16 @@ const AvailabilityTable = ({
           {countries.map((country) => (
             <tr key={country.countryCode} className="hover:bg-gray-700">
               <td className="py-2 px-4 border-b border-gray-600 truncate">
-                {countryFlagMapping[country.countryCode] || ''} {country.countryName}
+                {getCountryFlag(country.countryCode)} {country.countryName}
               </td>
               <td
-                className="py-2 px-4 border-b border-gray-600 truncate"
+                className="py-2 px-4 border-b border-gray-600"
                 title={country.freeProviders.join(', ')}
               >
                 {country.freeProviders.length > 0 ? country.freeProviders.join(', ') : '-'}
               </td>
               <td
-                className="py-2 px-4 border-b border-gray-600 truncate"
+                className="py-2 px-4 border-b border-gray-600"
                 title={country.paidProviders.join(', ')}
               >
                 {country.paidProviders.length > 0 ? country.paidProviders.join(', ') : '-'}

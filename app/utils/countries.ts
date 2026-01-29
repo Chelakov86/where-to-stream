@@ -276,3 +276,22 @@ export const COUNTRY_NAMES: Record<string, string> = {
 export function getCountryName(code: string): string {
   return COUNTRY_NAMES[code] || code;
 }
+
+/**
+ * Converts an ISO 3166-1 alpha-2 country code to a flag emoji.
+ *
+ * @param countryCode - ISO 3166-1 alpha-2 country code (e.g., "US", "GB")
+ * @returns The flag emoji or an empty string if the code is invalid.
+ */
+export function getCountryFlag(countryCode: string): string {
+  if (!countryCode || countryCode.length !== 2) {
+    return '';
+  }
+
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map((char) => 127397 + char.charCodeAt(0));
+
+  return String.fromCodePoint(...codePoints);
+}
