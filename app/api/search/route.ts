@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   searchMovies,
   searchTv,
+  getMovieWatchProviders,
+  getTvWatchProviders,
   SearchMoviesParams,
   SearchTvParams,
   discoverMovies,
@@ -10,12 +12,67 @@ import {
   DiscoverTvParams,
 } from '@/app/tmdbApi';
 import { TmdbError } from '@/app/tmdbClient';
-import { TmdbSearchResult, TmdbSearchResponse } from '@/app/tmdbTypes';
+import { TmdbSearchResult, TmdbSearchResponse, TmdbWatchProvidersResponse } from '@/app/tmdbTypes';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { NormalizedSearchResult } from '@/app/types';
 import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
 import { logger } from '@/app/utils/logger';
+
+/**
+ * Filter results by checking availability in the specified region and providers.
+ * Returns only the results that are available on at least one of the specified providers in the region.
+ */
+async function filterResultsByProvider(
+  results: NormalizedSearchResult[],
+  watchRegion?: string,
+  providerIds?: number[]
+): Promise<NormalizedSearchResult[]> {
+  if ((!watchRegion && (!providerIds || providerIds.length === 0)) || results.length === 0) {
+    return results;
+  }
+
+  // If providers are selected, we must filter.
+  // If only region is selected, we technically should check if it's available in that region at all,
+  // but for now we'll prioritize filtering by specific providers if providerIds are present.
+  // If only watchRegion is present, we return all results (TMDB doesn't easily support "available anywhere in region" check efficiently for search results without providers)
+  // strict "streaming" availability check requires checking providers.
+  if (!providerIds || providerIds.length === 0) {
+    return results;
+  }
+
+  const region = watchRegion || 'US'; // Default to US if region is missing but providers are selected
+
+  const checks = await Promise.all(
+    results.map(async (item) => {
+      try {
+        let providersData: TmdbWatchProvidersResponse;
+        if (item.type === 'movie') {
+          providersData = await getMovieWatchProviders(item.id);
+        } else {
+          providersData = await getTvWatchProviders(item.id);
+        }
+
+        const regionData = providersData.results[region];
+        if (!regionData) return false;
+
+        // Check availability in flatrate, ads, free
+        const availableProviders = [
+          ...(regionData.flatrate || []),
+          ...(regionData.ads || []),
+          ...(regionData.free || []),
+        ];
+
+        return availableProviders.some((p) => providerIds.includes(p.provider_id));
+      } catch (error) {
+        logger.error(`Failed to fetch providers for ${item.type} ${item.id}`, { error });
+        return false;
+      }
+    })
+  );
+
+  return results.filter((_, index) => checks[index]);
+}
 
 /**
  * API route handler for searching movies and TV shows.
@@ -319,130 +376,60 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    let response: SearchResponse;
+    let results: NormalizedSearchResult[] = [];
+    let page = 1;
+    let totalPages = 1;
+    let totalResults = 0;
 
-    // Determine if we should use discover endpoint
-    const useDiscover =
-      (params.providerIds && params.providerIds.length > 0) || !!params.watchRegion;
-
+    // Always use search endpoints to ensure query relevance.
+    // We apply strict provider/region filtering post-search.
     if (params.type === 'movie') {
-      if (useDiscover) {
-        const discoverParams = mapSearchParamsToDiscoverMovieParams(params);
-        const tmdbResponse = await discoverMovies(discoverParams);
-
-        // Filter results by query text if provided
-        let results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode));
-        if (params.query) {
-          const queryLower = params.query.toLowerCase();
-          results = results.filter(
-            (r) => r.title?.toLowerCase().includes(queryLower) || false
-          );
-        }
-
-        response = {
-          page: tmdbResponse.page,
-          totalPages: tmdbResponse.total_pages,
-          totalResults: results.length,
-          results: results,
-        };
-      } else {
-        const movieParams = mapSearchParamsToMovieParams(params);
-        const tmdbResponse = await searchMovies(movieParams);
-        response = {
-          page: tmdbResponse.page,
-          totalPages: tmdbResponse.total_pages,
-          totalResults: tmdbResponse.total_results,
-          results: tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
-        };
-      }
+      const movieParams = mapSearchParamsToMovieParams(params);
+      const tmdbResponse = await searchMovies(movieParams);
+      page = tmdbResponse.page;
+      totalPages = tmdbResponse.total_pages;
+      totalResults = tmdbResponse.total_results;
+      results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode));
     } else if (params.type === 'tv') {
-      if (useDiscover) {
-        const discoverParams = mapSearchParamsToDiscoverTvParams(params);
-        const tmdbResponse = await discoverTv(discoverParams);
-
-        // Filter results by query text if provided
-        let results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode));
-        if (params.query) {
-          const queryLower = params.query.toLowerCase();
-          results = results.filter(
-            (r) => r.title?.toLowerCase().includes(queryLower) || false
-          );
-        }
-
-        response = {
-          page: tmdbResponse.page,
-          totalPages: tmdbResponse.total_pages,
-          totalResults: results.length,
-          results: results,
-        };
-      } else {
-        const tvParams = mapSearchParamsToTvParams(params);
-        const tmdbResponse = await searchTv(tvParams);
-        response = {
-          page: tmdbResponse.page,
-          totalPages: tmdbResponse.total_pages,
-          totalResults: tmdbResponse.total_results,
-          results: tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
-        };
-      }
+      const tvParams = mapSearchParamsToTvParams(params);
+      const tmdbResponse = await searchTv(tvParams);
+      page = tmdbResponse.page;
+      totalPages = tmdbResponse.total_pages;
+      totalResults = tmdbResponse.total_results;
+      results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode));
     } else {
-      // type === 'all': Fetch both movies and TV in parallel, then merge and sort
-      if (useDiscover) {
-        const discoverMovieParams = mapSearchParamsToDiscoverMovieParams(params);
-        const discoverTvParams = mapSearchParamsToDiscoverTvParams(params);
-        const [movieResponse, tvResponse] = await Promise.all([
-          discoverMovies(discoverMovieParams),
-          discoverTv(discoverTvParams),
-        ]);
+      // type === 'all': Fetch both movies and TV in parallel
+      const movieParams = mapSearchParamsToMovieParams(params);
+      const tvParams = mapSearchParamsToTvParams(params);
+      const [movieResponse, tvResponse] = await Promise.all([
+        searchMovies(movieParams),
+        searchTv(tvParams),
+      ]);
 
-        // Combine and normalize results
-        let combinedResults = [
-          ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
-          ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
-        ];
+      page = movieResponse.page;
+      totalPages = Math.max(movieResponse.total_pages, tvResponse.total_pages);
+      totalResults = movieResponse.total_results + tvResponse.total_results;
 
-        // Filter by query text if provided
-        if (params.query) {
-          const queryLower = params.query.toLowerCase();
-          combinedResults = combinedResults.filter(
-            (r) => r.title?.toLowerCase().includes(queryLower) || false
-          );
-        }
+      results = [
+        ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
+        ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
+      ];
 
-        // Sort by popularity (descending) to show most popular results first
-        combinedResults.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-
-        response = {
-          page: movieResponse.page, // Assuming same page for both
-          totalPages: Math.max(movieResponse.total_pages, tvResponse.total_pages),
-          totalResults: combinedResults.length,
-          results: combinedResults,
-        };
-      } else {
-        const movieParams = mapSearchParamsToMovieParams(params);
-        const tvParams = mapSearchParamsToTvParams(params);
-        const [movieResponse, tvResponse] = await Promise.all([
-          searchMovies(movieParams),
-          searchTv(tvParams),
-        ]);
-
-        // Combine results from both sources
-        const combinedResults = [
-          ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
-          ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
-        ];
-
-        // Sort by popularity (descending) to show most popular results first
-        combinedResults.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-
-        response = {
-          page: movieResponse.page, // Assuming same page for both
-          totalPages: Math.max(movieResponse.total_pages, tvResponse.total_pages),
-          totalResults: movieResponse.total_results + tvResponse.total_results,
-          results: combinedResults,
-        };
-      }
+      // Sort by popularity (descending)
+      results.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
     }
+
+    // Apply strict filtering if requested
+    if ((params.providerIds && params.providerIds.length > 0) || params.watchRegion) {
+      results = await filterResultsByProvider(results, params.watchRegion, params.providerIds);
+    }
+
+    const response: SearchResponse = {
+      page,
+      totalPages,
+      totalResults,
+      results,
+    };
 
     // Add rate limit headers to successful response
     const resetDate = new Date(rateLimitResult.resetTime);

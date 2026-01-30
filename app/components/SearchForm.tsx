@@ -293,16 +293,18 @@ const SearchForm: React.FC<SearchFormProps> = ({
           {isProvidersLoading ? (
             <p className="mt-2 text-sm text-gray-400">Loading providers...</p>
           ) : Array.isArray(providers) && providers.length > 0 ? (
-            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {providers.slice(0, 18).map((provider) => (
-                <label key={provider.provider_id} className="flex items-center space-x-2">
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-60 overflow-y-auto p-1 custom-scrollbar">
+              {providers.map((provider) => (
+                <label key={provider.provider_id} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-700 p-1 rounded">
                   <input
                     type="checkbox"
                     name="provider"
                     value={provider.provider_id}
-                    className="form-checkbox h-5 w-5 rounded border-gray-600 bg-gray-700"
+                    className="form-checkbox h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-sm">{provider.provider_name}</span>
+                  <span className="text-sm truncate" title={provider.provider_name}>
+                    {provider.provider_name}
+                  </span>
                 </label>
               ))}
             </div>
