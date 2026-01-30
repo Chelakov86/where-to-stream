@@ -18,12 +18,15 @@ import { logger } from '@/app/utils/logger';
  *
  * @returns JSON response with providers array
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const watchRegion = searchParams.get('watchRegion') || undefined;
+
     // Fetch both movie and TV providers in parallel
     const [movieProviders, tvProviders] = await Promise.all([
-      getMovieWatchProvidersList(),
-      getTvWatchProvidersList(),
+      getMovieWatchProvidersList(watchRegion),
+      getTvWatchProvidersList(watchRegion),
     ]);
 
     // Combine and deduplicate by provider_id

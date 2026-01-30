@@ -19,6 +19,7 @@ export default function Home() {
   const [selectedTitle, setSelectedTitle] = useState<{ id: number; type: 'movie' | 'tv' } | null>(
     null
   );
+  const [watchRegion, setWatchRegion] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const resultDetailsRef = useRef<HTMLDivElement | null>(null);
 
@@ -26,7 +27,9 @@ export default function Home() {
   const clearError = useCallback(() => setErrorMessage(null), []);
 
   const { genres, isLoading: isGenresLoading, error: genresError } = useGenres();
-  const { providers, isLoading: isProvidersLoading, error: providersError } = useProviders();
+  const { providers, isLoading: isProvidersLoading, error: providersError } = useProviders(
+    watchRegion
+  );
   const { autocompleteSuggestions, handleAutocompleteRequest, clearAutocomplete } =
     useAutocomplete(showError);
   const { history, addToHistory, clearHistory, removeFromHistory } = useSearchHistory();
@@ -129,6 +132,8 @@ export default function Home() {
         isProvidersLoading={isProvidersLoading}
         onAutocompleteRequest={handleAutocompleteRequest}
         onSearch={handleSearchWithClear}
+        watchRegion={watchRegion}
+        onWatchRegionChange={setWatchRegion}
         autocompleteListId={AUTOCOMPLETE_LIST_ID}
         autocompleteItems={autocompleteSuggestions}
         onAutocompleteSelect={handleSelectSuggestion}
