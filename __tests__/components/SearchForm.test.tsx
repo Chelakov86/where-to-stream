@@ -19,7 +19,14 @@ const mockProviders = [
 describe('SearchForm', () => {
   it('renders all form fields', () => {
     const handleSearch = jest.fn();
-    render(<SearchForm genres={mockGenres} providers={mockProviders} onSearch={handleSearch} />);
+    render(
+      <SearchForm
+        genres={mockGenres}
+        providers={mockProviders}
+        onSearch={handleSearch}
+        watchRegion="US"
+      />
+    );
 
     expect(screen.getByPlaceholderText('Search for a movie or series')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Show search filters/i })).toBeInTheDocument();
@@ -36,7 +43,7 @@ describe('SearchForm', () => {
     expect(screen.getByRole('checkbox', { name: 'Adventure' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Animation' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Netflix' })).toBeInTheDocument();
-    expect(screen.getByLabelText(/Filter by country availability/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Streaming Availability by Country/i)).toBeInTheDocument();
   });
 
   it('associates the query input with its accessible label', () => {
@@ -48,7 +55,16 @@ describe('SearchForm', () => {
 
   it('calls onSearch with all form values on submit', () => {
     const handleSearch = jest.fn();
-    render(<SearchForm genres={mockGenres} providers={mockProviders} onSearch={handleSearch} />);
+    const handleWatchRegionChange = jest.fn();
+    render(
+      <SearchForm
+        genres={mockGenres}
+        providers={mockProviders}
+        onSearch={handleSearch}
+        watchRegion="US"
+        onWatchRegionChange={handleWatchRegionChange}
+      />
+    );
 
     fireEvent.change(screen.getByPlaceholderText('Search for a movie or series'), {
       target: { value: 'Inception' },
@@ -72,9 +88,6 @@ describe('SearchForm', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Action' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Adventure' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Netflix' }));
-    fireEvent.change(screen.getByLabelText(/Filter by country availability/), {
-      target: { value: 'US' },
-    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
