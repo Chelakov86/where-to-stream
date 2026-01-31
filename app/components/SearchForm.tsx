@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AutocompleteList, AutocompleteItem } from './AutocompleteList';
 import { COUNTRY_NAMES } from '@/app/utils/countries';
 import { buildTmdbImageUrl } from '@/app/utils/tmdb';
+import { loadFilterState, saveFilterState } from '@/app/utils/filterStorage';
 
 interface SearchFormProps {
   genres: { id: number; name: string }[];
@@ -54,6 +55,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const previousWatchRegion = useRef<string>(watchRegion);
   const errorMessageId = 'search-form-query-error';
 
   // Calculate active filter count
@@ -66,6 +68,47 @@ const SearchForm: React.FC<SearchFormProps> = ({
     selectedProviders.length +
     (watchRegion ? 1 : 0);
 
+  // Load saved filter state on mount
+  useEffect(() => {
+    const savedState = loadFilterState();
+    if (savedState) {
+      setSelectedType(savedState.selectedType);
+      setYearFrom(savedState.yearFrom);
+      setYearTo(savedState.yearTo);
+      setSelectedLanguage(savedState.selectedLanguage);
+      setSelectedGenres(savedState.selectedGenres);
+      setSelectedProviders(savedState.selectedProviders);
+      // Notify parent of saved watch region
+      if (savedState.watchRegion && onWatchRegionChange) {
+        previousWatchRegion.current = savedState.watchRegion;
+        onWatchRegionChange(savedState.watchRegion);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
+
+  // Save filter state to localStorage whenever it changes
+  useEffect(() => {
+    const filterState = {
+      selectedType,
+      yearFrom,
+      yearTo,
+      selectedLanguage,
+      selectedGenres,
+      selectedProviders,
+      watchRegion,
+    };
+    saveFilterState(filterState);
+  }, [
+    selectedType,
+    yearFrom,
+    yearTo,
+    selectedLanguage,
+    selectedGenres,
+    selectedProviders,
+    watchRegion,
+  ]);
+
   useEffect(() => {
     if (autocompleteItems.length === 0) {
       setHighlightedIndex(-1);
@@ -74,7 +117,10 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
   // Clear selected providers when watch region changes
   useEffect(() => {
-    setSelectedProviders([]);
+    if (previousWatchRegion.current !== watchRegion) {
+      setSelectedProviders([]);
+      previousWatchRegion.current = watchRegion;
+    }
   }, [watchRegion]);
 
   // Handle click outside to close autocomplete
@@ -176,6 +222,16 @@ const SearchForm: React.FC<SearchFormProps> = ({
     if (onWatchRegionChange) {
       onWatchRegionChange('');
     }
+    // Clear persisted state as well
+    saveFilterState({
+      selectedType: 'all',
+      yearFrom: '',
+      yearTo: '',
+      selectedLanguage: '',
+      selectedGenres: [],
+      selectedProviders: [],
+      watchRegion: '',
+    });
   };
 
   return (
