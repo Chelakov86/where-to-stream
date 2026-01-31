@@ -1,8 +1,9 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import SearchForm from '../../app/components/SearchForm';
+import { saveFilterState, clearFilterState } from '../../app/utils/filterStorage';
 
 const mockGenres = [
   { id: 28, name: 'Action' },
@@ -19,7 +20,14 @@ const mockProviders = [
 describe('SearchForm', () => {
   it('renders all form fields', () => {
     const handleSearch = jest.fn();
-    render(<SearchForm genres={mockGenres} providers={mockProviders} onSearch={handleSearch} />);
+    render(
+      <SearchForm
+        genres={mockGenres}
+        providers={mockProviders}
+        onSearch={handleSearch}
+        watchRegion="US"
+      />
+    );
 
     expect(screen.getByPlaceholderText('Search for a movie or series')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Show search filters/i })).toBeInTheDocument();
@@ -36,7 +44,7 @@ describe('SearchForm', () => {
     expect(screen.getByRole('checkbox', { name: 'Adventure' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Animation' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Netflix' })).toBeInTheDocument();
-    expect(screen.getByLabelText(/Filter by country availability/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Streaming Availability by Country/i)).toBeInTheDocument();
   });
 
   it('associates the query input with its accessible label', () => {
@@ -48,7 +56,16 @@ describe('SearchForm', () => {
 
   it('calls onSearch with all form values on submit', () => {
     const handleSearch = jest.fn();
-    render(<SearchForm genres={mockGenres} providers={mockProviders} onSearch={handleSearch} />);
+    const handleWatchRegionChange = jest.fn();
+    render(
+      <SearchForm
+        genres={mockGenres}
+        providers={mockProviders}
+        onSearch={handleSearch}
+        watchRegion="US"
+        onWatchRegionChange={handleWatchRegionChange}
+      />
+    );
 
     fireEvent.change(screen.getByPlaceholderText('Search for a movie or series'), {
       target: { value: 'Inception' },
@@ -72,9 +89,6 @@ describe('SearchForm', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Action' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Adventure' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Netflix' }));
-    fireEvent.change(screen.getByLabelText(/Filter by country availability/), {
-      target: { value: 'US' },
-    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
@@ -162,5 +176,157 @@ describe('SearchForm', () => {
     expect(queryInput).toHaveAttribute('aria-expanded', 'true');
     expect(queryInput).toHaveAttribute('aria-haspopup', 'listbox');
     expect(queryInput).toHaveAttribute('aria-autocomplete', 'list');
+  });
+
+  describe('Persistent Filter State', () => {
+    beforeEach(() => {
+      // Clear localStorage before each test
+      localStorage.clear();
+    });
+
+    it('loads saved filter state from localStorage on mount', async () => {
+      const handleWatchRegionChange = jest.fn();
+
+      // Save filter state to localStorage
+      saveFilterState({
+        selectedType: 'movie',
+        yearFrom: '2020',
+        yearTo: '2024',
+        selectedLanguage: 'en',
+        selectedGenres: [28],
+        selectedProviders: [8],
+        watchRegion: 'US',
+      });
+
+      render(
+        <SearchForm
+          genres={mockGenres}
+          providers={mockProviders}
+          onSearch={jest.fn()}
+          onWatchRegionChange={handleWatchRegionChange}
+          watchRegion="US"
+        />
+      );
+
+      // Show filters
+      fireEvent.click(screen.getByRole('button', { name: /Show search filters/i }));
+
+      // Verify filters were loaded
+      await waitFor(() => {
+        expect(screen.getByLabelText('Type')).toHaveValue('movie');
+        expect(screen.getByLabelText('From Year')).toHaveValue(2020);
+        expect(screen.getByLabelText('To Year')).toHaveValue(2024);
+        expect(screen.getByLabelText('Language')).toHaveValue('en');
+        expect(screen.getByRole('checkbox', { name: 'Action' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Netflix' })).toBeChecked();
+      });
+
+      // Verify parent was notified of watch region
+      expect(handleWatchRegionChange).toHaveBeenCalledWith('US');
+    });
+
+    it('saves filter state to localStorage when filters change', async () => {
+      render(
+        <SearchForm
+          genres={mockGenres}
+          providers={mockProviders}
+          onSearch={jest.fn()}
+          watchRegion="US"
+        />
+      );
+
+      // Show filters
+      fireEvent.click(screen.getByRole('button', { name: /Show search filters/i }));
+
+      // Change some filters
+      fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'tv' } });
+      fireEvent.change(screen.getByLabelText('From Year'), { target: { value: '2015' } });
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Action' }));
+
+      // Verify state was saved to localStorage
+      await waitFor(() => {
+        const saved = localStorage.getItem('whereToStream:filterState');
+        expect(saved).toBeTruthy();
+        const parsed = JSON.parse(saved!);
+        expect(parsed.selectedType).toBe('tv');
+        expect(parsed.yearFrom).toBe('2015');
+        expect(parsed.selectedGenres).toContain(28);
+      });
+    });
+
+    it('clears localStorage when "Clear all filters" is clicked', async () => {
+      const handleWatchRegionChange = jest.fn();
+
+      // Pre-populate some filter state
+      saveFilterState({
+        selectedType: 'movie',
+        yearFrom: '2020',
+        yearTo: '2024',
+        selectedLanguage: 'en',
+        selectedGenres: [28],
+        selectedProviders: [8],
+        watchRegion: 'US',
+      });
+
+      render(
+        <SearchForm
+          genres={mockGenres}
+          providers={mockProviders}
+          onSearch={jest.fn()}
+          onWatchRegionChange={handleWatchRegionChange}
+          watchRegion="US"
+        />
+      );
+
+      // Show filters
+      fireEvent.click(screen.getByRole('button', { name: /Show search filters/i }));
+
+      // Wait for filters to load
+      await waitFor(() => {
+        expect(screen.getByRole('checkbox', { name: 'Action' })).toBeChecked();
+      });
+
+      // Click "Clear all filters" button
+      const clearButton = screen.getByRole('button', { name: /Clear all filters/i });
+      fireEvent.click(clearButton);
+
+      // Verify filters are cleared
+      await waitFor(() => {
+        expect(screen.getByLabelText('Type')).toHaveValue('all');
+        expect(screen.getByLabelText('From Year')).toHaveValue(null);
+        expect(screen.getByLabelText('To Year')).toHaveValue(null);
+        expect(screen.getByLabelText('Language')).toHaveValue('');
+        expect(screen.getByRole('checkbox', { name: 'Action' })).not.toBeChecked();
+      });
+
+      // Verify localStorage was cleared to default state
+      const saved = localStorage.getItem('whereToStream:filterState');
+      expect(saved).toBeTruthy();
+      const parsed = JSON.parse(saved!);
+      expect(parsed.selectedType).toBe('all');
+      expect(parsed.yearFrom).toBe('');
+      expect(parsed.selectedGenres).toEqual([]);
+    });
+
+    it('does not load filter state if localStorage is empty', () => {
+      const handleWatchRegionChange = jest.fn();
+
+      render(
+        <SearchForm
+          genres={mockGenres}
+          providers={mockProviders}
+          onSearch={jest.fn()}
+          onWatchRegionChange={handleWatchRegionChange}
+        />
+      );
+
+      // Show filters
+      fireEvent.click(screen.getByRole('button', { name: /Show search filters/i }));
+
+      // Verify default values
+      expect(screen.getByLabelText('Type')).toHaveValue('all');
+      expect(screen.getByLabelText('From Year')).toHaveValue(null);
+      expect(screen.getByLabelText('Language')).toHaveValue('');
+    });
   });
 });
