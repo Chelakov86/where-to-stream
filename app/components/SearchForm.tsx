@@ -18,6 +18,8 @@ interface SearchFormProps {
   onAutocompleteRequest?: (query: string) => void;
   isGenresLoading?: boolean;
   isProvidersLoading?: boolean;
+  watchRegion?: string;
+  onWatchRegionChange?: (region: string) => void;
   autocompleteListId?: string;
   autocompleteItems?: AutocompleteItem[];
   onAutocompleteSelect?: (item: AutocompleteItem) => void;
@@ -31,6 +33,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
   onAutocompleteRequest,
   isGenresLoading = false,
   isProvidersLoading = false,
+  watchRegion = '',
+  onWatchRegionChange,
   autocompleteListId,
   autocompleteItems = [],
   onAutocompleteSelect,
@@ -80,7 +84,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
     const formData = new FormData(event.currentTarget);
     const selectedGenreIds = formData.getAll('genre').map((id) => parseInt(id as string, 10));
     const selectedProviderIds = formData.getAll('provider').map((id) => parseInt(id as string, 10));
-    const watchRegion = formData.get('watchRegion') as string;
 
     onSearch({
       query: formData.get('query') as string,
@@ -290,7 +293,11 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium">Streaming Providers</label>
-          {isProvidersLoading ? (
+          {!watchRegion ? (
+            <p className="mt-2 text-sm text-yellow-500 bg-yellow-900/30 p-2 rounded">
+              Please select a country to view available streaming providers.
+            </p>
+          ) : isProvidersLoading ? (
             <p className="mt-2 text-sm text-gray-400">Loading providers...</p>
           ) : Array.isArray(providers) && providers.length > 0 ? (
             <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-60 overflow-y-auto p-1 custom-scrollbar">
@@ -309,7 +316,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
               ))}
             </div>
           ) : (
-            <p className="mt-2 text-sm text-gray-400">No providers available</p>
+            <p className="mt-2 text-sm text-gray-400">No providers available for this region</p>
           )}
         </div>
 
@@ -320,10 +327,12 @@ const SearchForm: React.FC<SearchFormProps> = ({
           <select
             id="watchRegion"
             name="watchRegion"
+            value={watchRegion}
+            onChange={(e) => onWatchRegionChange && onWatchRegionChange(e.target.value)}
             className="mt-2 w-full p-2 bg-gray-700 border border-gray-600 rounded"
             aria-label="Filter by country availability"
           >
-            <option value="">Any Country</option>
+            <option value="">Select a Country...</option>
             <optgroup label="Popular Countries">
               <option value="US">United States</option>
               <option value="GB">United Kingdom</option>

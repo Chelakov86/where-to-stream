@@ -392,14 +392,20 @@ export async function discoverTv(params: DiscoverTvParams): Promise<TmdbDiscover
  * // [{ provider_id: 8, provider_name: 'Netflix', ... }, ...]
  * ```
  */
-export async function getMovieWatchProvidersList(): Promise<TmdbProviderListResponse> {
-  const cacheKey = 'providers:list:movie';
+export async function getMovieWatchProvidersList(
+  watchRegion?: string
+): Promise<TmdbProviderListResponse> {
+  const cacheKey = watchRegion
+    ? `providers:list:movie:${watchRegion}`
+    : 'providers:list:movie';
   const cached = getCache<TmdbProviderListResponse>(cacheKey);
   if (cached) {
     return cached;
   }
 
-  const data = await tmdbGet<TmdbProviderListResponse>('/watch/providers/movie');
+  const data = await tmdbGet<TmdbProviderListResponse>('/watch/providers/movie', {
+    watch_region: watchRegion,
+  });
   setCache(cacheKey, data, 24 * 60 * 60); // 24 hours
   return data;
 }
@@ -415,14 +421,18 @@ export async function getMovieWatchProvidersList(): Promise<TmdbProviderListResp
  * // [{ provider_id: 8, provider_name: 'Netflix', ... }, ...]
  * ```
  */
-export async function getTvWatchProvidersList(): Promise<TmdbProviderListResponse> {
-  const cacheKey = 'providers:list:tv';
+export async function getTvWatchProvidersList(
+  watchRegion?: string
+): Promise<TmdbProviderListResponse> {
+  const cacheKey = watchRegion ? `providers:list:tv:${watchRegion}` : 'providers:list:tv';
   const cached = getCache<TmdbProviderListResponse>(cacheKey);
   if (cached) {
     return cached;
   }
 
-  const data = await tmdbGet<TmdbProviderListResponse>('/watch/providers/tv');
+  const data = await tmdbGet<TmdbProviderListResponse>('/watch/providers/tv', {
+    watch_region: watchRegion,
+  });
   setCache(cacheKey, data, 24 * 60 * 60); // 24 hours
   return data;
 }

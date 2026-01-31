@@ -11,7 +11,7 @@ const GLOBAL_ERROR_MESSAGE =
  *
  * @returns Object containing providers array, loading state, and error handling functions
  */
-export function useProviders() {
+export function useProviders(watchRegion?: string) {
   const [providers, setProviders] = useState<WatchProvider[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +21,12 @@ export function useProviders() {
   const showError = useCallback((message: string) => setError(message), []);
 
   useEffect(() => {
+    // If no region is selected, clear providers and don't fetch
+    if (!watchRegion) {
+      setProviders([]);
+      return;
+    }
+
     const fetchProviders = async () => {
       // Cancel previous request if any
       if (abortControllerRef.current) {
@@ -31,7 +37,12 @@ export function useProviders() {
       setIsLoading(true);
 
       try {
-        const response = await fetch('/api/providers', {
+        const url = new URL('/api/providers', window.location.origin);
+        if (watchRegion) {
+          url.searchParams.append('watchRegion', watchRegion);
+        }
+
+        const response = await fetch(url.toString(), {
           signal: abortControllerRef.current.signal,
         });
 
@@ -61,7 +72,7 @@ export function useProviders() {
         abortControllerRef.current.abort();
       }
     };
-  }, [clearError, showError]);
+  }, [watchRegion, clearError, showError]);
 
   return {
     providers,
