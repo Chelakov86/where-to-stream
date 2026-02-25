@@ -43,7 +43,7 @@ const AvailabilityTable = ({
         {countries.map((country) => (
           <div
             key={country.countryCode}
-            className="bg-gray-700 p-3 rounded-lg border border-gray-600"
+            className="bg-muted-violet/40 p-3 rounded-lg border border-golden-bronze/30"
           >
             <div className="flex items-center justify-between mb-2">
               <span className="font-semibold text-white flex items-center">
@@ -62,7 +62,7 @@ const AvailabilityTable = ({
                   href={country.watchLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-400 hover:underline text-sm font-medium"
+                  className="text-primary-gold hover:text-primary-gold/80 text-sm font-medium transition-colors"
                 >
                   Watch →
                 </a>
@@ -71,13 +71,13 @@ const AvailabilityTable = ({
             <div className="space-y-1 text-sm">
               {country.freeProviders.length > 0 && (
                 <div className="flex justify-between gap-3">
-                  <span className="text-gray-400 flex-shrink-0">Free:</span>
+                  <span className="text-cream-text/60 flex-shrink-0">Free:</span>
                   <span className="text-white text-right">{country.freeProviders.join(', ')}</span>
                 </div>
               )}
               {country.paidProviders.length > 0 && (
                 <div className="flex justify-between gap-3">
-                  <span className="text-gray-400 flex-shrink-0">Paid:</span>
+                  <span className="text-cream-text/60 flex-shrink-0">Paid:</span>
                   <span className="text-white text-right">{country.paidProviders.join(', ')}</span>
                 </div>
               )}
@@ -88,7 +88,7 @@ const AvailabilityTable = ({
 
       {/* Desktop: Table layout */}
       <table
-        className="hidden md:table w-full bg-gray-800 border border-gray-700 table-fixed"
+        className="hidden md:table w-full bg-muted-violet/30 border border-golden-bronze/30 table-fixed rounded-lg overflow-hidden"
         aria-label={title}
         style={{ tableLayout: 'fixed' }}
       >
@@ -99,24 +99,24 @@ const AvailabilityTable = ({
           <col style={{ width: '10%' }} />
         </colgroup>
         <thead>
-          <tr className="bg-gray-900">
+          <tr className="bg-midnight-plum-end/80">
             <th
-              className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+              className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
             >
               Country
             </th>
             <th
-              className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+              className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
             >
               Free Providers
             </th>
             <th
-              className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+              className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
             >
               Paid Providers
             </th>
             <th
-              className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+              className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
             >
               Link
             </th>
@@ -124,8 +124,8 @@ const AvailabilityTable = ({
         </thead>
         <tbody>
           {countries.map((country) => (
-            <tr key={country.countryCode} className="hover:bg-gray-700">
-              <td className="py-2 px-4 border-b border-gray-600 truncate">
+            <tr key={country.countryCode} className="hover:bg-muted-violet/40">
+              <td className="py-2 px-4 border-b border-golden-bronze/20 truncate">
                 <div className="flex items-center">
                   <Image
                     src={getCountryFlagUrl(country.countryCode)}
@@ -139,13 +139,13 @@ const AvailabilityTable = ({
                 </div>
               </td>
               <td
-                className="py-2 px-4 border-b border-gray-600"
+                className="py-2 px-4 border-b border-golden-bronze/20"
                 title={country.freeProviders.join(', ')}
               >
                 {country.freeProviders.length > 0 ? country.freeProviders.join(', ') : '-'}
               </td>
               <td
-                className="py-2 px-4 border-b border-gray-600"
+                className="py-2 px-4 border-b border-golden-bronze/20"
                 title={country.paidProviders.join(', ')}
               >
                 {country.paidProviders.length > 0 ? country.paidProviders.join(', ') : '-'}
@@ -156,7 +156,7 @@ const AvailabilityTable = ({
                     href={country.watchLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline"
+                    className="text-primary-gold hover:text-primary-gold/80 transition-colors"
                   >
                     Watch
                   </a>
@@ -231,7 +231,7 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
 
   return (
     <section
-      className="bg-gray-800 text-white rounded-lg shadow-lg p-4 sm:p-5 md:p-6 max-w-4xl mx-auto"
+      className="glass-panel rounded-xl text-white shadow-lg p-4 sm:p-5 md:p-6 max-w-4xl mx-auto"
       aria-labelledby={titleHeadingId}
       role="region"
     >
@@ -250,7 +250,7 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
           <h2 id={titleHeadingId} className="text-2xl sm:text-3xl md:text-4xl font-bold">
             {details.title}
           </h2>
-          <div className="flex items-center space-x-4 text-gray-400 mt-2">
+          <div className="flex items-center space-x-4 text-cream-text/70 mt-2">
             <span>{details.year}</span>
             <span>{details.type === 'movie' ? 'Movie' : 'TV Show'}</span>
             {details.runtime && <span>{formatRuntime(details.runtime)}</span>}
@@ -262,16 +262,16 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
           <div className="mt-4" data-testid="rating">
             <span className="font-semibold">Rating:</span> {details.rating.toFixed(1)}/10
           </div>
-          <p className="mt-4 text-gray-300">{details.overview}</p>
+          <p className="mt-4 text-cream-text/80">{details.overview}</p>
         </div>
       </div>
 
       <div className="mt-6 sm:mt-8">
-        <h3 className="text-xl sm:text-2xl font-bold border-b-2 border-gray-700 pb-2">
+        <h3 className="text-xl sm:text-2xl font-bold border-b-2 border-golden-bronze/30 pb-2">
           Streaming Availability
         </h3>
         {!hasAvailability ? (
-          <p className="mt-4 text-gray-400">No streaming availability found.</p>
+          <p className="mt-4 text-cream-text/60">No streaming availability found.</p>
         ) : (
           <div className="-mx-6 px-6">
             {/* User's country section - shown if detected */}
@@ -287,7 +287,7 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
                     <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">
                       Not Available in Your Country ({details.availability.userCountry.countryName})
                     </h4>
-                    <p className="text-gray-400">
+                    <p className="text-cream-text/60">
                       This title is not available for streaming in your country.
                     </p>
                   </div>

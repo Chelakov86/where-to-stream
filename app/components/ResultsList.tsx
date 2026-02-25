@@ -30,7 +30,7 @@ export const ResultsList: React.FC<ResultsListProps> = ({
   }
 
   if (results.length === 0) {
-    return <p className="text-center text-gray-400">No results found.</p>;
+    return <p className="text-center text-cream-text/60">No results found.</p>;
   }
 
   return (
@@ -47,18 +47,18 @@ export const ResultsList: React.FC<ResultsListProps> = ({
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
-          className="px-4 py-2 bg-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-muted-violet/50 border border-golden-bronze/30 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-gold hover:text-midnight-plum-end hover:border-primary-gold transition-all"
           aria-label="Previous Page"
         >
           Previous
         </button>
-        <span className="text-gray-300">
+        <span className="text-cream-text">
           Page {page} of {totalPages}
         </span>
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page === totalPages}
-          className="px-4 py-2 bg-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-muted-violet/50 border border-golden-bronze/30 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-gold hover:text-midnight-plum-end hover:border-primary-gold transition-all"
           aria-label="Next Page"
         >
           Next

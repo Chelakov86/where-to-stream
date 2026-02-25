@@ -82,13 +82,13 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
   };
 
   return (
-    <div className="mt-4 p-4 bg-gray-800 text-white rounded-lg">
+    <div className="mt-4 p-4 glass-panel rounded-xl text-white">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold">Search History</h2>
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 rounded font-medium flex items-center gap-1"
+          className="px-3 py-1 text-sm bg-muted-violet/40 hover:bg-muted-violet/60 border border-golden-bronze/30 rounded-lg font-medium flex items-center gap-1 transition-colors"
           aria-expanded={isExpanded}
           aria-controls="search-history-list"
         >
@@ -104,7 +104,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
               <button
                 type="button"
                 onClick={handleClearHistory}
-                className="px-3 py-1 text-sm bg-gray-700 hover:bg-red-600 rounded font-medium"
+                className="px-3 py-1 text-sm bg-muted-violet/40 hover:bg-red-600/80 border border-golden-bronze/30 rounded-lg font-medium transition-colors"
                 aria-label="Clear all search history"
               >
                 Clear All
@@ -112,7 +112,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
             </div>
           )}
           {history.length === 0 ? (
-            <p className="text-sm text-gray-400 py-4 text-center">
+            <p className="text-sm text-cream-text/60 py-4 text-center">
               No viewed titles yet. Titles you view will appear here.
             </p>
           ) : (
@@ -120,23 +120,23 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
               {displayHistory.map((item, index) => (
                 <div
                   key={`${item.timestamp}-${index}`}
-                  className="flex items-center justify-between p-2 bg-gray-700 hover:bg-gray-600 rounded transition-colors group"
+                  className="flex items-center justify-between p-2 bg-muted-violet/40 hover:bg-muted-violet/60 border border-golden-bronze/20 rounded-lg transition-colors group"
                 >
                   <button
                     type="button"
                     onClick={() => onSelectTitle(item.id, item.type)}
-                    className="flex-1 text-left text-sm hover:text-blue-400 transition-colors"
+                    className="flex-1 text-left text-sm hover:text-primary-gold transition-colors"
                     aria-label={`View ${formatTitle(item)}`}
                   >
                     <div className="font-medium">{formatTitle(item)}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">
+                    <div className="text-xs text-cream-text/60 mt-0.5">
                       {formatTimestamp(item.timestamp)}
                     </div>
                   </button>
                   <button
                     type="button"
                     onClick={() => onRemoveItem(index)}
-                    className="ml-2 px-2 py-1 text-xs bg-gray-600 hover:bg-red-600 rounded opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                    className="ml-2 px-2 py-1 text-xs bg-muted-violet/60 hover:bg-red-600/80 rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                     aria-label={`Remove ${formatTitle(item)}`}
                   >
                     ×
@@ -148,7 +148,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAll(true)}
-                  className="w-full p-2 text-sm bg-gray-700 hover:bg-gray-600 rounded font-medium"
+                  className="w-full p-2 text-sm bg-muted-violet/40 hover:bg-muted-violet/60 border border-golden-bronze/30 rounded-lg font-medium transition-colors"
                 >
                   Show {history.length - DISPLAY_LIMIT} more
                 </button>
@@ -158,7 +158,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAll(false)}
-                  className="w-full p-2 text-sm bg-gray-700 hover:bg-gray-600 rounded font-medium"
+                  className="w-full p-2 text-sm bg-muted-violet/40 hover:bg-muted-violet/60 border border-golden-bronze/30 rounded-lg font-medium transition-colors"
                 >
                   Show less
                 </button>

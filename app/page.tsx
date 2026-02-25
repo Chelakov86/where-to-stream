@@ -153,7 +153,7 @@ export default function Home() {
         </div>
         <section className="relative min-h-[3rem]">
           {isSearching && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-gray-900/80 text-lg font-semibold text-white">
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-midnight-plum-end/80 backdrop-blur-sm text-lg font-semibold text-white">
               Searching...
             </div>
           )}
@@ -167,11 +167,11 @@ export default function Home() {
               onSelectResult={handleSelectResult}
             />
           ) : shouldShowNoResults ? (
-            <p className="mt-4 text-gray-300">
+            <p className="mt-4 text-cream-text/70">
               No titles found. Please check the spelling or try a different title.
             </p>
           ) : shouldShowInitialPrompt ? (
-            <p className="mt-4 text-gray-300">
+            <p className="mt-4 text-cream-text/70">
               Search for a movie or series to see where it's streaming.
             </p>
           ) : null}

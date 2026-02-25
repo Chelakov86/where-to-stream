@@ -237,7 +237,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 p-3 sm:p-4 bg-gray-800 text-white rounded-lg"
+      className="space-y-4 p-3 sm:p-4 glass-panel rounded-xl text-white"
     >
       <div ref={wrapperRef} className="relative">
         <label htmlFor="query" className="sr-only">
@@ -252,7 +252,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           onChange={handleQueryChange}
           onKeyDown={handleInputKeyDown}
           placeholder="Search for a movie or series"
-          className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
+          className="w-full p-2 bg-muted-violet/50 border border-golden-bronze/50 rounded-lg placeholder-cream-text/50 focus:border-primary-gold focus:ring-1 focus:ring-primary-gold/30 gold-glow transition-colors"
           aria-autocomplete="list"
           aria-haspopup="listbox"
           aria-controls={autocompleteListId}
@@ -267,7 +267,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           </p>
         )}
         {autocompleteItems.length > 0 && onAutocompleteSelect && onAutocompleteClose && (
-          <div className="mt-1 border border-gray-600 rounded bg-gray-800">
+          <div className="mt-1 rounded-lg overflow-hidden">
             <AutocompleteList
               id={autocompleteListId}
               items={autocompleteItems}
@@ -285,7 +285,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
         <button
           type="button"
           onClick={() => setShowFilters(!showFilters)}
-          className="w-full p-2 bg-gray-700 hover:bg-gray-600 rounded font-medium text-sm flex items-center justify-between"
+          className="w-full p-2 bg-muted-violet/40 hover:bg-muted-violet/60 border border-golden-bronze/30 rounded-lg font-medium text-sm flex items-center justify-between transition-colors"
           aria-expanded={showFilters}
           aria-controls="filter-section"
           aria-label={showFilters ? 'Hide search filters' : 'Show search filters'}
@@ -293,7 +293,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           <span className="flex items-center gap-2">
             {showFilters ? 'Hide Filters' : 'Show Filters'}
             {activeFilterCount > 0 && (
-              <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-blue-600 rounded-full">
+              <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-midnight-plum-end bg-primary-gold rounded-full">
                 {activeFilterCount}
               </span>
             )}
@@ -304,8 +304,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
       <div id="filter-section" className={`space-y-5 ${showFilters ? '' : 'hidden'}`}>
         {/* Basic Filters */}
-        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-300 mb-3">Basic Filters</h3>
+        <div className="bg-muted-violet/30 p-3 rounded-lg border border-golden-bronze/30">
+          <h3 className="text-xs font-semibold text-cream-text uppercase tracking-[0.1em] mb-3">Basic Filters</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <div>
               <label htmlFor="type" className="block text-sm font-medium">
@@ -316,7 +316,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 name="type"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value as 'movie' | 'tv' | 'all')}
-                className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+                className="w-full p-2 bg-muted-violet/50 border border-golden-bronze/40 rounded-lg text-white"
                 aria-label="Filter by content type"
               >
                 <option value="all">All</option>
@@ -336,7 +336,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 value={yearFrom}
                 onChange={(e) => setYearFrom(e.target.value)}
                 placeholder="2000"
-                className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
+                className="w-full p-2 bg-muted-violet/50 border border-golden-bronze/40 rounded-lg placeholder-cream-text/40"
                 aria-label="Filter by start year"
               />
             </div>
@@ -352,7 +352,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 value={yearTo}
                 onChange={(e) => setYearTo(e.target.value)}
                 placeholder="2024"
-                className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
+                className="w-full p-2 bg-muted-violet/50 border border-golden-bronze/40 rounded-lg placeholder-cream-text/40"
                 aria-label="Filter by end year"
               />
             </div>
@@ -366,7 +366,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 name="language"
                 value={selectedLanguage}
                 onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+                className="w-full p-2 bg-muted-violet/50 border border-golden-bronze/40 rounded-lg text-white"
                 aria-label="Filter by language"
               >
                 <option value="">Any</option>
@@ -378,10 +378,10 @@ const SearchForm: React.FC<SearchFormProps> = ({
         </div>
 
         {/* Genres */}
-        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-          <label className="block text-sm font-semibold text-gray-300 mb-2">Genres</label>
+        <div className="bg-muted-violet/30 p-3 rounded-lg border border-golden-bronze/30">
+          <label className="block text-xs font-semibold text-cream-text uppercase tracking-[0.1em] mb-2">Genres</label>
           {isGenresLoading ? (
-            <p className="mt-2 text-sm text-gray-400">Loading filters...</p>
+            <p className="mt-2 text-sm text-cream-text/60">Loading filters...</p>
           ) : Array.isArray(genres) && genres.length > 0 ? (
             <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
               {genres.map((genre) => (
@@ -398,21 +398,21 @@ const SearchForm: React.FC<SearchFormProps> = ({
                         setSelectedGenres(selectedGenres.filter((id) => id !== genre.id));
                       }
                     }}
-                    className="form-checkbox h-5 w-5 rounded border-gray-600 bg-gray-700"
+                    className="form-checkbox h-5 w-5 rounded border-golden-bronze/40 bg-muted-violet/50 text-primary-gold focus:ring-primary-gold/30"
                   />
                   <span>{genre.name}</span>
                 </label>
               ))}
             </div>
           ) : (
-            <p className="mt-2 text-sm text-gray-400">No genres available</p>
+            <p className="mt-2 text-sm text-cream-text/60">No genres available</p>
           )}
         </div>
 
         {/* Country & Streaming Providers */}
-        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 space-y-4">
+        <div className="bg-muted-violet/30 p-3 rounded-lg border border-golden-bronze/30 space-y-4">
           <div>
-            <label htmlFor="watchRegion" className="block text-sm font-semibold text-gray-300 mb-2">
+            <label htmlFor="watchRegion" className="block text-xs font-semibold text-cream-text uppercase tracking-[0.1em] mb-2">
               Streaming Availability by Country
             </label>
             <select
@@ -420,7 +420,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
               name="watchRegion"
               value={watchRegion}
               onChange={(e) => onWatchRegionChange && onWatchRegionChange(e.target.value)}
-              className="mt-2 w-full p-2 bg-gray-700 border border-gray-600 rounded"
+              className="mt-2 w-full p-2 bg-muted-violet/50 border border-golden-bronze/40 rounded-lg text-white"
               aria-label="Filter by country availability"
             >
               <option value="">Select a Country...</option>
@@ -445,15 +445,15 @@ const SearchForm: React.FC<SearchFormProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-2">
+            <label className="block text-xs font-semibold text-cream-text uppercase tracking-[0.1em] mb-2">
               Filter by Streaming Providers
             </label>
             {!watchRegion ? (
-              <p className="mt-2 text-sm text-yellow-500 bg-yellow-900/30 p-2 rounded">
+              <p className="mt-2 text-sm text-primary-gold bg-primary-gold/10 border border-primary-gold/20 p-2 rounded-lg">
                 Please select a country above to view available streaming providers.
               </p>
             ) : isProvidersLoading ? (
-              <p className="mt-2 text-sm text-gray-400">Loading providers...</p>
+              <p className="mt-2 text-sm text-cream-text/60">Loading providers...</p>
             ) : Array.isArray(providers) && providers.length > 0 ? (
               <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-60 overflow-y-auto p-1 custom-scrollbar">
                 {providers.map((provider) => {
@@ -461,7 +461,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   return (
                     <label
                       key={provider.provider_id}
-                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-700 p-2 rounded transition-colors"
+                      className="flex items-center space-x-2 cursor-pointer hover:bg-muted-violet/60 p-2 rounded-lg transition-colors"
                     >
                       <input
                         type="checkbox"
@@ -477,7 +477,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                             );
                           }
                         }}
-                        className="form-checkbox h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500 flex-shrink-0"
+                        className="form-checkbox h-4 w-4 rounded border-golden-bronze/40 bg-muted-violet/50 text-primary-gold focus:ring-primary-gold/30 flex-shrink-0"
                       />
                       {logoUrl && (
                         <img
@@ -494,17 +494,17 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 })}
               </div>
             ) : (
-              <p className="mt-2 text-sm text-gray-400">No providers available for this region</p>
+              <p className="mt-2 text-sm text-cream-text/60">No providers available for this region</p>
             )}
           </div>
         </div>
 
         {activeFilterCount > 0 && (
-          <div className="pt-2 border-t border-gray-700">
+          <div className="pt-2 border-t border-golden-bronze/30">
             <button
               type="button"
               onClick={handleClearFilters}
-              className="w-full p-2 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              className="w-full p-2 bg-muted-violet/40 hover:bg-muted-violet/60 border border-golden-bronze/30 rounded-lg text-sm font-medium text-cream-text hover:text-white transition-colors"
               aria-label="Clear all filters"
             >
               Clear all filters ({activeFilterCount})
@@ -513,7 +513,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
         )}
       </div>
 
-      <button type="submit" className="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded font-bold">
+      <button type="submit" className="w-full p-2.5 bg-primary-gold hover:bg-primary-gold/90 text-midnight-plum-end rounded-full font-bold shadow-[0_0_15px_rgba(245,176,65,0.3)] hover:shadow-[0_0_25px_rgba(245,176,65,0.4)] transition-all">
         Search
       </button>
     </form>

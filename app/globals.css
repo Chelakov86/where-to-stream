@@ -11,6 +11,18 @@
     font-family: "Spline Sans", sans-serif;
     background: linear-gradient(180deg, #1A0F1F 0%, #0A050F 100%);
     min-height: 100vh;
+    color-scheme: dark;
+  }
+
+  select,
+  option {
+    background-color: #2A1B38;
+    color: #F5F5DC;
+  }
+
+  option:checked {
+    background-color: #F5B041;
+    color: #0A050F;
   }
 }
 

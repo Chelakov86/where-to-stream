@@ -102,7 +102,7 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
     <ul
       id={id}
       ref={listRef}
-      className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
+      className="w-full mt-1 glass-panel rounded-lg shadow-lg max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
       role="listbox"
       tabIndex={-1}
       onKeyDown={handleKeyDown}
@@ -113,9 +113,8 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
           ref={(el) => {
             itemRefs.current[index] = el;
           }}
-          className={`cursor-pointer p-2 flex items-center ${
-            index === highlightedIndex ? 'bg-gray-700' : 'hover:bg-gray-700'
-          }`}
+          className={`cursor-pointer p-2 flex items-center ${index === highlightedIndex ? 'bg-muted-violet/60' : 'hover:bg-muted-violet/60'
+            }`}
           onMouseEnter={() => setHighlightedIndex(index)}
           onClick={() => onSelect(item)}
           role="option"
@@ -130,21 +129,20 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
               className="object-cover w-10 h-15 mr-3 rounded-sm"
             />
           ) : (
-            <div className="w-10 h-15 mr-3 bg-gray-700 rounded-sm flex items-center justify-center">
-              <span className="text-xs text-gray-400">No Image</span>
+            <div className="w-10 h-15 mr-3 bg-muted-violet/50 rounded-sm flex items-center justify-center">
+              <span className="text-xs text-cream-text/40">No Image</span>
             </div>
           )}
           <div className="flex-grow">
             <p className="font-semibold text-white">{item.title}</p>
-            <div className="flex items-center text-sm text-gray-400">
+            <div className="flex items-center text-sm text-cream-text/60">
               <span>{item.year}</span>
               <span className="mx-2">•</span>
               <span
-                className={`px-2 py-0.5 rounded-full text-xs ${
-                  item.type === 'movie'
+                className={`px-2 py-0.5 rounded-full text-xs ${item.type === 'movie'
                     ? 'bg-blue-600 text-blue-100'
                     : 'bg-purple-600 text-purple-100'
-                }`}
+                  }`}
               >
                 {item.type === 'movie' ? 'Movie' : 'Series'}
               </span>
