@@ -10,6 +10,7 @@ export const ResultsList: React.FC<ResultsListProps> = ({
   isLoading = false,
   onPageChange,
   onSelectResult,
+  selectedTitle,
 }) => {
   // Show loading skeletons
   if (isLoading) {
@@ -38,7 +39,13 @@ export const ResultsList: React.FC<ResultsListProps> = ({
       <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-0" role="list">
         {results.map((result) => (
           <li key={`${result.type}-${result.id}`} className="list-none">
-            <ResultItem result={result} onSelectResult={onSelectResult} />
+            <ResultItem
+              result={result}
+              onSelectResult={onSelectResult}
+              isSelected={
+                selectedTitle?.id === result.id && selectedTitle?.type === result.type
+              }
+            />
           </li>
         ))}
       </ul>

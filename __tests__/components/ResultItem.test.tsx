@@ -25,7 +25,8 @@ describe('ResultItem', () => {
     const heading = screen.getByRole('heading', { level: 3 });
     expect(heading).toHaveTextContent('Test Movie');
     expect(heading).toHaveTextContent('(2023)');
-    expect(screen.getByText('Movie')).toBeInTheDocument();
+    const movieBadges = screen.getAllByText('Movie');
+    expect(movieBadges.length).toBeGreaterThan(0);
   });
 
   it('renders the poster image if posterUrl is provided', () => {
@@ -49,7 +50,8 @@ describe('ResultItem', () => {
     const onSelectResult = jest.fn();
     render(<ResultItem result={mockResult} onSelectResult={onSelectResult} />);
 
-    expect(screen.getByText('8.5')).toBeInTheDocument();
+    const ratingElements = screen.getAllByText('8.5');
+    expect(ratingElements.length).toBeGreaterThan(0);
   });
 
   it('does not render genre IDs (genre display removed in new card design)', () => {
@@ -73,5 +75,13 @@ describe('ResultItem', () => {
 
     fireEvent.click(screen.getByText('Details'));
     expect(onSelectResult).toHaveBeenCalledWith(mockResult);
+  });
+
+  it('shows "Viewing" instead of "Details" when isSelected is true', () => {
+    const onSelectResult = jest.fn();
+    render(<ResultItem result={mockResult} onSelectResult={onSelectResult} isSelected={true} />);
+
+    expect(screen.queryByText('Details')).not.toBeInTheDocument();
+    expect(screen.getByText('Viewing')).toBeInTheDocument();
   });
 });

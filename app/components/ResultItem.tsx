@@ -6,9 +6,10 @@ import { buildTmdbImageUrl } from '@/app/utils/tmdb';
 interface ResultItemProps {
   result: NormalizedSearchResult;
   onSelectResult: (result: NormalizedSearchResult) => void;
+  isSelected?: boolean;
 }
 
-export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }) => {
+export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult, isSelected = false }) => {
   const { title, year, type, posterUrl, rating } = result;
 
   // Build poster URL at w200 size for the card thumbnail
@@ -27,21 +28,30 @@ export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }
   const titleId = `result-${result.type}-${result.id}-title`;
   const isMovie = type === 'movie';
 
+  const articleClasses = [
+    'flex rounded-xl overflow-hidden bg-[#2A1B38]/60 border transition-all duration-200 group h-full',
+    // Mobile: horizontal layout | Desktop: vertical layout
+    'flex-row md:flex-col',
+    isSelected
+      ? 'border-[#F5B041] shadow-[0_0_20px_rgba(245,176,65,0.3)] ring-1 ring-[#F5B041]/40'
+      : 'border-[#4A3B28]/30 hover:border-[#F5B041]/40 hover:shadow-[0_0_20px_rgba(245,176,65,0.1)]',
+  ].join(' ');
+
   return (
     <article
       aria-labelledby={titleId}
-      className="flex flex-col rounded-xl overflow-hidden bg-[#2A1B38]/60 border border-[#4A3B28]/30 hover:border-[#F5B041]/40 transition-all duration-200 hover:shadow-[0_0_20px_rgba(245,176,65,0.1)] group h-full"
+      className={articleClasses}
       role="article"
     >
       {/* Poster */}
-      <div className="relative w-full aspect-[2/3] flex-shrink-0 overflow-hidden bg-[#1A0F1F]">
+      <div className="relative flex-shrink-0 overflow-hidden bg-[#1A0F1F] w-[80px] h-[120px] md:w-full md:h-auto md:aspect-[2/3]">
         {posterPath ? (
           <Image
             src={posterPath}
             alt={`${title} poster`}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes="(max-width: 768px) 80px, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
           <div
@@ -59,20 +69,19 @@ export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }
           </div>
         )}
 
-        {/* Type badge overlay */}
-        <div className="absolute top-2 left-2">
+        {/* Type badge overlay — hidden on mobile compact view */}
+        <div className="absolute top-2 left-2 hidden md:block">
           <span
-            className={`px-2 py-0.5 text-xs font-semibold rounded-full backdrop-blur-sm ${
-              isMovie ? 'bg-blue-600/80 text-blue-100' : 'bg-purple-600/80 text-purple-100'
-            }`}
+            className={`px-2 py-0.5 text-xs font-semibold rounded-full backdrop-blur-sm ${isMovie ? 'bg-blue-600/80 text-blue-100' : 'bg-purple-600/80 text-purple-100'
+              }`}
           >
             {isMovie ? 'Movie' : 'Series'}
           </span>
         </div>
 
-        {/* Rating badge overlay */}
+        {/* Rating badge overlay — hidden on mobile compact view */}
         {rating && (
-          <div className="absolute top-2 right-2 flex items-center gap-0.5 bg-black/60 backdrop-blur-sm rounded-full px-2 py-0.5">
+          <div className="absolute top-2 right-2 hidden md:flex items-center gap-0.5 bg-black/60 backdrop-blur-sm rounded-full px-2 py-0.5">
             <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
@@ -82,17 +91,38 @@ export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }
       </div>
 
       {/* Card body */}
-      <div className="flex flex-col flex-1 p-3 gap-2">
-        <h3 id={titleId} className="text-sm font-semibold text-white leading-snug line-clamp-2">
+      <div className="flex flex-col flex-1 p-2 md:p-3 gap-1 md:gap-2 min-w-0">
+        {/* Mobile type + rating row */}
+        <div className="flex items-center gap-2 md:hidden">
+          <span
+            className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full ${isMovie ? 'bg-blue-600/80 text-blue-100' : 'bg-purple-600/80 text-purple-100'
+              }`}
+          >
+            {isMovie ? 'Movie' : 'Series'}
+          </span>
+          {rating && (
+            <span className="flex items-center gap-0.5 text-[10px] text-yellow-400">
+              <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+              {rating.toFixed(1)}
+            </span>
+          )}
+        </div>
+
+        <h3 id={titleId} className="text-xs md:text-sm font-semibold text-white leading-snug line-clamp-2">
           {title}
           {year && <span className="text-white/50 font-normal ml-1">({year})</span>}
         </h3>
-        <div className="mt-auto pt-2">
+        <div className="mt-auto pt-1 md:pt-2">
           <button
             onClick={() => onSelectResult(result)}
-            className="w-full bg-[#F5B041]/10 hover:bg-[#F5B041] text-[#F5B041] hover:text-[#0A050F] border border-[#F5B041]/30 hover:border-[#F5B041] text-xs font-semibold py-1.5 px-3 rounded-lg transition-all duration-200"
+            className={`w-full text-xs font-semibold py-1 md:py-1.5 px-3 rounded-lg transition-all duration-200 ${isSelected
+                ? 'bg-[#F5B041] text-[#0A050F] border border-[#F5B041]'
+                : 'bg-[#F5B041]/10 hover:bg-[#F5B041] text-[#F5B041] hover:text-[#0A050F] border border-[#F5B041]/30 hover:border-[#F5B041]'
+              }`}
           >
-            Details
+            {isSelected ? 'Viewing' : 'Details'}
           </button>
         </div>
       </div>

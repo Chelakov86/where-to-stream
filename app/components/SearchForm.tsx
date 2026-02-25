@@ -26,6 +26,9 @@ interface SearchFormProps {
   autocompleteItems?: AutocompleteItem[];
   onAutocompleteSelect?: (item: AutocompleteItem) => void;
   onAutocompleteClose?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  lastSearchQuery?: string;
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({
@@ -41,6 +44,9 @@ const SearchForm: React.FC<SearchFormProps> = ({
   autocompleteItems = [],
   onAutocompleteSelect,
   onAutocompleteClose,
+  isCollapsed = false,
+  onToggleCollapse,
+  lastSearchQuery = '',
 }) => {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -233,6 +239,30 @@ const SearchForm: React.FC<SearchFormProps> = ({
       watchRegion: '',
     });
   };
+
+  // Collapsed compact bar
+  if (isCollapsed && lastSearchQuery) {
+    return (
+      <div className="flex items-center gap-3 p-3 sm:p-4 glass-panel rounded-xl text-white">
+        <div className="flex-1 min-w-0">
+          <span className="text-cream-text/60 text-sm">Results for: </span>
+          <span className="font-semibold truncate">&quot;{lastSearchQuery}&quot;</span>
+          {activeFilterCount > 0 && (
+            <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-midnight-plum-end bg-primary-gold rounded-full">
+              {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          className="flex-shrink-0 px-4 py-2 bg-muted-violet/50 hover:bg-muted-violet/70 border border-golden-bronze/30 rounded-lg text-sm font-medium transition-colors"
+        >
+          ✏️ Modify Search
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form

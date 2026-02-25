@@ -30,6 +30,7 @@ export interface ResultsListProps {
   isLoading?: boolean;
   onPageChange: (nextPage: number) => void;
   onSelectResult: (result: NormalizedSearchResult) => void;
+  selectedTitle?: { id: number; type: string } | null;
 }
 
 export interface Genre {

@@ -28,19 +28,76 @@ const formatRuntime = (runtime: number) => {
 const AvailabilityTable = ({
   title,
   countries,
+  defaultCollapsed = false,
 }: {
   title: string;
   countries: CountryAvailability[];
+  defaultCollapsed?: boolean;
 }) => {
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  const [filterQuery, setFilterQuery] = useState('');
   const isOtherCountries = title === 'Other Countries';
+
+  const filteredCountries = filterQuery
+    ? countries.filter((c) =>
+      c.countryName.toLowerCase().includes(filterQuery.toLowerCase())
+    )
+    : countries;
+
+  // Collapsible header for "Other Countries"
+  if (isOtherCountries && isCollapsed) {
+    return (
+      <div className="mt-4">
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(false)}
+          className="w-full flex items-center justify-between p-3 bg-muted-violet/40 hover:bg-muted-violet/60 border border-golden-bronze/30 rounded-lg transition-colors"
+          aria-expanded={false}
+        >
+          <span className="text-base sm:text-lg font-semibold text-white">
+            Available in {countries.length} other {countries.length === 1 ? 'country' : 'countries'}
+          </span>
+          <span className="text-cream-text/60 text-sm">Show ▸</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4">
-      <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">{title}</h4>
+      <div className="flex items-center justify-between mb-2 sm:mb-3">
+        <h4 className="text-base sm:text-lg font-semibold text-white">{title}</h4>
+        {isOtherCountries && (
+          <button
+            type="button"
+            onClick={() => {
+              setIsCollapsed(true);
+              setFilterQuery('');
+            }}
+            className="text-sm text-cream-text/60 hover:text-white transition-colors"
+          >
+            Hide ◂
+          </button>
+        )}
+      </div>
+
+      {/* Country search filter for Other Countries */}
+      {isOtherCountries && (
+        <div className="mb-3">
+          <input
+            type="text"
+            value={filterQuery}
+            onChange={(e) => setFilterQuery(e.target.value)}
+            placeholder="Filter by country name..."
+            className="w-full p-2 text-sm bg-muted-violet/50 border border-golden-bronze/40 rounded-lg placeholder-cream-text/40 focus:border-primary-gold focus:ring-1 focus:ring-primary-gold/30 transition-colors"
+            aria-label="Filter countries"
+          />
+        </div>
+      )}
 
       {/* Mobile: Card layout */}
-      <div className="block md:hidden space-y-3">
-        {countries.map((country) => (
+      <div className={`block md:hidden space-y-3 ${isOtherCountries ? 'max-h-[400px] overflow-y-auto custom-scrollbar pr-1' : ''}`}>
+        {filteredCountries.map((country) => (
           <div
             key={country.countryCode}
             className="bg-muted-violet/40 p-3 rounded-lg border border-golden-bronze/30"
@@ -84,88 +141,100 @@ const AvailabilityTable = ({
             </div>
           </div>
         ))}
+        {filteredCountries.length === 0 && filterQuery && (
+          <p className="text-sm text-cream-text/60 text-center py-2">No countries match &quot;{filterQuery}&quot;</p>
+        )}
       </div>
 
       {/* Desktop: Table layout */}
-      <table
-        className="hidden md:table w-full bg-muted-violet/30 border border-golden-bronze/30 table-fixed rounded-lg overflow-hidden"
-        aria-label={title}
-        style={{ tableLayout: 'fixed' }}
-      >
-        <colgroup>
-          <col style={{ width: '20%' }} />
-          <col style={{ width: '35%' }} />
-          <col style={{ width: '35%' }} />
-          <col style={{ width: '10%' }} />
-        </colgroup>
-        <thead>
-          <tr className="bg-midnight-plum-end/80">
-            <th
-              className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
-            >
-              Country
-            </th>
-            <th
-              className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
-            >
-              Free Providers
-            </th>
-            <th
-              className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
-            >
-              Paid Providers
-            </th>
-            <th
-              className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
-            >
-              Link
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {countries.map((country) => (
-            <tr key={country.countryCode} className="hover:bg-muted-violet/40">
-              <td className="py-2 px-4 border-b border-golden-bronze/20 truncate">
-                <div className="flex items-center">
-                  <Image
-                    src={getCountryFlagUrl(country.countryCode)}
-                    alt={`${country.countryName} flag`}
-                    width={20}
-                    height={15}
-                    className="mr-2"
-                    unoptimized
-                  />
-                  {country.countryName}
-                </div>
-              </td>
-              <td
-                className="py-2 px-4 border-b border-golden-bronze/20"
-                title={country.freeProviders.join(', ')}
+      <div className={isOtherCountries ? 'max-h-[400px] overflow-y-auto custom-scrollbar' : ''}>
+        <table
+          className="hidden md:table w-full bg-muted-violet/30 border border-golden-bronze/30 table-fixed rounded-lg overflow-hidden"
+          aria-label={title}
+          style={{ tableLayout: 'fixed' }}
+        >
+          <colgroup>
+            <col style={{ width: '20%' }} />
+            <col style={{ width: '35%' }} />
+            <col style={{ width: '35%' }} />
+            <col style={{ width: '10%' }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-midnight-plum-end/80">
+              <th
+                className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
               >
-                {country.freeProviders.length > 0 ? country.freeProviders.join(', ') : '-'}
-              </td>
-              <td
-                className="py-2 px-4 border-b border-golden-bronze/20"
-                title={country.paidProviders.join(', ')}
+                Country
+              </th>
+              <th
+                className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
               >
-                {country.paidProviders.length > 0 ? country.paidProviders.join(', ') : '-'}
-              </td>
-              <td className="py-2 px-4 border-b border-gray-600">
-                {country.watchLink && (
-                  <a
-                    href={country.watchLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary-gold hover:text-primary-gold/80 transition-colors"
-                  >
-                    Watch
-                  </a>
-                )}
-              </td>
+                Free Providers
+              </th>
+              <th
+                className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+              >
+                Paid Providers
+              </th>
+              <th
+                className={`py-2 px-4 border-b border-golden-bronze/30 text-left bg-midnight-plum-end/80 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+              >
+                Link
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredCountries.map((country) => (
+              <tr key={country.countryCode} className="hover:bg-muted-violet/40">
+                <td className="py-2 px-4 border-b border-golden-bronze/20 truncate">
+                  <div className="flex items-center">
+                    <Image
+                      src={getCountryFlagUrl(country.countryCode)}
+                      alt={`${country.countryName} flag`}
+                      width={20}
+                      height={15}
+                      className="mr-2"
+                      unoptimized
+                    />
+                    {country.countryName}
+                  </div>
+                </td>
+                <td
+                  className="py-2 px-4 border-b border-golden-bronze/20"
+                  title={country.freeProviders.join(', ')}
+                >
+                  {country.freeProviders.length > 0 ? country.freeProviders.join(', ') : '-'}
+                </td>
+                <td
+                  className="py-2 px-4 border-b border-golden-bronze/20"
+                  title={country.paidProviders.join(', ')}
+                >
+                  {country.paidProviders.length > 0 ? country.paidProviders.join(', ') : '-'}
+                </td>
+                <td className="py-2 px-4 border-b border-gray-600">
+                  {country.watchLink && (
+                    <a
+                      href={country.watchLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary-gold hover:text-primary-gold/80 transition-colors"
+                    >
+                      Watch
+                    </a>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {filteredCountries.length === 0 && filterQuery && (
+              <tr>
+                <td colSpan={4} className="py-4 text-center text-cream-text/60 text-sm">
+                  No countries match &quot;{filterQuery}&quot;
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
@@ -298,6 +367,7 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
               <AvailabilityTable
                 title="Other Countries"
                 countries={details.availability.otherCountries}
+                defaultCollapsed={true}
               />
             )}
           </div>

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import SearchForm from './components/SearchForm';
 import { ResultsList } from './components/ResultsList';
-import ResultDetails from './components/ResultDetails';
+import DetailsSidebar from './components/DetailsSidebar';
 import ErrorBanner from './components/ErrorBanner';
 import SearchHistory from './components/SearchHistory';
 import { TMDBResult, SearchParams } from './types';
@@ -21,7 +21,7 @@ export default function Home() {
   );
   const [watchRegion, setWatchRegion] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const resultDetailsRef = useRef<HTMLDivElement | null>(null);
+  const [isSearchFormCollapsed, setIsSearchFormCollapsed] = useState(false);
 
   const showError = useCallback((message: string | null) => setErrorMessage(message), []);
   const clearError = useCallback(() => setErrorMessage(null), []);
@@ -52,6 +52,7 @@ export default function Home() {
       clearAutocomplete();
       setSelectedTitle(null);
       await handleSearch(params, newPage);
+      setIsSearchFormCollapsed(true);
     },
     [handleSearch, clearAutocomplete]
   );
@@ -100,23 +101,9 @@ export default function Home() {
   const shouldShowInitialPrompt = !searchQuery && !isSearching && !errorMessage;
   const shouldShowNoResults = searchQuery && !isSearching && results.length === 0 && !errorMessage;
 
-  useEffect(() => {
-    if (!selectedTitle) {
-      return;
-    }
-    const node = resultDetailsRef.current;
-    if (!node) {
-      return;
-    }
-    const scroll = () => {
-      node.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-      window.requestAnimationFrame(scroll);
-    } else {
-      scroll();
-    }
-  }, [selectedTitle]);
+  const handleCloseDetails = useCallback(() => {
+    setSelectedTitle(null);
+  }, []);
 
   return (
     <main className="min-h-screen p-4 sm:p-6 md:p-8">
@@ -140,6 +127,9 @@ export default function Home() {
         autocompleteItems={autocompleteSuggestions}
         onAutocompleteSelect={handleSelectSuggestion}
         onAutocompleteClose={clearAutocomplete}
+        isCollapsed={isSearchFormCollapsed}
+        onToggleCollapse={() => setIsSearchFormCollapsed(false)}
+        lastSearchQuery={searchQuery?.query ?? ''}
       />
       <SearchHistory
         history={history}
@@ -148,9 +138,6 @@ export default function Home() {
         onClearHistory={clearHistory}
       />
       <div className="mt-8 space-y-8">
-        <div ref={resultDetailsRef}>
-          {selectedTitle && <ResultDetails title={selectedTitle} onError={handleDetailsError} />}
-        </div>
         <section className="relative min-h-[3rem]">
           {isSearching && (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-midnight-plum-end/80 backdrop-blur-sm text-lg font-semibold text-white">
@@ -165,6 +152,7 @@ export default function Home() {
               isLoading={isSearching}
               onPageChange={handlePageChange}
               onSelectResult={handleSelectResult}
+              selectedTitle={selectedTitle}
             />
           ) : shouldShowNoResults ? (
             <p className="mt-4 text-cream-text/70">
@@ -177,6 +165,11 @@ export default function Home() {
           ) : null}
         </section>
       </div>
+      <DetailsSidebar
+        selectedTitle={selectedTitle}
+        onClose={handleCloseDetails}
+        onError={handleDetailsError}
+      />
     </main>
   );
 }

@@ -92,3 +92,60 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Details sidebar — slide-over panel */
+.details-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+}
+
+.details-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 5, 15, 0.6);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.details-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(180deg, #1A0F1F 0%, #0A050F 100%);
+  border-left: 1px solid #4A3B28;
+  overflow-y: auto;
+  z-index: 51;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@media (min-width: 1024px) {
+  .details-sidebar {
+    width: 42vw;
+    min-width: 480px;
+    max-width: 700px;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

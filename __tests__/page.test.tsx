@@ -36,6 +36,13 @@ beforeAll(() => {
   });
 });
 
+// Prevent body overflow side effects from DetailsSidebar
+Object.defineProperty(document.body.style, 'overflow', {
+  configurable: true,
+  set: jest.fn(),
+  get: () => '',
+});
+
 // Mock fetch
 global.fetch = jest.fn();
 
@@ -106,26 +113,32 @@ jest.mock('../app/components/ResultsList', () => ({
   ),
 }));
 
-jest.mock('../app/components/ResultDetails', () => ({
+jest.mock('../app/components/DetailsSidebar', () => ({
   __esModule: true,
   default: ({
-    title,
+    selectedTitle,
+    onClose,
     onError,
   }: {
-    title: { id: number; type: 'movie' | 'tv' } | null;
+    selectedTitle: { id: number; type: 'movie' | 'tv' } | null;
+    onClose: () => void;
     onError?: (message: string) => void;
-  }) => (
-    <div data-testid="result-details">
-      {title ? `Details for ${title.type} ${title.id}` : null}
-      <button
-        type="button"
-        onClick={() => onError?.(globalErrorMessage)}
-        data-testid="details-error-trigger"
-      >
-        Simulate details error
-      </button>
-    </div>
-  ),
+  }) =>
+    selectedTitle ? (
+      <div data-testid="result-details">
+        Details for {selectedTitle.type} {selectedTitle.id}
+        <button
+          type="button"
+          onClick={() => onError?.(globalErrorMessage)}
+          data-testid="details-error-trigger"
+        >
+          Simulate details error
+        </button>
+        <button type="button" onClick={onClose} data-testid="close-details">
+          Close
+        </button>
+      </div>
+    ) : null,
 }));
 
 describe('Home Page', () => {
@@ -303,7 +316,7 @@ describe('Home Page', () => {
     expect(await screen.findByText(globalErrorMessage)).toBeInTheDocument();
   });
 
-  it('scrolls to the details section after selecting a result', async () => {
+  it('closes details when the close button is clicked', async () => {
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce(buildOkResponse(mockGenres))
       .mockResolvedValueOnce(
@@ -326,12 +339,14 @@ describe('Home Page', () => {
 
     await waitFor(() => expect(screen.getByTestId('results-list')).toBeInTheDocument());
 
-    scrollIntoViewMock.mockClear();
-
     fireEvent.click(screen.getByText('Mystery Movie'));
 
+    expect(await screen.findByTestId('result-details')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('close-details'));
+
     await waitFor(() => {
-      expect(scrollIntoViewMock).toHaveBeenCalled();
+      expect(screen.queryByTestId('result-details')).not.toBeInTheDocument();
     });
   });
 });

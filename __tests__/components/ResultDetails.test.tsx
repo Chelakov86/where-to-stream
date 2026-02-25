@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import ResultDetails from '@/app/components/ResultDetails';
 import { mockMovie, mockTv } from '../../test/mocks';
@@ -73,6 +73,12 @@ describe('ResultDetails', () => {
     // Check for free and paid providers
     expect(within(userCountryTable).getByText('Pluto TV, Tubi')).toBeInTheDocument();
     expect(within(userCountryTable).getByText('Hulu, Max, Netflix')).toBeInTheDocument();
+
+    // Other Countries is collapsed by default — expand it
+    const expandButton = screen.getByRole('button', {
+      name: /available in \d+ other countr/i,
+    });
+    fireEvent.click(expandButton);
 
     const otherTable = await screen.findByRole('table', { name: 'Other Countries' });
     const otherLink = within(otherTable).getByRole('link', { name: 'Watch' });
