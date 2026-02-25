@@ -9,77 +9,88 @@ interface ResultItemProps {
 }
 
 export const ResultItem: React.FC<ResultItemProps> = ({ result, onSelectResult }) => {
-  const { title, year, type, posterUrl, rating, genres } = result;
-  // Extract poster path from full URL and rebuild with smaller size for list view
+  const { title, year, type, posterUrl, rating } = result;
+
+  // Build poster URL at w200 size for the card thumbnail
   let posterPath: string | undefined = undefined;
   if (posterUrl) {
     if (posterUrl.startsWith('http')) {
-      // Extract path from full URL (e.g., "https://image.tmdb.org/t/p/w500/abc.jpg" -> "/abc.jpg")
       const urlMatch = posterUrl.match(/\/t\/p\/w\d+\/(.+)$/);
       if (urlMatch) {
         posterPath = buildTmdbImageUrl(`/${urlMatch[1]}`, 'w200');
       }
     } else {
-      // Already a path, just rebuild with different size
       posterPath = buildTmdbImageUrl(posterUrl, 'w200');
     }
   }
+
   const titleId = `result-${result.type}-${result.id}-title`;
+  const isMovie = type === 'movie';
 
   return (
     <article
       aria-labelledby={titleId}
-      className="bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4"
+      className="flex flex-col rounded-xl overflow-hidden bg-[#2A1B38]/60 border border-[#4A3B28]/30 hover:border-[#F5B041]/40 transition-all duration-200 hover:shadow-[0_0_20px_rgba(245,176,65,0.1)] group h-full"
       role="article"
     >
-      <div className="flex-shrink-0 mx-auto sm:mx-0">
+      {/* Poster */}
+      <div className="relative w-full aspect-[2/3] flex-shrink-0 overflow-hidden bg-[#1A0F1F]">
         {posterPath ? (
           <Image
             src={posterPath}
             alt={`${title} poster`}
-            width={100}
-            height={150}
-            className="rounded-md w-20 sm:w-24 md:w-[100px] h-auto"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
           <div
             data-testid="poster-placeholder"
-            className="w-20 sm:w-24 md:w-[100px] h-[120px] sm:h-[135px] md:h-[150px] bg-gray-700 rounded-md flex items-center justify-center"
+            className="w-full h-full flex items-center justify-center"
           >
-            <span className="text-gray-500 text-xs sm:text-sm">No Image</span>
+            <svg
+              className="w-12 h-12 text-[#4A3B28]"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z" />
+            </svg>
+          </div>
+        )}
+
+        {/* Type badge overlay */}
+        <div className="absolute top-2 left-2">
+          <span
+            className={`px-2 py-0.5 text-xs font-semibold rounded-full backdrop-blur-sm ${
+              isMovie ? 'bg-blue-600/80 text-blue-100' : 'bg-purple-600/80 text-purple-100'
+            }`}
+          >
+            {isMovie ? 'Movie' : 'Series'}
+          </span>
+        </div>
+
+        {/* Rating badge overlay */}
+        {rating && (
+          <div className="absolute top-2 right-2 flex items-center gap-0.5 bg-black/60 backdrop-blur-sm rounded-full px-2 py-0.5">
+            <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            <span className="text-xs text-white font-medium">{rating.toFixed(1)}</span>
           </div>
         )}
       </div>
-      <div className="flex-grow">
-        <h3 id={titleId} className="text-lg sm:text-xl font-bold">
-          {title} {year && `(${year})`}
+
+      {/* Card body */}
+      <div className="flex flex-col flex-1 p-3 gap-2">
+        <h3 id={titleId} className="text-sm font-semibold text-white leading-snug line-clamp-2">
+          {title}
+          {year && <span className="text-white/50 font-normal ml-1">({year})</span>}
         </h3>
-        <div className="flex items-center space-x-2 mt-1">
-          <span
-            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-              type === 'movie' ? 'bg-blue-600 text-blue-100' : 'bg-purple-600 text-purple-100'
-            }`}
-          >
-            {type === 'movie' ? 'Movie' : 'Series'}
-          </span>
-          {rating && (
-            <div className="flex items-center">
-              <span className="text-yellow-400">&#9733;</span>
-              <span className="ml-1">{rating.toFixed(1)}</span>
-            </div>
-          )}
-        </div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {genres?.slice(0, 3).map((genreId) => (
-            <span key={genreId} className="bg-gray-700 text-gray-300 px-2 py-1 text-xs rounded-md">
-              {genreId}
-            </span>
-          ))}
-        </div>
-        <div className="mt-4">
+        <div className="mt-auto pt-2">
           <button
             onClick={() => onSelectResult(result)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+            className="w-full bg-[#F5B041]/10 hover:bg-[#F5B041] text-[#F5B041] hover:text-[#0A050F] border border-[#F5B041]/30 hover:border-[#F5B041] text-xs font-semibold py-1.5 px-3 rounded-lg transition-all duration-200"
           >
             Details
           </button>

@@ -311,68 +311,68 @@ const SearchForm: React.FC<SearchFormProps> = ({
               <label htmlFor="type" className="block text-sm font-medium">
                 Type
               </label>
-            <select
-              id="type"
-              name="type"
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as 'movie' | 'tv' | 'all')}
-              className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
-              aria-label="Filter by content type"
-            >
-              <option value="all">All</option>
-              <option value="movie">Movies only</option>
-              <option value="tv">Series only</option>
-            </select>
-          </div>
+              <select
+                id="type"
+                name="type"
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value as 'movie' | 'tv' | 'all')}
+                className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+                aria-label="Filter by content type"
+              >
+                <option value="all">All</option>
+                <option value="movie">Movies only</option>
+                <option value="tv">Series only</option>
+              </select>
+            </div>
 
-          <div>
-            <label htmlFor="yearFrom" className="block text-sm font-medium">
-              From Year
-            </label>
-            <input
-              id="yearFrom"
-              name="yearFrom"
-              type="number"
-              value={yearFrom}
-              onChange={(e) => setYearFrom(e.target.value)}
-              placeholder="2000"
-              className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
-              aria-label="Filter by start year"
-            />
-          </div>
+            <div>
+              <label htmlFor="yearFrom" className="block text-sm font-medium">
+                From Year
+              </label>
+              <input
+                id="yearFrom"
+                name="yearFrom"
+                type="number"
+                value={yearFrom}
+                onChange={(e) => setYearFrom(e.target.value)}
+                placeholder="2000"
+                className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
+                aria-label="Filter by start year"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="yearTo" className="block text-sm font-medium">
-              To Year
-            </label>
-            <input
-              id="yearTo"
-              name="yearTo"
-              type="number"
-              value={yearTo}
-              onChange={(e) => setYearTo(e.target.value)}
-              placeholder="2024"
-              className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
-              aria-label="Filter by end year"
-            />
-          </div>
+            <div>
+              <label htmlFor="yearTo" className="block text-sm font-medium">
+                To Year
+              </label>
+              <input
+                id="yearTo"
+                name="yearTo"
+                type="number"
+                value={yearTo}
+                onChange={(e) => setYearTo(e.target.value)}
+                placeholder="2024"
+                className="w-full p-2 bg-gray-700 border border-gray-600 rounded placeholder-gray-300"
+                aria-label="Filter by end year"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="language" className="block text-sm font-medium">
-              Language
-            </label>
-            <select
-              id="language"
-              name="language"
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
-              aria-label="Filter by language"
-            >
-              <option value="">Any</option>
-              <option value="en">EN</option>
-              <option value="de">DE</option>
-            </select>
+            <div>
+              <label htmlFor="language" className="block text-sm font-medium">
+                Language
+              </label>
+              <select
+                id="language"
+                name="language"
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="w-full p-2 bg-gray-700 border border-gray-600 rounded"
+                aria-label="Filter by language"
+              >
+                <option value="">Any</option>
+                <option value="en">EN</option>
+                <option value="de">DE</option>
+              </select>
             </div>
           </div>
         </div>
@@ -415,78 +415,85 @@ const SearchForm: React.FC<SearchFormProps> = ({
             <label htmlFor="watchRegion" className="block text-sm font-semibold text-gray-300 mb-2">
               Streaming Availability by Country
             </label>
-          <select
-            id="watchRegion"
-            name="watchRegion"
-            value={watchRegion}
-            onChange={(e) => onWatchRegionChange && onWatchRegionChange(e.target.value)}
-            className="mt-2 w-full p-2 bg-gray-700 border border-gray-600 rounded"
-            aria-label="Filter by country availability"
-          >
-            <option value="">Select a Country...</option>
-            <optgroup label="Popular Countries">
-              <option value="US">United States</option>
-              <option value="GB">United Kingdom</option>
-              <option value="CA">Canada</option>
-              <option value="DE">Germany</option>
-              <option value="FR">France</option>
-              <option value="AU">Australia</option>
-            </optgroup>
-            <optgroup label="All Countries">
-              {Object.entries(COUNTRY_NAMES)
-                .sort((a, b) => a[1].localeCompare(b[1]))
-                .map(([code, name]) => (
-                  <option key={code} value={code}>
-                    {name}
-                  </option>
-                ))}
-            </optgroup>
-          </select>
+            <select
+              id="watchRegion"
+              name="watchRegion"
+              value={watchRegion}
+              onChange={(e) => onWatchRegionChange && onWatchRegionChange(e.target.value)}
+              className="mt-2 w-full p-2 bg-gray-700 border border-gray-600 rounded"
+              aria-label="Filter by country availability"
+            >
+              <option value="">Select a Country...</option>
+              <optgroup label="Popular Countries">
+                <option value="US">United States</option>
+                <option value="GB">United Kingdom</option>
+                <option value="CA">Canada</option>
+                <option value="DE">Germany</option>
+                <option value="FR">France</option>
+                <option value="AU">Australia</option>
+              </optgroup>
+              <optgroup label="All Countries">
+                {Object.entries(COUNTRY_NAMES)
+                  .sort((a, b) => a[1].localeCompare(b[1]))
+                  .map(([code, name]) => (
+                    <option key={code} value={code}>
+                      {name}
+                    </option>
+                  ))}
+              </optgroup>
+            </select>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-2">Filter by Streaming Providers</label>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">
+              Filter by Streaming Providers
+            </label>
             {!watchRegion ? (
               <p className="mt-2 text-sm text-yellow-500 bg-yellow-900/30 p-2 rounded">
                 Please select a country above to view available streaming providers.
               </p>
-          ) : isProvidersLoading ? (
-            <p className="mt-2 text-sm text-gray-400">Loading providers...</p>
-          ) : Array.isArray(providers) && providers.length > 0 ? (
-            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-60 overflow-y-auto p-1 custom-scrollbar">
-              {providers.map((provider) => {
-                const logoUrl = buildTmdbImageUrl(provider.logo_path, 'w92');
-                return (
-                  <label key={provider.provider_id} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-700 p-2 rounded transition-colors">
-                    <input
-                      type="checkbox"
-                      name="provider"
-                      value={provider.provider_id}
-                      checked={selectedProviders.includes(provider.provider_id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedProviders([...selectedProviders, provider.provider_id]);
-                        } else {
-                          setSelectedProviders(selectedProviders.filter((id) => id !== provider.provider_id));
-                        }
-                      }}
-                      className="form-checkbox h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500 flex-shrink-0"
-                    />
-                    {logoUrl && (
-                      <img
-                        src={logoUrl}
-                        alt=""
-                        className="w-6 h-6 rounded flex-shrink-0 object-contain"
+            ) : isProvidersLoading ? (
+              <p className="mt-2 text-sm text-gray-400">Loading providers...</p>
+            ) : Array.isArray(providers) && providers.length > 0 ? (
+              <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-60 overflow-y-auto p-1 custom-scrollbar">
+                {providers.map((provider) => {
+                  const logoUrl = buildTmdbImageUrl(provider.logo_path, 'w92');
+                  return (
+                    <label
+                      key={provider.provider_id}
+                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-700 p-2 rounded transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        name="provider"
+                        value={provider.provider_id}
+                        checked={selectedProviders.includes(provider.provider_id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedProviders([...selectedProviders, provider.provider_id]);
+                          } else {
+                            setSelectedProviders(
+                              selectedProviders.filter((id) => id !== provider.provider_id)
+                            );
+                          }
+                        }}
+                        className="form-checkbox h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500 flex-shrink-0"
                       />
-                    )}
-                    <span className="text-sm truncate" title={provider.provider_name}>
-                      {provider.provider_name}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          ) : (
+                      {logoUrl && (
+                        <img
+                          src={logoUrl}
+                          alt=""
+                          className="w-6 h-6 rounded flex-shrink-0 object-contain"
+                        />
+                      )}
+                      <span className="text-sm truncate" title={provider.provider_name}>
+                        {provider.provider_name}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
               <p className="mt-2 text-sm text-gray-400">No providers available for this region</p>
             )}
           </div>

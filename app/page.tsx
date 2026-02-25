@@ -27,9 +27,11 @@ export default function Home() {
   const clearError = useCallback(() => setErrorMessage(null), []);
 
   const { genres, isLoading: isGenresLoading, error: genresError } = useGenres();
-  const { providers, isLoading: isProvidersLoading, error: providersError } = useProviders(
-    watchRegion
-  );
+  const {
+    providers,
+    isLoading: isProvidersLoading,
+    error: providersError,
+  } = useProviders(watchRegion);
   const { autocompleteSuggestions, handleAutocompleteRequest, clearAutocomplete } =
     useAutocomplete(showError);
   const { history, addToHistory, clearHistory, removeFromHistory } = useSearchHistory();

@@ -21,12 +21,15 @@ describe('ResultsList', () => {
         totalPages={3}
         onPageChange={onPageChange}
         onSelectResult={onSelectResult}
-      />
+      />,
     );
 
-    expect(screen.getByText('Movie 1 (2021)')).toBeInTheDocument();
-    expect(screen.getByText('Series 2 (2022)')).toBeInTheDocument();
-    expect(screen.getByText('Movie 3 (2023)')).toBeInTheDocument();
+    // Title and year are split across elements in the new card design — match via heading text content
+    const headings = screen.getAllByRole('heading', { level: 3 });
+    expect(headings[0]).toHaveTextContent('Movie 1');
+    expect(headings[0]).toHaveTextContent('(2021)');
+    expect(headings[1]).toHaveTextContent('Series 2');
+    expect(headings[2]).toHaveTextContent('Movie 3');
   });
 
   it('uses semantic list markup for search results', () => {
@@ -39,7 +42,7 @@ describe('ResultsList', () => {
         totalPages={3}
         onPageChange={onPageChange}
         onSelectResult={onSelectResult}
-      />
+      />,
     );
 
     const list = screen.getByRole('list');
@@ -57,7 +60,7 @@ describe('ResultsList', () => {
         totalPages={3}
         onPageChange={onPageChange}
         onSelectResult={onSelectResult}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Next'));
@@ -74,7 +77,7 @@ describe('ResultsList', () => {
         totalPages={3}
         onPageChange={onPageChange}
         onSelectResult={onSelectResult}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Previous'));
@@ -91,7 +94,7 @@ describe('ResultsList', () => {
         totalPages={3}
         onPageChange={onPageChange}
         onSelectResult={onSelectResult}
-      />
+      />,
     );
 
     expect(screen.getByText('Previous')).toBeDisabled();
@@ -107,7 +110,7 @@ describe('ResultsList', () => {
         totalPages={3}
         onPageChange={onPageChange}
         onSelectResult={onSelectResult}
-      />
+      />,
     );
 
     expect(screen.getByText('Next')).toBeDisabled();
@@ -123,7 +126,7 @@ describe('ResultsList', () => {
         totalPages={1}
         onPageChange={onPageChange}
         onSelectResult={onSelectResult}
-      />
+      />,
     );
 
     expect(screen.getByText('No results found.')).toBeInTheDocument();
@@ -139,7 +142,7 @@ describe('ResultsList', () => {
         totalPages={3}
         onPageChange={onPageChange}
         onSelectResult={onSelectResult}
-      />
+      />,
     );
 
     fireEvent.click(screen.getAllByText('Details')[0]);

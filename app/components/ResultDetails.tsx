@@ -16,8 +16,6 @@ interface ResultDetailsProps {
 
 type Status = 'loading' | 'error' | 'success';
 
-
-
 const formatRuntime = (runtime: number) => {
   const hours = Math.floor(runtime / 60);
   const minutes = runtime % 60;

@@ -32,6 +32,8 @@
   },
   "homepage": "https://github.com/Chelakov86/where-to-stream#readme",
   "dependencies": {
+    "@tailwindcss/container-queries": "^0.1.1",
+    "@tailwindcss/forms": "^0.5.11",
     "@types/node": "^24.10.0",
     "next": "^16.0.1",
     "react": "^19.0.0",

@@ -49,15 +49,16 @@ test.describe('Filter Functionality', () => {
     await homePage.waitForSearchComplete();
   });
 
-  test('should set minimum rating slider', async ({ homePage, page }) => {
+  test('should show clear filters button when filters are active', async ({ homePage, page }) => {
     await mockGenres(page);
     await mockSearch(page);
 
     await homePage.toggleFilters();
-    await homePage.setMinRating(7.5);
+    await homePage.selectType('movie');
 
-    const ratingValue = await homePage.minRatingValue.textContent();
-    expect(ratingValue).toContain('7.5');
+    const clearFiltersButton = page.locator('button[aria-label="Clear all filters"]');
+    await expect(clearFiltersButton).toBeVisible();
+    expect(await clearFiltersButton.textContent()).toContain('Clear all filters');
   });
 
   test('should select genre checkboxes', async ({ homePage, page }) => {

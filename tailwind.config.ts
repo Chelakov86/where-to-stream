@@ -9,21 +9,40 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        "primary-gold": "#F5B041",
+        "midnight-plum-start": "#1A0F1F",
+        "midnight-plum-end": "#0A050F",
+        "muted-violet": "#2A1B38",
+        "golden-bronze": "#4A3B28",
+        "cream-text": "#F5F5DC",
         background: {
-          DEFAULT: '#0a0a0f',
-          secondary: '#1a1a2e',
+          DEFAULT: '#0A050F',
+          secondary: '#1A0F1F',
         },
         text: {
-          DEFAULT: '#e0e0e0',
-          secondary: '#a0a0a0',
+          DEFAULT: '#FFFFFF',
+          secondary: '#F5F5DC',
         },
         accent: {
-          primary: '#00d4ff',
-          secondary: '#ff6b35',
+          primary: '#F5B041',
+          secondary: '#4A3B28',
         },
+      },
+      fontFamily: {
+        "display": ["Spline Sans", "sans-serif"],
+        "sans": ["Spline Sans", "sans-serif"]
+      },
+      borderRadius: {
+        "DEFAULT": "1rem",
+        "lg": "2rem",
+        "xl": "3rem",
+        "full": "9999px"
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/container-queries')
+  ],
 };
 export default config;

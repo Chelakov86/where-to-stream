@@ -254,7 +254,9 @@ describe('mapAvailability', () => {
         },
         BR: {
           link: 'https://www.themoviedb.org/movie/1/watch?locale=BR',
-          ads: [{ provider_id: 613, provider_name: 'Pluto TV', logo_path: '', display_priority: 0 }],
+          ads: [
+            { provider_id: 613, provider_name: 'Pluto TV', logo_path: '', display_priority: 0 },
+          ],
         },
       },
     };

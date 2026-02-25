@@ -21,7 +21,10 @@ describe('ResultItem', () => {
     const onSelectResult = jest.fn();
     render(<ResultItem result={mockResult} onSelectResult={onSelectResult} />);
 
-    expect(screen.getByText('Test Movie (2023)')).toBeInTheDocument();
+    // Title and year are split into separate elements in the new design
+    const heading = screen.getByRole('heading', { level: 3 });
+    expect(heading).toHaveTextContent('Test Movie');
+    expect(heading).toHaveTextContent('(2023)');
     expect(screen.getByText('Movie')).toBeInTheDocument();
   });
 
@@ -49,20 +52,19 @@ describe('ResultItem', () => {
     expect(screen.getByText('8.5')).toBeInTheDocument();
   });
 
-  it('renders up to 3 genres', () => {
+  it('does not render genre IDs (genre display removed in new card design)', () => {
     const onSelectResult = jest.fn();
     render(<ResultItem result={mockResult} onSelectResult={onSelectResult} />);
 
-    expect(screen.getByText('28')).toBeInTheDocument();
-    expect(screen.getByText('12')).toBeInTheDocument();
-    expect(screen.getByText('16')).toBeInTheDocument();
+    // Genre IDs should not appear as standalone text in the new vertical card design
+    expect(screen.queryByText('28')).not.toBeInTheDocument();
   });
 
   it('exposes an article landmark named after the result title', () => {
     const onSelectResult = jest.fn();
     render(<ResultItem result={mockResult} onSelectResult={onSelectResult} />);
 
-    expect(screen.getByRole('article', { name: /test movie \(2023\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: /test movie/i })).toBeInTheDocument();
   });
 
   it('calls onSelectResult with the correct result when the "Details" button is clicked', () => {

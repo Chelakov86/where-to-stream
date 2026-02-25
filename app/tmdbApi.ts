@@ -395,9 +395,7 @@ export async function discoverTv(params: DiscoverTvParams): Promise<TmdbDiscover
 export async function getMovieWatchProvidersList(
   watchRegion?: string
 ): Promise<TmdbProviderListResponse> {
-  const cacheKey = watchRegion
-    ? `providers:list:movie:${watchRegion}`
-    : 'providers:list:movie';
+  const cacheKey = watchRegion ? `providers:list:movie:${watchRegion}` : 'providers:list:movie';
   const cached = getCache<TmdbProviderListResponse>(cacheKey);
   if (cached) {
     return cached;
