@@ -96,7 +96,7 @@ const AvailabilityTable = ({
       )}
 
       {/* Mobile: Card layout */}
-      <div className={`block md:hidden space-y-3 ${isOtherCountries ? 'max-h-[400px] overflow-y-auto custom-scrollbar pr-1' : ''}`}>
+      <div className={`block 2xl:hidden space-y-3 ${isOtherCountries ? 'max-h-[400px] overflow-y-auto custom-scrollbar pr-1' : ''}`}>
         {filteredCountries.map((country) => (
           <div
             key={country.countryCode}
@@ -149,7 +149,7 @@ const AvailabilityTable = ({
       {/* Desktop: Table layout */}
       <div className={isOtherCountries ? 'max-h-[400px] overflow-y-auto custom-scrollbar' : ''}>
         <table
-          className="hidden md:table w-full bg-muted-violet/30 border border-golden-bronze/30 table-fixed rounded-lg overflow-hidden"
+          className="hidden 2xl:table w-full bg-muted-violet/30 border border-golden-bronze/30 table-fixed rounded-lg overflow-hidden"
           aria-label={title}
           style={{ tableLayout: 'fixed' }}
         >
