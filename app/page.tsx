@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import SearchForm from './components/SearchForm';
 import { ResultsList } from './components/ResultsList';
 import DetailsSidebar from './components/DetailsSidebar';
+import ResultDetails from './components/ResultDetails';
 import ErrorBanner from './components/ErrorBanner';
 import SearchHistory from './components/SearchHistory';
 import { TMDBResult, SearchParams } from './types';
@@ -137,39 +138,60 @@ export default function Home() {
         onRemoveItem={removeFromHistory}
         onClearHistory={clearHistory}
       />
-      <div className="mt-8 space-y-8">
-        <section className="relative min-h-[3rem]">
-          {isSearching && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-midnight-plum-end/80 backdrop-blur-sm text-lg font-semibold text-white">
-              Searching...
+
+      {/* Split-panel layout: left = results, right = details (desktop only) */}
+      <div className="mt-8 lg:flex lg:gap-6 lg:items-start">
+        {/* Left: results list */}
+        <div className="lg:flex-1 lg:min-w-0">
+          <section className="relative min-h-[3rem]">
+            {isSearching && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-midnight-plum-end/80 backdrop-blur-sm text-lg font-semibold text-white">
+                Searching...
+              </div>
+            )}
+            {isSearching || results.length > 0 ? (
+              <ResultsList
+                results={results}
+                page={page}
+                totalPages={totalPages}
+                isLoading={isSearching}
+                onPageChange={handlePageChange}
+                onSelectResult={handleSelectResult}
+                selectedTitle={selectedTitle}
+              />
+            ) : shouldShowNoResults ? (
+              <p className="mt-4 text-cream-text/70">
+                No titles found. Please check the spelling or try a different title.
+              </p>
+            ) : shouldShowInitialPrompt ? (
+              <p className="mt-4 text-cream-text/70">
+                Search for a movie or series to see where it&apos;s streaming.
+              </p>
+            ) : null}
+          </section>
+        </div>
+
+        {/* Right: inline details panel — desktop only */}
+        <div className="hidden lg:block lg:w-[44%] lg:flex-shrink-0 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+          {selectedTitle ? (
+            <ResultDetails title={selectedTitle} onError={handleDetailsError} />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-64 glass-panel rounded-xl text-cream-text/40 text-center p-8">
+              <span className="text-4xl mb-3">🎬</span>
+              <p className="text-base">Select a title to see where it streams</p>
             </div>
           )}
-          {isSearching || results.length > 0 ? (
-            <ResultsList
-              results={results}
-              page={page}
-              totalPages={totalPages}
-              isLoading={isSearching}
-              onPageChange={handlePageChange}
-              onSelectResult={handleSelectResult}
-              selectedTitle={selectedTitle}
-            />
-          ) : shouldShowNoResults ? (
-            <p className="mt-4 text-cream-text/70">
-              No titles found. Please check the spelling or try a different title.
-            </p>
-          ) : shouldShowInitialPrompt ? (
-            <p className="mt-4 text-cream-text/70">
-              Search for a movie or series to see where it's streaming.
-            </p>
-          ) : null}
-        </section>
+        </div>
       </div>
-      <DetailsSidebar
-        selectedTitle={selectedTitle}
-        onClose={handleCloseDetails}
-        onError={handleDetailsError}
-      />
+
+      {/* Mobile/tablet overlay — hidden on lg+ */}
+      <div className="lg:hidden">
+        <DetailsSidebar
+          selectedTitle={selectedTitle}
+          onClose={handleCloseDetails}
+          onError={handleDetailsError}
+        />
+      </div>
     </main>
   );
 }
