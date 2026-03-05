@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { buildTmdbImageUrl } from '@/app/utils/tmdb';
 import { WatchProvider } from '@/app/types';
 
@@ -45,18 +45,19 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
     }
   };
 
-  const renderChip = (provider: WatchProvider) => {
-    const logoUrl = buildTmdbImageUrl(provider.logo_path, 'w92');
-    const isSelected = selectedProviders.includes(provider.provider_id);
-    return (
-      <button
-        key={provider.provider_id}
-        type="button"
-        title={provider.provider_name}
-        aria-label={`${isSelected ? 'Remove' : 'Add'} ${provider.provider_name} filter`}
-        aria-pressed={isSelected}
-        onClick={() => toggle(provider.provider_id)}
-        className={`
+  const renderChip = useCallback(
+    (provider: WatchProvider) => {
+      const logoUrl = buildTmdbImageUrl(provider.logo_path, 'w92');
+      const isSelected = selectedProviders.includes(provider.provider_id);
+      return (
+        <button
+          key={provider.provider_id}
+          type="button"
+          title={provider.provider_name}
+          aria-label={`${isSelected ? 'Remove' : 'Add'} ${provider.provider_name} filter`}
+          aria-pressed={isSelected}
+          onClick={() => toggle(provider.provider_id)}
+          className={`
           w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 transition-all
           focus:outline-none focus:ring-2 focus:ring-primary-gold/60
           ${
@@ -65,21 +66,19 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
               : 'ring-1 ring-golden-bronze/40 opacity-70 hover:opacity-100 hover:ring-golden-bronze/80'
           }
         `}
-      >
-        {logoUrl ? (
-          <img
-            src={logoUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-muted-violet/60 flex items-center justify-center text-xs text-cream-text/60">
-            ?
-          </div>
-        )}
-      </button>
-    );
-  };
+        >
+          {logoUrl ? (
+            <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-muted-violet/60 flex items-center justify-center text-xs text-cream-text/60">
+              ?
+            </div>
+          )}
+        </button>
+      );
+    },
+    [selectedProviders, toggle]
+  );
 
   return (
     <div className="space-y-3">
@@ -101,11 +100,11 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
       {popular.length > 0 && (
         <div>
           {!search && (
-            <p className="text-xs text-cream-text/50 uppercase tracking-wider mb-2">Popular</p>
+            <span className="text-xs text-cream-text/50 uppercase tracking-wider mb-2">
+              Popular
+            </span>
           )}
-          <div className="flex flex-wrap gap-2">
-            {popular.map(renderChip)}
-          </div>
+          <div className="flex flex-wrap gap-2">{popular.map(renderChip)}</div>
         </div>
       )}
 
@@ -113,7 +112,9 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
       {others.length > 0 && (
         <div>
           {!search && popular.length > 0 && (
-            <p className="text-xs text-cream-text/50 uppercase tracking-wider mb-2">All providers</p>
+            <span className="text-xs text-cream-text/50 uppercase tracking-wider mb-2">
+              All providers
+            </span>
           )}
           <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
             {others.map(renderChip)}
