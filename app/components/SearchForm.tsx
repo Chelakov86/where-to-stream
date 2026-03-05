@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AutocompleteList, AutocompleteItem } from './AutocompleteList';
 import { COUNTRY_NAMES } from '@/app/utils/countries';
-import { buildTmdbImageUrl } from '@/app/utils/tmdb';
 import { loadFilterState, saveFilterState } from '@/app/utils/filterStorage';
+import ProviderChips from './ProviderChips';
+import { WatchProvider } from '@/app/types';
 
 interface SearchFormProps {
   genres: { id: number; name: string }[];
-  providers: { provider_id: number; provider_name: string; logo_path: string }[];
+  providers: WatchProvider[];
   onSearch: (params: {
     query: string;
     type: 'movie' | 'tv' | 'all';
@@ -157,7 +158,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
     const formData = new FormData(event.currentTarget);
     const selectedGenreIds = formData.getAll('genre').map((id) => parseInt(id as string, 10));
-    const selectedProviderIds = formData.getAll('provider').map((id) => parseInt(id as string, 10));
+    const selectedProviderIds = selectedProviders;
 
     onSearch({
       query: formData.get('query') as string,
@@ -485,43 +486,12 @@ const SearchForm: React.FC<SearchFormProps> = ({
             ) : isProvidersLoading ? (
               <p className="mt-2 text-sm text-cream-text/60">Loading providers...</p>
             ) : Array.isArray(providers) && providers.length > 0 ? (
-              <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-60 overflow-y-auto p-1 custom-scrollbar">
-                {providers.map((provider) => {
-                  const logoUrl = buildTmdbImageUrl(provider.logo_path, 'w92');
-                  return (
-                    <label
-                      key={provider.provider_id}
-                      className="flex items-center space-x-2 cursor-pointer hover:bg-muted-violet/60 p-2 rounded-lg transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        name="provider"
-                        value={provider.provider_id}
-                        checked={selectedProviders.includes(provider.provider_id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedProviders([...selectedProviders, provider.provider_id]);
-                          } else {
-                            setSelectedProviders(
-                              selectedProviders.filter((id) => id !== provider.provider_id)
-                            );
-                          }
-                        }}
-                        className="form-checkbox h-4 w-4 rounded border-golden-bronze/40 bg-muted-violet/50 text-primary-gold focus:ring-primary-gold/30 flex-shrink-0"
-                      />
-                      {logoUrl && (
-                        <img
-                          src={logoUrl}
-                          alt=""
-                          className="w-6 h-6 rounded flex-shrink-0 object-contain"
-                        />
-                      )}
-                      <span className="text-sm truncate" title={provider.provider_name}>
-                        {provider.provider_name}
-                      </span>
-                    </label>
-                  );
-                })}
+              <div className="mt-2">
+                <ProviderChips
+                  providers={providers}
+                  selectedProviders={selectedProviders}
+                  onChange={setSelectedProviders}
+                />
               </div>
             ) : (
               <p className="mt-2 text-sm text-cream-text/60">No providers available for this region</p>
