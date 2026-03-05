@@ -177,7 +177,7 @@ export default function Home() {
             <ResultDetails title={selectedTitle} onError={handleDetailsError} />
           ) : (
             <div className="flex flex-col items-center justify-center h-64 glass-panel rounded-xl text-cream-text/40 text-center p-8">
-              <span className="text-4xl mb-3">🎬</span>
+              <span className="text-4xl mb-3" aria-hidden="true">🎬</span>
               <p className="text-base">Select a title to see where it streams</p>
             </div>
           )}

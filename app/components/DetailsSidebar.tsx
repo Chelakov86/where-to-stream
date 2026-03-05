@@ -26,9 +26,12 @@ const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
 
     useEffect(() => {
         if (!selectedTitle) return;
+        // Only lock body scroll when the overlay is actually visible (below lg = 1024px)
+        const isOverlayVisible = window.innerWidth < 1024;
         document.addEventListener('keydown', handleKeyDown);
-        // Prevent body scroll when sidebar is open
-        document.body.style.overflow = 'hidden';
+        if (isOverlayVisible) {
+            document.body.style.overflow = 'hidden';
+        }
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = '';
