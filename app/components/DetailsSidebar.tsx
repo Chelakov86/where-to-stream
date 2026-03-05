@@ -34,7 +34,9 @@ const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
         }
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
-            document.body.style.overflow = '';
+            if (isOverlayVisible) {
+                document.body.style.overflow = '';
+            }
         };
     }, [selectedTitle, handleKeyDown]);
 
