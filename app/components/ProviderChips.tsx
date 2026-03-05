@@ -37,14 +37,6 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
     [filtered]
   );
 
-  const toggle = (id: number) => {
-    if (selectedProviders.includes(id)) {
-      onChange(selectedProviders.filter((x) => x !== id));
-    } else {
-      onChange([...selectedProviders, id]);
-    }
-  };
-
   const renderChip = useCallback(
     (provider: WatchProvider) => {
       const logoUrl = buildTmdbImageUrl(provider.logo_path, 'w92');
@@ -56,7 +48,13 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
           title={provider.provider_name}
           aria-label={`${isSelected ? 'Remove' : 'Add'} ${provider.provider_name} filter`}
           aria-pressed={isSelected}
-          onClick={() => toggle(provider.provider_id)}
+          onClick={() => {
+            if (selectedProviders.includes(provider.provider_id)) {
+              onChange(selectedProviders.filter((x) => x !== provider.provider_id));
+            } else {
+              onChange([...selectedProviders, provider.provider_id]);
+            }
+          }}
           className={`
           w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 transition-all
           focus:outline-none focus:ring-2 focus:ring-primary-gold/60
@@ -77,7 +75,7 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
         </button>
       );
     },
-    [selectedProviders, toggle]
+    [selectedProviders, onChange]
   );
 
   return (
