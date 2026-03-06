@@ -12,9 +12,9 @@ const mockGenres = [
 ];
 
 const mockProviders = [
-  { provider_id: 8, provider_name: 'Netflix', logo_path: '/netflix.jpg' },
-  { provider_id: 9, provider_name: 'Amazon Prime Video', logo_path: '/prime.jpg' },
-  { provider_id: 337, provider_name: 'Disney Plus', logo_path: '/disney.jpg' },
+  { provider_id: 8, provider_name: 'Netflix', logo_path: '/netflix.jpg', display_priority: 0 },
+  { provider_id: 9, provider_name: 'Amazon Prime Video', logo_path: '/prime.jpg', display_priority: 1 },
+  { provider_id: 337, provider_name: 'Disney Plus', logo_path: '/disney.jpg', display_priority: 2 },
 ];
 
 describe('SearchForm', () => {
@@ -43,7 +43,7 @@ describe('SearchForm', () => {
     expect(screen.getByRole('checkbox', { name: 'Action' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Adventure' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Animation' })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'Netflix' })).toBeInTheDocument();
+    expect(screen.getByTitle('Netflix')).toBeInTheDocument();
     expect(screen.getByLabelText(/Streaming Availability by Country/i)).toBeInTheDocument();
   });
 
@@ -88,7 +88,7 @@ describe('SearchForm', () => {
     });
     fireEvent.click(screen.getByRole('checkbox', { name: 'Action' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Adventure' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Netflix' }));
+    fireEvent.click(screen.getByTitle('Netflix'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
@@ -218,7 +218,7 @@ describe('SearchForm', () => {
         expect(screen.getByLabelText('To Year')).toHaveValue(2024);
         expect(screen.getByLabelText('Language')).toHaveValue('en');
         expect(screen.getByRole('checkbox', { name: 'Action' })).toBeChecked();
-        expect(screen.getByRole('checkbox', { name: 'Netflix' })).toBeChecked();
+        expect(screen.getByTitle('Netflix')).toHaveAttribute('aria-pressed', 'true');
       });
 
       // Verify parent was notified of watch region

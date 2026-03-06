@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import ResultDetails from '@/app/components/ResultDetails';
 import { mockMovie, mockTv } from '../../test/mocks';
@@ -27,7 +27,7 @@ describe('ResultDetails', () => {
   });
 
   it('should show a loading indicator', () => {
-    (fetch as jest.Mock).mockReturnValue(new Promise(() => { }));
+    (fetch as jest.Mock).mockReturnValue(new Promise(() => {}));
     render(<ResultDetails title={{ id: 123, type: 'movie' }} />);
     expect(screen.getByRole('status', { name: /loading title details/i })).toBeInTheDocument();
   });
@@ -66,13 +66,14 @@ describe('ResultDetails', () => {
     const userCountryLink = within(userCountryTable).getByRole('link', {
       name: 'Watch',
     });
-    expect(userCountryLink).toHaveAttribute(
-      'href',
-      mockMovie.availability.userCountry!.watchLink
-    );
+    expect(userCountryLink).toHaveAttribute('href', mockMovie.availability.userCountry!.watchLink);
     // Check for free and paid providers
     expect(within(userCountryTable).getByText('Pluto TV, Tubi')).toBeInTheDocument();
     expect(within(userCountryTable).getByText('Hulu, Max, Netflix')).toBeInTheDocument();
+
+    // "Other Countries" is collapsed by default — expand it first
+    const showButton = await screen.findByRole('button', { name: /available in.*other/i });
+    fireEvent.click(showButton);
 
     const otherTable = await screen.findByRole('table', { name: 'Other Countries' });
     const otherLink = within(otherTable).getByRole('link', { name: 'Watch' });
