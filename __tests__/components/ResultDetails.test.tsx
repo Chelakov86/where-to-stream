@@ -55,9 +55,10 @@ describe('ResultDetails', () => {
     expect(await screen.findByText(mockMovie.title)).toBeInTheDocument();
     expect(screen.getByText('2023')).toBeInTheDocument();
     expect(screen.getByText('Movie')).toBeInTheDocument();
-    expect(screen.getByText('Action, Adventure')).toBeInTheDocument();
+    expect(screen.getByText('Action')).toBeInTheDocument();
+    expect(screen.getByText('Adventure')).toBeInTheDocument();
     expect(screen.getByText(mockMovie.overview)).toBeInTheDocument();
-    expect(await screen.findByTestId('rating')).toHaveTextContent('Rating: 8.5/10');
+    expect(await screen.findByTestId('rating')).toHaveTextContent('8.5/10');
     expect(screen.getByText('1h 30m')).toBeInTheDocument();
 
     const userCountryTable = await screen.findByRole('table', {
@@ -87,9 +88,10 @@ describe('ResultDetails', () => {
     expect(await screen.findByText(mockTv.title)).toBeInTheDocument();
     expect(screen.getByText('2021')).toBeInTheDocument();
     expect(screen.getByText('TV Show')).toBeInTheDocument();
-    expect(screen.getByText('Sci-Fi & Fantasy, Drama')).toBeInTheDocument();
+    expect(screen.getByText('Sci-Fi & Fantasy')).toBeInTheDocument();
+    expect(screen.getByText('Drama')).toBeInTheDocument();
     expect(screen.getByText(mockTv.overview)).toBeInTheDocument();
-    expect(await screen.findByTestId('rating')).toHaveTextContent('Rating: 9.0/10');
+    expect(await screen.findByTestId('rating')).toHaveTextContent('9.0/10');
     expect(screen.getByText('45m')).toBeInTheDocument();
 
     // Check for Canada - emoji and name may be in separate elements

@@ -102,7 +102,7 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
     <ul
       id={id}
       ref={listRef}
-      className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto"
+      className="custom-scrollbar max-h-80 w-full overflow-y-auto rounded-xl border border-white/[0.14] bg-[#10151d]/95 p-1 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl"
       role="listbox"
       tabIndex={-1}
       onKeyDown={handleKeyDown}
@@ -113,8 +113,10 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
           ref={(el) => {
             itemRefs.current[index] = el;
           }}
-          className={`cursor-pointer p-2 flex items-center ${
-            index === highlightedIndex ? 'bg-gray-700' : 'hover:bg-gray-700'
+          className={`flex cursor-pointer items-center gap-3 rounded-lg p-2 transition ${
+            index === highlightedIndex
+              ? 'bg-accent-primary/[0.14] text-text'
+              : 'text-text-secondary hover:bg-white/[0.06] hover:text-text'
           }`}
           onMouseEnter={() => setHighlightedIndex(index)}
           onClick={() => onSelect(item)}
@@ -125,27 +127,21 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
             <Image
               src={item.posterUrl}
               alt={item.title}
-              width={40}
-              height={60}
-              className="object-cover w-10 h-15 mr-3 rounded-sm"
+              width={44}
+              height={66}
+              className="h-[66px] w-11 rounded-md object-cover shadow-lg shadow-black/30"
             />
           ) : (
-            <div className="w-10 h-15 mr-3 bg-gray-700 rounded-sm flex items-center justify-center">
-              <span className="text-xs text-gray-400">No Image</span>
+            <div className="grid h-[66px] w-11 place-items-center rounded-md border border-white/10 bg-white/[0.06]">
+              <span className="text-[10px] font-bold uppercase text-text-secondary">No art</span>
             </div>
           )}
-          <div className="flex-grow">
-            <p className="font-semibold text-white">{item.title}</p>
-            <div className="flex items-center text-sm text-gray-400">
-              <span>{item.year}</span>
-              <span className="mx-2">•</span>
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs ${
-                  item.type === 'movie'
-                    ? 'bg-blue-600 text-blue-100'
-                    : 'bg-purple-600 text-purple-100'
-                }`}
-              >
+          <div className="min-w-0 flex-grow">
+            <p className="truncate text-sm font-black text-inherit">{item.title}</p>
+            <div className="mt-1 flex items-center gap-2 text-xs font-bold text-text-secondary">
+              <span>{item.year || 'Unknown year'}</span>
+              <span className="h-1 w-1 rounded-full bg-text-secondary/50" />
+              <span className="uppercase tracking-[0.12em]">
                 {item.type === 'movie' ? 'Movie' : 'Series'}
               </span>
             </div>

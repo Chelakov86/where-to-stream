@@ -82,14 +82,14 @@ export class HomePage extends BasePage {
     this.searchingIndicator = page.locator('text=Searching...');
 
     // Search history
-    this.searchHistorySection = page.locator('div:has-text("Search History")');
+    this.searchHistorySection = page.locator('aside:has-text("Search History")');
     this.searchHistoryToggle = page.locator('button[aria-controls="search-history-list"]');
     this.searchHistoryItems = page.locator('#search-history-list button[aria-label^="View"]');
     this.clearHistoryButton = page.locator('button[aria-label="Clear all search history"]');
 
     // Error banner
-    this.errorBanner = page.locator('[role="alert"]');
-    this.errorMessage = page.locator('[role="alert"] p');
+    this.errorBanner = page.locator('div[role="alert"]:not(#__next-route-announcer__)');
+    this.errorMessage = this.errorBanner.locator('p');
     this.dismissErrorButton = page.locator('button[aria-label="Dismiss error"]');
 
     // Page elements

@@ -13,7 +13,12 @@ const mockGenres = [
 
 const mockProviders = [
   { provider_id: 8, provider_name: 'Netflix', logo_path: '/netflix.jpg', display_priority: 0 },
-  { provider_id: 9, provider_name: 'Amazon Prime Video', logo_path: '/prime.jpg', display_priority: 1 },
+  {
+    provider_id: 9,
+    provider_name: 'Amazon Prime Video',
+    logo_path: '/prime.jpg',
+    display_priority: 1,
+  },
   { provider_id: 337, provider_name: 'Disney Plus', logo_path: '/disney.jpg', display_priority: 2 },
 ];
 

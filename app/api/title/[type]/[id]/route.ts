@@ -12,6 +12,7 @@ import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
 import { logger } from '@/app/utils/logger';
 import { detectUserCountry, validateCountryCode } from '@/app/utils/countryDetection';
+import { COUNTRY_NAMES } from '@/app/utils/countries';
 
 /**
  * API route handler for fetching detailed information about a specific movie or TV show.
@@ -158,8 +159,8 @@ export async function GET(
 
     // Detect user's country from request headers
     const detectedCountry = detectUserCountry(req);
-    const availableCountries = Object.keys(watchProvidersResponse.results || {});
-    const validatedCountry = validateCountryCode(detectedCountry, availableCountries);
+    const validCountryCodes = Object.keys(COUNTRY_NAMES);
+    const validatedCountry = validateCountryCode(detectedCountry, validCountryCodes);
 
     // Map TMDB watch providers to our availability model with user's country
     // This separates user's country (if detected) from other countries

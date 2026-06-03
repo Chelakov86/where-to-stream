@@ -28,7 +28,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   height,
   animation = 'pulse',
 }) => {
-  const baseClasses = 'bg-gray-700';
+  const baseClasses = 'bg-white/10';
   const animationClasses = {
     pulse: 'animate-pulse',
     wave: 'animate-wave',
@@ -61,7 +61,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
  */
 export const ResultItemSkeleton: React.FC = () => (
   <article
-    className="flex gap-4 p-4 bg-gray-800 rounded-lg"
+    className="flex gap-4 rounded-xl border border-white/10 bg-[#141a22]/[0.88] p-4"
     role="status"
     aria-label="Loading search result"
   >
@@ -81,7 +81,7 @@ export const ResultItemSkeleton: React.FC = () => (
  */
 export const ResultDetailsSkeleton: React.FC = () => (
   <section
-    className="bg-gray-800 text-white rounded-lg shadow-lg p-4 sm:p-5 md:p-6 max-w-4xl mx-auto"
+    className="mx-auto max-w-5xl rounded-2xl border border-white/10 bg-[#141a22]/[0.88] p-4 text-text shadow-[0_28px_80px_rgba(0,0,0,0.3)] sm:p-5 md:p-6"
     role="status"
     aria-label="Loading title details"
   >

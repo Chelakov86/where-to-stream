@@ -149,7 +149,7 @@ describe('GET /api/title/[type]/[id]', () => {
     expect(mockGetMovieDetails).toHaveBeenCalledWith(550);
     expect(mockGetMovieWatchProviders).toHaveBeenCalledWith(550);
     expect(mockDetectUserCountry).toHaveBeenCalledWith(req);
-    expect(mockValidateCountryCode).toHaveBeenCalledWith('US', ['US']);
+    expect(mockValidateCountryCode).toHaveBeenCalledWith('US', expect.arrayContaining(['US']));
     expect(mockMapAvailability).toHaveBeenCalledWith(
       {
         id: 550,

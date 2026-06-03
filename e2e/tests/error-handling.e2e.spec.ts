@@ -86,7 +86,9 @@ test.describe('Error Handling', () => {
     // Should show error in details section
     await page.waitForTimeout(1000);
 
-    const errorMessage = page.locator("text=We're having trouble fetching data right now");
+    const errorMessage = page.locator('div.text-red-400', {
+      hasText: "We're having trouble fetching data right now",
+    });
     await expect(errorMessage).toBeVisible();
   });
 
@@ -118,10 +120,7 @@ test.describe('Error Handling', () => {
 
     // Should show error
     await page.waitForTimeout(1000);
-    const hasError = await page
-      .locator('[role="alert"]')
-      .isVisible()
-      .catch(() => false);
+    const hasError = await homePage.errorBanner.isVisible().catch(() => false);
     expect(hasError).toBeTruthy();
   });
 

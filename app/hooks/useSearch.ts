@@ -77,7 +77,13 @@ export function useSearch(onError?: (message: string | null) => void) {
 
         const data = await response.json();
         setResults(Array.isArray(data.results) ? data.results : []);
-        setTotalPages(typeof data.total_pages === 'number' ? data.total_pages : 1);
+        setTotalPages(
+          typeof data.totalPages === 'number'
+            ? data.totalPages
+            : typeof data.total_pages === 'number'
+              ? data.total_pages
+              : 1
+        );
         clearError();
       } catch (err) {
         // Don't show error for aborted requests

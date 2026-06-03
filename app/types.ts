@@ -19,6 +19,7 @@ export interface SearchParams {
   genreIds?: number[];
   providerIds?: number[];
   watchRegion?: string;
+  minRating?: number;
 }
 
 export type TMDBResult = NormalizedSearchResult;
@@ -30,6 +31,7 @@ export interface ResultsListProps {
   isLoading?: boolean;
   onPageChange: (nextPage: number) => void;
   onSelectResult: (result: NormalizedSearchResult) => void;
+  genreNamesById?: Record<number, string>;
 }
 
 export interface Genre {

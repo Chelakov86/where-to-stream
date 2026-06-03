@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import SearchForm from './components/SearchForm';
 import { ResultsList } from './components/ResultsList';
 import ResultDetails from './components/ResultDetails';
@@ -27,14 +27,25 @@ export default function Home() {
   const clearError = useCallback(() => setErrorMessage(null), []);
 
   const { genres, isLoading: isGenresLoading, error: genresError } = useGenres();
-  const { providers, isLoading: isProvidersLoading, error: providersError } = useProviders(
-    watchRegion
-  );
+  const {
+    providers,
+    isLoading: isProvidersLoading,
+    error: providersError,
+  } = useProviders(watchRegion);
   const { autocompleteSuggestions, handleAutocompleteRequest, clearAutocomplete } =
     useAutocomplete(showError);
   const { history, addToHistory, clearHistory, removeFromHistory } = useSearchHistory();
   const { results, page, totalPages, searchQuery, isSearching, handleSearch, handlePageChange } =
     useSearch(showError);
+
+  const genreNamesById = useMemo(
+    () =>
+      genres.reduce<Record<number, string>>((acc, genre) => {
+        acc[genre.id] = genre.name;
+        return acc;
+      }, {}),
+    [genres]
+  );
 
   // Show genres or providers error if present
   useEffect(() => {
@@ -117,63 +128,87 @@ export default function Home() {
   }, [selectedTitle]);
 
   return (
-    <main className="min-h-screen p-4 sm:p-6 md:p-8">
-      {errorMessage && <ErrorBanner message={errorMessage} onDismiss={handleDismissError} />}
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-accent-primary">
-        WhereToStream
-      </h1>
-      <p className="mt-3 sm:mt-4 text-sm sm:text-base text-text-secondary">
-        Find where your favorite movies and TV shows are streaming
-      </p>
-      <SearchForm
-        genres={genres}
-        providers={providers}
-        isGenresLoading={isGenresLoading}
-        isProvidersLoading={isProvidersLoading}
-        onAutocompleteRequest={handleAutocompleteRequest}
-        onSearch={handleSearchWithClear}
-        watchRegion={watchRegion}
-        onWatchRegionChange={setWatchRegion}
-        autocompleteListId={AUTOCOMPLETE_LIST_ID}
-        autocompleteItems={autocompleteSuggestions}
-        onAutocompleteSelect={handleSelectSuggestion}
-        onAutocompleteClose={clearAutocomplete}
-      />
-      <SearchHistory
-        history={history}
-        onSelectTitle={handleSelectHistoryItem}
-        onRemoveItem={removeFromHistory}
-        onClearHistory={clearHistory}
-      />
-      <div className="mt-8 space-y-8">
-        <div ref={resultDetailsRef}>
-          {selectedTitle && <ResultDetails title={selectedTitle} onError={handleDetailsError} />}
-        </div>
-        <section className="relative min-h-[3rem]">
-          {isSearching && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-gray-900/80 text-lg font-semibold text-white">
-              Searching...
+    <main className="min-h-screen px-5 py-8 sm:px-8 lg:px-10">
+      <div className="mx-auto max-w-7xl">
+        {errorMessage && <ErrorBanner message={errorMessage} onDismiss={handleDismissError} />}
+        <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
+          <div>
+            <div className="max-w-3xl">
+              <h1 className="text-balance text-4xl font-black tracking-normal text-text sm:text-5xl md:text-6xl">
+                WhereToStream
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">
+                Find where your favorite movies and TV shows are streaming before the trailer ends.
+              </p>
             </div>
-          )}
-          {isSearching || results.length > 0 ? (
-            <ResultsList
-              results={results}
-              page={page}
-              totalPages={totalPages}
-              isLoading={isSearching}
-              onPageChange={handlePageChange}
-              onSelectResult={handleSelectResult}
-            />
-          ) : shouldShowNoResults ? (
-            <p className="mt-4 text-gray-300">
-              No titles found. Please check the spelling or try a different title.
-            </p>
-          ) : shouldShowInitialPrompt ? (
-            <p className="mt-4 text-gray-300">
-              Search for a movie or series to see where it's streaming.
-            </p>
-          ) : null}
+            <div className="mt-7">
+              <SearchForm
+                genres={genres}
+                providers={providers}
+                isGenresLoading={isGenresLoading}
+                isProvidersLoading={isProvidersLoading}
+                onAutocompleteRequest={handleAutocompleteRequest}
+                onSearch={handleSearchWithClear}
+                watchRegion={watchRegion}
+                onWatchRegionChange={setWatchRegion}
+                autocompleteListId={AUTOCOMPLETE_LIST_ID}
+                autocompleteItems={autocompleteSuggestions}
+                onAutocompleteSelect={handleSelectSuggestion}
+                onAutocompleteClose={clearAutocomplete}
+              />
+            </div>
+          </div>
+          <SearchHistory
+            history={history}
+            onSelectTitle={handleSelectHistoryItem}
+            onRemoveItem={removeFromHistory}
+            onClearHistory={clearHistory}
+          />
         </section>
+
+        <div className="mt-10 space-y-10">
+          <div ref={resultDetailsRef}>
+            {selectedTitle && <ResultDetails title={selectedTitle} onError={handleDetailsError} />}
+          </div>
+          <section className="relative min-h-[8rem]">
+            {isSearching && (
+              <div className="absolute inset-0 z-10 grid place-items-center rounded-xl border border-accent-primary/20 bg-background/[0.85] text-sm font-black uppercase tracking-[0.18em] text-accent-primary shadow-2xl shadow-black/40 backdrop-blur-md">
+                Searching...
+              </div>
+            )}
+            {isSearching || results.length > 0 ? (
+              <ResultsList
+                results={results}
+                page={page}
+                totalPages={totalPages}
+                isLoading={isSearching}
+                onPageChange={handlePageChange}
+                onSelectResult={handleSelectResult}
+                genreNamesById={genreNamesById}
+              />
+            ) : shouldShowNoResults ? (
+              <div className="max-w-xl border-l border-accent-primary/40 py-2 pl-5">
+                <p className="text-lg font-bold text-text">
+                  No titles found. Please check the spelling or try a different title.
+                </p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">
+                  Shorter queries usually work better for older films, foreign-language releases,
+                  and alternate titles.
+                </p>
+              </div>
+            ) : shouldShowInitialPrompt ? (
+              <div className="max-w-xl border-l border-white/15 py-2 pl-5">
+                <p className="text-lg font-bold text-text">
+                  Search for a movie or series to see where it&apos;s streaming.
+                </p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">
+                  Start with the title, then refine by country, service, year, or format only if the
+                  first answer is noisy.
+                </p>
+              </div>
+            ) : null}
+          </section>
+        </div>
       </div>
     </main>
   );

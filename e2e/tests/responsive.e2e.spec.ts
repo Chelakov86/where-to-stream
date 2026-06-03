@@ -90,10 +90,14 @@ test.describe('Responsive Design', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await mockSearch(page);
 
-    // Simulate touch interaction
-    await homePage.searchInput.tap();
+    // Simulate touch interaction (fallback to click if context doesn't support touch tap)
+    const tapOrClick = async (locator: any) => {
+      await locator.tap().catch(() => locator.click());
+    };
+
+    await tapOrClick(homePage.searchInput);
     await homePage.typeSearchQuery('test');
-    await homePage.searchButton.tap();
+    await tapOrClick(homePage.searchButton);
 
     await homePage.waitForResults();
     await expect(homePage.resultsList).toBeVisible();

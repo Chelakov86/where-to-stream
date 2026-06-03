@@ -20,13 +20,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-gray-900 text-white`}>
+      <body className={`${inter.className} bg-background text-text antialiased`}>
         <ErrorBoundary>
-          <div className="flex flex-col min-h-screen">
+          <div className="flex min-h-screen flex-col">
             <Header />
-            <main className="flex-grow container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl">
-              {children}
-            </main>
+            <div className="flex-grow">{children}</div>
             <Footer />
           </div>
         </ErrorBoundary>

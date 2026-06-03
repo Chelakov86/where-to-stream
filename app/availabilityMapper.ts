@@ -21,7 +21,7 @@
  */
 
 import { TmdbWatchProviderInfo, TmdbWatchProvidersResponse } from './tmdbTypes';
-import { getCountryName } from './utils/countries';
+import { getCountryName, COUNTRY_NAMES } from './utils/countries';
 
 // --- Internal Availability Model ---
 
@@ -98,8 +98,8 @@ export const mapAvailability = (
   let userCountry: CountryAvailability | null = null;
   const otherCountries: CountryAvailability[] = [];
 
-  // 1. Process user's country if detected and available in TMDB results
-  if (userCountryCode && tmdbResults[userCountryCode]) {
+  // 1. Process user's country if detected and valid
+  if (userCountryCode && userCountryCode in COUNTRY_NAMES) {
     const countryData = tmdbResults[userCountryCode];
     const flatrateProviders = countryData?.flatrate || [];
     const adsProviders = countryData?.ads || [];

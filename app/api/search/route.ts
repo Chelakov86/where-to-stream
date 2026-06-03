@@ -6,10 +6,6 @@ import {
   getTvWatchProviders,
   SearchMoviesParams,
   SearchTvParams,
-  discoverMovies,
-  discoverTv,
-  DiscoverMoviesParams,
-  DiscoverTvParams,
 } from '@/app/tmdbApi';
 import { TmdbError } from '@/app/tmdbClient';
 import { TmdbSearchResult, TmdbSearchResponse, TmdbWatchProvidersResponse } from '@/app/tmdbTypes';
@@ -111,6 +107,7 @@ interface SearchParams {
   genreIds?: number[];
   providerIds?: number[];
   watchRegion?: string;
+  minRating?: number;
   page: number;
   mode: SearchMode;
 }
@@ -209,6 +206,14 @@ const parseSearchParams = (searchParams: URLSearchParams): SearchParams => {
     params.watchRegion = watchRegion.trim().toUpperCase();
   }
 
+  const minRating = searchParams.get('minRating');
+  if (minRating) {
+    const rating = parseFloat(minRating);
+    if (!isNaN(rating)) {
+      params.minRating = rating;
+    }
+  }
+
   return params;
 };
 
@@ -268,76 +273,6 @@ const mapSearchParamsToTvParams = (params: SearchParams): SearchTvParams => {
   }
 
   return tvParams;
-};
-
-/**
- * Maps search parameters to TMDB API parameters for movie discovery.
- * Used when provider or country filters are present.
- */
-const mapSearchParamsToDiscoverMovieParams = (params: SearchParams): DiscoverMoviesParams => {
-  const discoverParams: DiscoverMoviesParams = {
-    page: params.page,
-  };
-
-  // For movies, use yearFrom as the year filter
-  if (params.yearFrom) {
-    discoverParams.year = params.yearFrom;
-  } else if (params.yearTo) {
-    discoverParams.year = params.yearTo;
-  }
-
-  if (params.language) {
-    discoverParams.language = params.language;
-  }
-
-  if (params.genreIds && params.genreIds.length > 0) {
-    discoverParams.withGenres = params.genreIds.join(',');
-  }
-
-  if (params.providerIds && params.providerIds.length > 0) {
-    discoverParams.withWatchProviders = params.providerIds.join('|');
-  }
-
-  if (params.watchRegion) {
-    discoverParams.watchRegion = params.watchRegion;
-  }
-
-  return discoverParams;
-};
-
-/**
- * Maps search parameters to TMDB API parameters for TV discovery.
- * Used when provider or country filters are present.
- */
-const mapSearchParamsToDiscoverTvParams = (params: SearchParams): DiscoverTvParams => {
-  const discoverParams: DiscoverTvParams = {
-    page: params.page,
-  };
-
-  // For TV shows, use yearFrom as the firstAirDateYear filter
-  if (params.yearFrom) {
-    discoverParams.firstAirDateYear = params.yearFrom;
-  } else if (params.yearTo) {
-    discoverParams.firstAirDateYear = params.yearTo;
-  }
-
-  if (params.language) {
-    discoverParams.language = params.language;
-  }
-
-  if (params.genreIds && params.genreIds.length > 0) {
-    discoverParams.withGenres = params.genreIds.join(',');
-  }
-
-  if (params.providerIds && params.providerIds.length > 0) {
-    discoverParams.withWatchProviders = params.providerIds.join('|');
-  }
-
-  if (params.watchRegion) {
-    discoverParams.watchRegion = params.watchRegion;
-  }
-
-  return discoverParams;
 };
 
 export async function GET(req: NextRequest) {
@@ -422,6 +357,11 @@ export async function GET(req: NextRequest) {
     // Apply strict filtering if requested
     if ((params.providerIds && params.providerIds.length > 0) || params.watchRegion) {
       results = await filterResultsByProvider(results, params.watchRegion, params.providerIds);
+    }
+
+    // Apply minRating filtering if requested
+    if (params.minRating !== undefined) {
+      results = results.filter((r) => r.rating !== undefined && r.rating >= params.minRating!);
     }
 
     const response: SearchResponse = {

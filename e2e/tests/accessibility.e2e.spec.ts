@@ -209,6 +209,7 @@ test.describe('Accessibility', () => {
 
     // Focus search input
     await homePage.searchInput.focus();
+    await homePage.enterSearchQuery('test');
 
     // Submit search
     await homePage.page.keyboard.press('Enter');

@@ -13,6 +13,7 @@ export interface FilterState {
   selectedGenres: number[];
   selectedProviders: number[];
   watchRegion: string;
+  minRating?: number;
 }
 
 /**

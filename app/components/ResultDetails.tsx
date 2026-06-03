@@ -49,13 +49,13 @@ const AvailabilityTable = ({
         <button
           type="button"
           onClick={() => setIsCollapsed(false)}
-          className="w-full flex items-center justify-between p-3 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded-lg transition-colors"
+          className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-white/20 hover:bg-white/[0.08]"
           aria-expanded={false}
         >
-          <span className="text-base sm:text-lg font-semibold text-white">
+          <span className="text-base font-black text-text sm:text-lg">
             Available in {countries.length} other {countries.length === 1 ? 'country' : 'countries'}
           </span>
-          <span className="text-gray-400 text-sm">Show ▸</span>
+          <span className="text-sm font-black text-accent-primary">Show</span>
         </button>
       </div>
     );
@@ -64,7 +64,7 @@ const AvailabilityTable = ({
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between mb-2 sm:mb-3">
-        <h4 className="text-base sm:text-lg font-semibold text-white">{title}</h4>
+        <h4 className="text-base font-black text-text sm:text-lg">{title}</h4>
         {isOtherCountries && (
           <button
             type="button"
@@ -72,9 +72,9 @@ const AvailabilityTable = ({
               setIsCollapsed(true);
               setFilterQuery('');
             }}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
+            className="text-sm font-black text-text-secondary transition hover:text-text"
           >
-            Hide ◂
+            Hide
           </button>
         )}
       </div>
@@ -87,7 +87,7 @@ const AvailabilityTable = ({
             value={filterQuery}
             onChange={(e) => setFilterQuery(e.target.value)}
             placeholder="Filter by country name..."
-            className="w-full p-2 text-sm bg-gray-700 border border-gray-600 rounded-lg placeholder-gray-400 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30 transition-colors"
+            className="w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2.5 text-sm font-semibold text-text outline-none transition placeholder:text-text-secondary/60 focus:border-accent-primary/70 focus:ring-2 focus:ring-accent-primary/20"
             aria-label="Filter countries"
           />
         </div>
@@ -100,10 +100,10 @@ const AvailabilityTable = ({
         {filteredCountries.map((country) => (
           <div
             key={country.countryCode}
-            className="bg-gray-700 p-3 rounded-lg border border-gray-600"
+            className="rounded-xl border border-white/10 bg-white/[0.05] p-3"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-white flex items-center">
+              <span className="flex items-center font-black text-text">
                 <Image
                   src={getCountryFlagUrl(country.countryCode)}
                   alt={`${country.countryName} flag`}
@@ -119,7 +119,7 @@ const AvailabilityTable = ({
                   href={country.watchLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-400 hover:underline text-sm font-medium"
+                  className="text-sm font-black text-accent-primary hover:underline"
                 >
                   Watch →
                 </a>
@@ -128,21 +128,21 @@ const AvailabilityTable = ({
             <div className="space-y-1 text-sm">
               {country.freeProviders.length > 0 && (
                 <div className="flex justify-between gap-3">
-                  <span className="text-gray-400 flex-shrink-0">Free:</span>
-                  <span className="text-white text-right">{country.freeProviders.join(', ')}</span>
+                  <span className="flex-shrink-0 text-text-secondary">Free:</span>
+                  <span className="text-right text-text">{country.freeProviders.join(', ')}</span>
                 </div>
               )}
               {country.paidProviders.length > 0 && (
                 <div className="flex justify-between gap-3">
-                  <span className="text-gray-400 flex-shrink-0">Paid:</span>
-                  <span className="text-white text-right">{country.paidProviders.join(', ')}</span>
+                  <span className="flex-shrink-0 text-text-secondary">Paid:</span>
+                  <span className="text-right text-text">{country.paidProviders.join(', ')}</span>
                 </div>
               )}
             </div>
           </div>
         ))}
         {filteredCountries.length === 0 && filterQuery && (
-          <p className="text-sm text-gray-400 text-center py-2">
+          <p className="py-2 text-center text-sm text-text-secondary">
             No countries match &quot;{filterQuery}&quot;
           </p>
         )}
@@ -151,7 +151,7 @@ const AvailabilityTable = ({
       {/* Desktop: Table layout */}
       <div className={isOtherCountries ? 'max-h-[400px] overflow-y-auto custom-scrollbar' : ''}>
         <table
-          className="hidden md:table w-full bg-gray-800 border border-gray-700 table-fixed"
+          className="hidden w-full table-fixed overflow-hidden rounded-xl border border-white/10 bg-white/[0.035] md:table"
           aria-label={title}
           style={{ tableLayout: 'fixed' }}
         >
@@ -162,24 +162,24 @@ const AvailabilityTable = ({
             <col style={{ width: '10%' }} />
           </colgroup>
           <thead>
-            <tr className="bg-gray-900">
+            <tr className="bg-black/24">
               <th
-                className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+                className={`border-b border-white/10 bg-[#10151d] px-4 py-2 text-left text-xs font-black uppercase tracking-[0.14em] text-text-secondary ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
               >
                 Country
               </th>
               <th
-                className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+                className={`border-b border-white/10 bg-[#10151d] px-4 py-2 text-left text-xs font-black uppercase tracking-[0.14em] text-text-secondary ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
               >
                 Free Providers
               </th>
               <th
-                className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+                className={`border-b border-white/10 bg-[#10151d] px-4 py-2 text-left text-xs font-black uppercase tracking-[0.14em] text-text-secondary ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
               >
                 Paid Providers
               </th>
               <th
-                className={`py-2 px-4 border-b border-gray-700 text-left bg-gray-900 ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
+                className={`border-b border-white/10 bg-[#10151d] px-4 py-2 text-left text-xs font-black uppercase tracking-[0.14em] text-text-secondary ${isOtherCountries ? 'sticky top-0 z-10' : ''}`}
               >
                 Link
               </th>
@@ -187,8 +187,8 @@ const AvailabilityTable = ({
           </thead>
           <tbody>
             {filteredCountries.map((country) => (
-              <tr key={country.countryCode} className="hover:bg-gray-700">
-                <td className="py-2 px-4 border-b border-gray-600 truncate">
+              <tr key={country.countryCode} className="hover:bg-white/[0.04]">
+                <td className="truncate border-b border-white/[0.08] px-4 py-2 font-semibold text-text">
                   <div className="flex items-center">
                     <Image
                       src={getCountryFlagUrl(country.countryCode)}
@@ -202,24 +202,24 @@ const AvailabilityTable = ({
                   </div>
                 </td>
                 <td
-                  className="py-2 px-4 border-b border-gray-600"
+                  className="border-b border-white/[0.08] px-4 py-2 text-text-secondary"
                   title={country.freeProviders.join(', ')}
                 >
                   {country.freeProviders.length > 0 ? country.freeProviders.join(', ') : '-'}
                 </td>
                 <td
-                  className="py-2 px-4 border-b border-gray-600"
+                  className="border-b border-white/[0.08] px-4 py-2 text-text-secondary"
                   title={country.paidProviders.join(', ')}
                 >
                   {country.paidProviders.length > 0 ? country.paidProviders.join(', ') : '-'}
                 </td>
-                <td className="py-2 px-4 border-b border-gray-600">
+                <td className="border-b border-white/[0.08] px-4 py-2">
                   {country.watchLink && (
                     <a
                       href={country.watchLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-400 hover:underline"
+                      className="font-black text-accent-primary hover:underline"
                     >
                       Watch
                     </a>
@@ -229,7 +229,7 @@ const AvailabilityTable = ({
             ))}
             {filteredCountries.length === 0 && filterQuery && (
               <tr>
-                <td colSpan={4} className="py-4 text-center text-gray-400 text-sm">
+                <td colSpan={4} className="py-4 text-center text-sm text-text-secondary">
                   No countries match &quot;{filterQuery}&quot;
                 </td>
               </tr>
@@ -302,49 +302,71 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
 
   return (
     <section
-      className="bg-gray-800 text-white rounded-lg shadow-lg p-4 sm:p-5 md:p-6 max-w-4xl mx-auto"
+      className="mx-auto max-w-6xl rounded-2xl border border-white/10 bg-[#141a22]/90 p-4 text-text shadow-[0_28px_80px_rgba(0,0,0,0.32)] sm:p-5 md:p-6"
       aria-labelledby={titleHeadingId}
       role="region"
     >
-      <div className="flex flex-col md:flex-row gap-4 sm:gap-5 md:gap-6">
-        <div className="md:w-1/3">
+      <div className="grid gap-5 md:grid-cols-[16rem_minmax(0,1fr)] lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div>
           <Image
             src={details.posterUrl}
             alt={`Poster for ${details.title}`}
             width={300}
             height={450}
-            className="rounded-lg w-full h-auto"
+            className="mx-auto aspect-[2/3] w-52 rounded-xl object-cover shadow-2xl shadow-black/40 md:w-full"
             priority
           />
         </div>
-        <div className="md:w-2/3">
-          <h2 id={titleHeadingId} className="text-2xl sm:text-3xl md:text-4xl font-bold">
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-accent-primary">
+            Selected title
+          </p>
+          <h2
+            id={titleHeadingId}
+            className="text-3xl font-black leading-tight sm:text-4xl md:text-5xl"
+          >
             {details.title}
           </h2>
-          <div className="flex items-center space-x-4 text-gray-400 mt-2">
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-black text-text-secondary">
             <span>{details.year}</span>
+            <span className="h-1 w-1 rounded-full bg-text-secondary/50" />
             <span>{details.type === 'movie' ? 'Movie' : 'TV Show'}</span>
+            {details.runtime && <span className="h-1 w-1 rounded-full bg-text-secondary/50" />}
             {details.runtime && <span>{formatRuntime(details.runtime)}</span>}
           </div>
-          <div className="mt-4">
-            <span className="font-semibold">Genres:</span>{' '}
-            {details.genres.map((g: Genre) => g.name).join(', ')}
+          <div className="mt-5 flex flex-wrap gap-2">
+            {details.genres.map((g: Genre) => (
+              <span
+                key={g.id}
+                className="rounded-md bg-white/[0.06] px-2.5 py-1.5 text-xs font-bold text-text-secondary"
+              >
+                {g.name}
+              </span>
+            ))}
           </div>
-          <div className="mt-4" data-testid="rating">
-            <span className="font-semibold">Rating:</span> {details.rating.toFixed(1)}/10
+          <div
+            className="mt-5 inline-flex items-center rounded-full border border-[#ffd36e]/30 bg-[#ffd36e]/10 px-3 py-1.5 text-sm font-black"
+            data-testid="rating"
+          >
+            <span className="mr-1 text-[#ffd36e]" aria-hidden="true">
+              ★
+            </span>
+            {details.rating.toFixed(1)}/10
           </div>
-          <p className="mt-4 text-gray-300">{details.overview}</p>
+          <p className="mt-5 max-w-3xl text-base leading-8 text-text-secondary">
+            {details.overview}
+          </p>
         </div>
       </div>
 
       <div className="mt-6 sm:mt-8">
-        <h3 className="text-xl sm:text-2xl font-bold border-b-2 border-gray-700 pb-2">
+        <h3 className="border-b border-white/10 pb-3 text-2xl font-black sm:text-3xl">
           Streaming Availability
         </h3>
         {!hasAvailability ? (
-          <p className="mt-4 text-gray-400">No streaming availability found.</p>
+          <p className="mt-4 text-text-secondary">No streaming availability found.</p>
         ) : (
-          <div className="-mx-6 px-6">
+          <div>
             {/* User's country section - shown if detected */}
             {details.availability.userCountry && (
               <>
@@ -355,10 +377,10 @@ const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => 
                   />
                 ) : (
                   <div className="mt-4">
-                    <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">
+                    <h4 className="mb-2 text-base font-black text-text sm:mb-3 sm:text-lg">
                       Not Available in Your Country ({details.availability.userCountry.countryName})
                     </h4>
-                    <p className="text-gray-400">
+                    <p className="text-text-secondary">
                       This title is not available for streaming in your country.
                     </p>
                   </div>
