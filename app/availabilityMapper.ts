@@ -145,6 +145,26 @@ const getPaidProviders = (flatrateProviders: TmdbWatchProviderInfo[] = []): stri
   return Array.from(providers).sort();
 };
 
+/**
+ * Helper to build a CountryAvailability object from TMDB country watch provider data.
+ */
+const createCountryAvailability = (
+  countryCode: string,
+  countryData?: TmdbCountryWatchProviders
+): CountryAvailability => {
+  const flatrateProviders = countryData?.flatrate || [];
+  const adsProviders = countryData?.ads || [];
+  const freeProviders = countryData?.free || [];
+
+  return {
+    countryCode,
+    countryName: getCountryName(countryCode),
+    freeProviders: getFreeProviders(adsProviders, freeProviders),
+    paidProviders: getPaidProviders(flatrateProviders),
+    watchLink: countryData?.link,
+  };
+};
+
 // --- Mapper ---
 
 /**
@@ -173,18 +193,7 @@ export const mapAvailability = (
 
   // 1. Process user's country if detected and valid
   if (isKnownCountryCode(userCountryCode)) {
-    const countryData = tmdbResults[userCountryCode];
-    const flatrateProviders = countryData?.flatrate || [];
-    const adsProviders = countryData?.ads || [];
-    const freeProviders = countryData?.free || [];
-
-    userCountry = {
-      countryCode: userCountryCode,
-      countryName: getCountryName(userCountryCode),
-      freeProviders: getFreeProviders(adsProviders, freeProviders),
-      paidProviders: getPaidProviders(flatrateProviders),
-      watchLink: countryData?.link,
-    };
+    userCountry = createCountryAvailability(userCountryCode, tmdbResults[userCountryCode]);
   }
 
   // 2. Process other countries (exclude user's country if it was processed)
@@ -194,23 +203,11 @@ export const mapAvailability = (
       continue;
     }
 
-    const countryData = tmdbResults[countryCode];
-    const flatrateProviders = countryData?.flatrate || [];
-    const adsProviders = countryData?.ads || [];
-    const freeProviders = countryData?.free || [];
+    const country = createCountryAvailability(countryCode, tmdbResults[countryCode]);
 
     // Only include countries with streaming services (flatrate, ads, or free)
-    const free = getFreeProviders(adsProviders, freeProviders);
-    const paid = getPaidProviders(flatrateProviders);
-
-    if (free.length > 0 || paid.length > 0) {
-      otherCountries.push({
-        countryCode,
-        countryName: getCountryName(countryCode),
-        freeProviders: free,
-        paidProviders: paid,
-        watchLink: countryData?.link,
-      });
+    if (country.freeProviders.length > 0 || country.paidProviders.length > 0) {
+      otherCountries.push(country);
     }
   }
 
