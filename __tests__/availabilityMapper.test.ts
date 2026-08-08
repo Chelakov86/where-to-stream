@@ -1,5 +1,52 @@
-import { mapAvailability } from '../app/availabilityMapper';
+import { mapAvailability, isStreamingProvider } from '../app/availabilityMapper';
 import { TmdbWatchProvidersResponse } from '../app/tmdbTypes';
+import { TmdbCountryWatchProviders } from '../app/tmdbTypes';
+
+describe('streaming category rule agreement', () => {
+  // Both consumers of the streaming rule must agree: what mapAvailability
+  // categorizes as streaming (free or paid) is what the provider filter matches.
+  const countryData = (categories: Partial<TmdbCountryWatchProviders>): TmdbCountryWatchProviders =>
+    categories;
+
+  it('agrees on flatrate-only providers', () => {
+    const region = countryData({
+      flatrate: [{ provider_id: 8, provider_name: 'Netflix', logo_path: '', display_priority: 1 }],
+    });
+
+    expect(isStreamingProvider(region, [8])).toBe(true);
+    const availability = mapAvailability({ id: 1, results: { US: region } }, 'US');
+    expect(availability.userCountry?.paidProviders).toContain('Netflix');
+  });
+
+  it('agrees on ads and free providers', () => {
+    const region = countryData({
+      ads: [{ provider_id: 337, provider_name: 'Peacock', logo_path: '', display_priority: 1 }],
+      free: [{ provider_id: 300, provider_name: 'Pluto TV', logo_path: '', display_priority: 1 }],
+    });
+
+    expect(isStreamingProvider(region, [337])).toBe(true);
+    expect(isStreamingProvider(region, [300])).toBe(true);
+
+    const availability = mapAvailability({ id: 1, results: { US: region } }, 'US');
+    expect(availability.userCountry?.freeProviders).toEqual(['Peacock', 'Pluto TV']);
+  });
+
+  it('agrees that rent and buy are not streaming', () => {
+    const region = countryData({
+      rent: [{ provider_id: 8, provider_name: 'Netflix', logo_path: '', display_priority: 1 }],
+      buy: [{ provider_id: 9, provider_name: 'Prime Video', logo_path: '', display_priority: 1 }],
+    });
+
+    expect(isStreamingProvider(region, [8])).toBe(false);
+    expect(isStreamingProvider(region, [9])).toBe(false);
+
+    // mapAvailability excludes the country entirely (no streaming services)
+    const availability = mapAvailability({ id: 1, results: { US: region } }, 'US');
+    expect(availability.userCountry?.freeProviders).toEqual([]);
+    expect(availability.userCountry?.paidProviders).toEqual([]);
+    expect(availability.otherCountries).toEqual([]);
+  });
+});
 
 describe('mapAvailability', () => {
   it('should return null userCountry and empty otherCountries when no providers exist', () => {

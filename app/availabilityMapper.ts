@@ -20,13 +20,95 @@
  *   Countries with only buy/rent options are excluded.
  */
 
-import { TmdbWatchProviderInfo, TmdbWatchProvidersResponse } from './tmdbTypes';
-import { CountryAvailability } from './types';
+import {
+  TmdbCountryWatchProviders,
+  TmdbWatchProviderInfo,
+  TmdbWatchProvidersResponse,
+} from './tmdbTypes';
+import { CountryAvailability, NormalizedSearchResult } from './types';
 import { getCountryName, COUNTRY_NAMES } from './utils/countries';
+import { logger } from './utils/logger';
 
 export interface AvailabilityResult {
   userCountry: CountryAvailability | null; // Single country or null
   otherCountries: CountryAvailability[];
+}
+
+/**
+ * Region used when filtering by providers but no watch region is selected.
+ */
+export const DEFAULT_WATCH_REGION = 'US';
+
+/**
+ * The streaming category rule: a provider streams in a region when it appears
+ * in the flatrate, ads, or free categories. Rent and buy are not streaming.
+ */
+export function isStreamingProvider(
+  providers: TmdbCountryWatchProviders,
+  providerIds: number[]
+): boolean {
+  const streamingProviders = [
+    ...(providers.flatrate || []),
+    ...(providers.ads || []),
+    ...(providers.free || []),
+  ];
+  return streamingProviders.some((p) => providerIds.includes(p.provider_id));
+}
+
+/**
+ * Whether a country code is one the app knows about (validated against the
+ * country name table). Invalid codes are treated as undetected.
+ */
+export function isKnownCountryCode(code: string | null): code is string {
+  return code !== null && code in COUNTRY_NAMES;
+}
+
+/**
+ * Filters search results down to titles available on at least one selected
+ * provider in the watch region, applying the streaming category rule.
+ * Items whose provider lookup fails are excluded (treated as unavailable).
+ *
+ * @param results - Normalized search results
+ * @param options - Watch region and selected provider IDs
+ * @param fetchWatchProviders - Injected fetcher (movie/tv watch providers)
+ * @returns Results available on a selected provider
+ */
+export async function filterResultsByProvider(
+  results: NormalizedSearchResult[],
+  options: { watchRegion?: string; providerIds?: number[] },
+  fetchWatchProviders: (type: 'movie' | 'tv', id: number) => Promise<TmdbWatchProvidersResponse>
+): Promise<NormalizedSearchResult[]> {
+  if (
+    (!options.watchRegion && (!options.providerIds || options.providerIds.length === 0)) ||
+    results.length === 0
+  ) {
+    return results;
+  }
+
+  // If only a region is selected, we can't filter efficiently without providers
+  if (!options.providerIds || options.providerIds.length === 0) {
+    return results;
+  }
+
+  const region = options.watchRegion || DEFAULT_WATCH_REGION;
+
+  const checks = await Promise.all(
+    results.map(async (item) => {
+      try {
+        const providersData = await fetchWatchProviders(item.type, item.id);
+        const regionData = providersData.results[region];
+        if (!regionData) {
+          return false;
+        }
+        return isStreamingProvider(regionData, options.providerIds!);
+      } catch (error) {
+        logger.error(`Failed to fetch providers for ${item.type} ${item.id}`, { error });
+        return false;
+      }
+    })
+  );
+
+  return results.filter((_, index) => checks[index]);
 }
 
 // --- Helper Functions ---
@@ -90,7 +172,7 @@ export const mapAvailability = (
   const otherCountries: CountryAvailability[] = [];
 
   // 1. Process user's country if detected and valid
-  if (userCountryCode && userCountryCode in COUNTRY_NAMES) {
+  if (isKnownCountryCode(userCountryCode)) {
     const countryData = tmdbResults[userCountryCode];
     const flatrateProviders = countryData?.flatrate || [];
     const adsProviders = countryData?.ads || [];

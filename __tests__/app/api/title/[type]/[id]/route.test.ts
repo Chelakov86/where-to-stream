@@ -24,6 +24,7 @@ jest.mock('@/app/tmdbApi', () => ({
 // Mock availabilityMapper
 jest.mock('@/app/availabilityMapper', () => ({
   mapAvailability: jest.fn(),
+  isKnownCountryCode: jest.fn((code: string | null) => code !== null),
 }));
 
 // Mock country detection utilities
@@ -149,7 +150,6 @@ describe('GET /api/title/[type]/[id]', () => {
     expect(mockGetMovieDetails).toHaveBeenCalledWith(550);
     expect(mockGetMovieWatchProviders).toHaveBeenCalledWith(550);
     expect(mockDetectUserCountry).toHaveBeenCalledWith(req);
-    expect(mockValidateCountryCode).toHaveBeenCalledWith('US', expect.arrayContaining(['US']));
     expect(mockMapAvailability).toHaveBeenCalledWith(
       {
         id: 550,

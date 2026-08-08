@@ -8,10 +8,11 @@ import {
   SearchTvParams,
 } from '@/app/tmdbApi';
 import { TmdbError } from '@/app/tmdbClient';
-import { TmdbSearchResult, TmdbSearchResponse, TmdbWatchProvidersResponse } from '@/app/tmdbTypes';
+import { TmdbSearchResult, TmdbSearchResponse } from '@/app/tmdbTypes';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { NormalizedSearchResult } from '@/app/types';
 import { normalizeTmdbMedia } from '@/app/titleNormalizer';
+import { filterResultsByProvider } from '@/app/availabilityMapper';
 import {
   SearchMode,
   SearchRequest,
@@ -20,61 +21,6 @@ import {
 } from '@/app/searchContract';
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
 import { logger } from '@/app/utils/logger';
-
-/**
- * Filter results by checking availability in the specified region and providers.
- * Returns only the results that are available on at least one of the specified providers in the region.
- */
-async function filterResultsByProvider(
-  results: NormalizedSearchResult[],
-  watchRegion?: string,
-  providerIds?: number[]
-): Promise<NormalizedSearchResult[]> {
-  if ((!watchRegion && (!providerIds || providerIds.length === 0)) || results.length === 0) {
-    return results;
-  }
-
-  // If providers are selected, we must filter.
-  // If only region is selected, we technically should check if it's available in that region at all,
-  // but for now we'll prioritize filtering by specific providers if providerIds are present.
-  // If only watchRegion is present, we return all results (TMDB doesn't easily support "available anywhere in region" check efficiently for search results without providers)
-  // strict "streaming" availability check requires checking providers.
-  if (!providerIds || providerIds.length === 0) {
-    return results;
-  }
-
-  const region = watchRegion || 'US'; // Default to US if region is missing but providers are selected
-
-  const checks = await Promise.all(
-    results.map(async (item) => {
-      try {
-        let providersData: TmdbWatchProvidersResponse;
-        if (item.type === 'movie') {
-          providersData = await getMovieWatchProviders(item.id);
-        } else {
-          providersData = await getTvWatchProviders(item.id);
-        }
-
-        const regionData = providersData.results[region];
-        if (!regionData) return false;
-
-        // Check availability in flatrate, ads, free
-        const availableProviders = [
-          ...(regionData.flatrate || []),
-          ...(regionData.ads || []),
-          ...(regionData.free || []),
-        ];
-
-        return availableProviders.some((p) => providerIds.includes(p.provider_id));
-      } catch (error) {
-        logger.error(`Failed to fetch providers for ${item.type} ${item.id}`, { error });
-        return false;
-      }
-    })
-  );
-
-  return results.filter((_, index) => checks[index]);
-}
 
 /**
  * API route handler for searching movies and TV shows.
@@ -279,7 +225,11 @@ export async function GET(req: NextRequest) {
 
     // Apply strict filtering if requested
     if ((params.providerIds && params.providerIds.length > 0) || params.watchRegion) {
-      results = await filterResultsByProvider(results, params.watchRegion, params.providerIds);
+      results = await filterResultsByProvider(
+        results,
+        { watchRegion: params.watchRegion, providerIds: params.providerIds },
+        (type, id) => (type === 'movie' ? getMovieWatchProviders(id) : getTvWatchProviders(id))
+      );
     }
 
     // Apply minRating filtering if requested

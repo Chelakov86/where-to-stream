@@ -5,14 +5,13 @@ import {
   getTvDetails,
   getTvWatchProviders,
 } from '@/app/tmdbApi';
-import { mapAvailability, AvailabilityResult } from '@/app/availabilityMapper';
+import { mapAvailability, AvailabilityResult, isKnownCountryCode } from '@/app/availabilityMapper';
 import { TmdbError } from '@/app/tmdbClient';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { normalizeTmdbMedia } from '@/app/titleNormalizer';
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
 import { logger } from '@/app/utils/logger';
-import { detectUserCountry, validateCountryCode } from '@/app/utils/countryDetection';
-import { COUNTRY_NAMES } from '@/app/utils/countries';
+import { detectUserCountry } from '@/app/utils/countryDetection';
 
 /**
  * API route handler for fetching detailed information about a specific movie or TV show.
@@ -140,10 +139,9 @@ export async function GET(
       };
     }
 
-    // Detect user's country from request headers
+    // Detect user's country from request headers; invalid codes are treated as undetected
     const detectedCountry = detectUserCountry(req);
-    const validCountryCodes = Object.keys(COUNTRY_NAMES);
-    const validatedCountry = validateCountryCode(detectedCountry, validCountryCodes);
+    const validatedCountry = isKnownCountryCode(detectedCountry) ? detectedCountry : null;
 
     // Map TMDB watch providers to our availability model with user's country
     // This separates user's country (if detected) from other countries
