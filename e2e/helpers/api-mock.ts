@@ -95,6 +95,39 @@ export async function mockSearch(
 }
 
 /**
+ * Mock the search API for autocomplete mode only.
+ * Non-autocomplete requests fall through to previously registered handlers
+ * (e.g. the default full-search mock from setupDefaultMocks).
+ */
+export async function mockAutocomplete(
+  page: Page,
+  results: typeof sampleAutocompleteResults = sampleAutocompleteResults,
+  options: MockOptions = {}
+): Promise<void> {
+  await page.route('**/api/search*', async (route: Route) => {
+    const url = new URL(route.request().url());
+    const mode = url.searchParams.get('mode');
+
+    if (mode !== 'autocomplete') {
+      await route.fallback();
+      return;
+    }
+
+    await route.fulfill({
+      status: options.status || 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        page: 1,
+        totalPages: 1,
+        totalResults: results.length,
+        results,
+      }),
+      ...(options.delay && { delay: options.delay }),
+    });
+  });
+}
+
+/**
  * Mock search API with empty results
  */
 export async function mockEmptySearch(page: Page, options: MockOptions = {}): Promise<void> {
@@ -175,12 +208,23 @@ export async function mockTitleDetailsError(page: Page, status: number = 500): P
   });
 }
 
+// Deterministic 44x66 placeholder so visual tests never race real TMDB image loads
+const POSTER_PLACEHOLDER = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAACwAAABCCAIAAACjGKN8AAAAU0lEQVR4nO3OMRWAMBBAsStyWNjrXxjTf5XQJVGQ9X57bntuB2YkDolIRCISkYhEJCIRiUhEIhKRiEQkIhGJSEQiEpGIRCQiEYlIRCISkYhEJPIDqkoBF7HHE7QAAAAASUVORK5CYII=',
+  'base64'
+);
+
 /**
- * Mock network failure
+ * Mock TMDB poster images with a deterministic placeholder.
+ * Keeps visual tests independent of the network and free of image-loading races.
  */
-export async function mockNetworkFailure(page: Page, urlPattern: string | RegExp): Promise<void> {
-  await page.route(urlPattern, async (route: Route) => {
-    await route.abort('failed');
+export async function mockImages(page: Page): Promise<void> {
+  await page.route('**/image.tmdb.org/**', async (route: Route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'image/png',
+      body: POSTER_PLACEHOLDER,
+    });
   });
 }
 

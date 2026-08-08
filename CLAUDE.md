@@ -47,7 +47,7 @@ This document provides comprehensive guidance for AI assistants working on the W
 - **ESLint** with Next.js config + Prettier integration
 - **Prettier** for code formatting
 - **Jest 30** + React Testing Library 16 for unit tests
-- **Playwright 1.56** for E2E tests with visual regression
+- **Playwright 1.62.1** for E2E tests with visual regression
 - **Node.js** (check `package.json` for version requirements)
 
 ### Key Dependencies
@@ -416,7 +416,7 @@ describe('ComponentName', () => {
 
 **Naming:** `*.e2e.spec.ts`
 
-**Configuration:** Port 3001 for E2E tests (configured in `playwright.config.ts`)
+**Configuration:** Port 3001 for E2E tests (configured in `playwright.config.ts`). The web server is a production build (`next build && next start`) started automatically. Projects: `chromium` runs every spec; `Tablet` and `Mobile Chrome` run only the responsive and visual-regression specs. Snapshots are OS-independent and regenerated with `npx playwright test visual-regression --update-snapshots` after a Playwright upgrade. CI runs the suite via `.github/workflows/playwright.yml`.
 
 **Structure:**
 
@@ -446,9 +446,10 @@ test.describe('Feature Name', () => {
 - `autocomplete.e2e.spec.ts` - Autocomplete behavior
 - `filters.e2e.spec.ts` - Filter interactions
 - `results.e2e.spec.ts` - Result display
+- `search-history.e2e.spec.ts` - Search history behavior
 - `accessibility.e2e.spec.ts` - Accessibility compliance
-- `responsive.e2e.spec.ts` - Responsive design
-- `visual-regression.e2e.spec.ts` - Visual regression testing
+- `responsive.e2e.spec.ts` - Responsive design (runs on all viewport projects)
+- `visual-regression.e2e.spec.ts` - Visual regression testing (runs on all viewport projects)
 - `error-handling.e2e.spec.ts` - Error scenarios
 
 ### Testing Best Practices

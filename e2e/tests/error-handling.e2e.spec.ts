@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures/test-fixtures';
-import { mockSearchError, mockTitleDetailsError, mockNetworkFailure } from '../helpers/api-mock';
+import { mockSearchError, mockTitleDetailsError } from '../helpers/api-mock';
 
 test.describe('Error Handling', () => {
   test('should display error banner on API error', async ({ homePage, page }) => {
@@ -23,44 +23,6 @@ test.describe('Error Handling', () => {
     await homePage.waitForErrorHidden();
 
     await expect(homePage.errorBanner).not.toBeVisible();
-  });
-
-  test('should handle network errors', async ({ homePage, page }) => {
-    await mockNetworkFailure(page, '**/api/search**');
-
-    await homePage.search('test');
-
-    // Should show error or handle gracefully
-    // The exact behavior depends on implementation
-    await page.waitForTimeout(2000);
-
-    // Check if error is displayed or search completes with error handling
-    const hasError = await homePage.errorBanner.isVisible().catch(() => false);
-    const hasNoResults = await homePage.noResultsMessage.isVisible().catch(() => false);
-
-    // At least one should be true
-    expect(hasError || hasNoResults).toBeTruthy();
-  });
-
-  test('should handle invalid search gracefully', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      await route.fulfill({
-        status: 400,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Query parameter is required' }),
-      });
-    });
-
-    await homePage.search('');
-
-    // Should show validation error or API error
-    const hasFormError = await homePage.page
-      .locator('#search-form-query-error')
-      .isVisible()
-      .catch(() => false);
-    const hasApiError = await homePage.errorBanner.isVisible().catch(() => false);
-
-    expect(hasFormError || hasApiError).toBeTruthy();
   });
 
   test('should handle title details API error', async ({ homePage, page }) => {

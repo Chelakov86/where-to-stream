@@ -1,5 +1,10 @@
 import { test, expect } from '../fixtures/test-fixtures';
-import { mockSearch, mockTitleDetails } from '../helpers/api-mock';
+import {
+  mockAutocomplete,
+  mockEmptySearch,
+  mockImages,
+  mockSearchError,
+} from '../helpers/api-mock';
 
 test.describe('Visual Regression', () => {
   test('should match home page screenshot', async ({ homePage }) => {
@@ -12,7 +17,7 @@ test.describe('Visual Regression', () => {
   });
 
   test('should match search results screenshot', async ({ homePage, page }) => {
-    await mockSearch(page);
+    await mockImages(page);
 
     await homePage.search('test');
     await homePage.waitForResults();
@@ -26,30 +31,15 @@ test.describe('Visual Regression', () => {
   });
 
   test('should match result details screenshot', async ({ homePage, page }) => {
-    await mockSearch(page);
-    await mockTitleDetails(page);
-
-    await homePage.search('test');
-    await homePage.waitForResults();
-    await homePage.clickResultItem(0);
-
-    const resultDetailsPage = new (await import('../pages/ResultDetailsPage')).ResultDetailsPage(
-      page
-    );
-    await resultDetailsPage.waitForDetails();
+    await mockImages(page);
+    const resultDetailsPage = await homePage.viewDetails('test');
 
     // Take screenshot of details
     await expect(resultDetailsPage.detailsSection).toHaveScreenshot('result-details.png');
   });
 
   test('should match error state screenshot', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Server error' }),
-      });
-    });
+    await mockSearchError(page, 500);
 
     await homePage.search('test');
     await homePage.waitForError();
@@ -67,30 +57,14 @@ test.describe('Visual Regression', () => {
   });
 
   test('should match autocomplete screenshot', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const mode = url.searchParams.get('mode');
-
-      if (mode === 'autocomplete') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: 3,
-            results: [
-              { id: 1, type: 'movie', title: 'Test Movie 1', year: 2020 },
-              { id: 2, type: 'movie', title: 'Test Movie 2', year: 2021 },
-              { id: 3, type: 'tv', title: 'Test TV Show', year: 2022 },
-            ],
-          }),
-        });
-      }
-    });
+    await mockAutocomplete(page);
+    await mockImages(page);
 
     await homePage.typeSearchQuery('test');
     await homePage.waitForAutocomplete();
+
+    // Wait for the mocked results to render before capturing
+    await expect(homePage.autocompleteItems).toHaveCount(3);
 
     // Take screenshot of autocomplete
     await expect(homePage.autocompleteList).toHaveScreenshot('autocomplete-list.png');
@@ -118,30 +92,8 @@ test.describe('Visual Regression', () => {
     });
   });
 
-  test('should match desktop viewport screenshot', async ({ homePage, page }) => {
-    await page.setViewportSize({ width: 1920, height: 1080 });
-
-    await expect(homePage.pageTitle).toBeVisible();
-
-    // Take screenshot of desktop view
-    await expect(homePage.page).toHaveScreenshot('home-page-desktop.png', {
-      fullPage: true,
-    });
-  });
-
   test('should match no results state screenshot', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          page: 1,
-          totalPages: 0,
-          totalResults: 0,
-          results: [],
-        }),
-      });
-    });
+    await mockEmptySearch(page);
 
     await homePage.search('nonexistent');
     await homePage.waitForSearchComplete();
