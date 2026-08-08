@@ -1,12 +1,5 @@
 import { TMDB_BASE_URL, getTmdbApiKey } from './config';
-
-/**
- * Interface for a single genre object from TMDB.
- */
-export interface Genre {
-  id: number;
-  name: string;
-}
+import { Genre } from './types';
 
 /**
  * Interface for the TMDB genre list response.

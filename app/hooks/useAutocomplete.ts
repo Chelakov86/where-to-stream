@@ -1,9 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { debounce } from '@/app/utils/debounce';
 import { TMDBResult } from '@/app/types';
-
-const GLOBAL_ERROR_MESSAGE =
-  "We're having trouble fetching data right now. Please try again later.";
+import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
 
 const DEBOUNCE_DELAY_MS = 300; // 300ms debounce delay
 
@@ -14,32 +12,26 @@ const DEBOUNCE_DELAY_MS = 300; // 300ms debounce delay
  * @param onError - Optional callback to handle errors
  * @returns Object containing autocomplete items, loading state, and handler functions
  */
-export function useAutocomplete(onError?: (message: string) => void) {
+export function useAutocomplete(onError?: (message: string | null) => void) {
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<TMDBResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  // Optimistic loading shown during the debounce window, before the fetch starts
+  const [pendingLoad, setPendingLoad] = useState(false);
+  const { run, cancel, isLoading: isFetching } = useFetchLifecycle(onError);
+  const isLoading = pendingLoad || isFetching;
 
   // Actual fetch function that will be debounced
   const fetchSuggestions = useCallback(
     async (query: string) => {
       if (query.trim().length < 2) {
         setAutocompleteSuggestions([]);
-        setIsLoading(false);
+        setPendingLoad(false);
         return;
       }
 
-      // Cancel previous request if any
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      abortControllerRef.current = new AbortController();
-      setIsLoading(true);
-
-      try {
+      const status = await run(async (signal) => {
         const response = await fetch(
           `/api/search?mode=autocomplete&query=${encodeURIComponent(query)}`,
-          { signal: abortControllerRef.current.signal }
+          { signal }
         );
 
         if (!response.ok) {
@@ -47,20 +39,17 @@ export function useAutocomplete(onError?: (message: string) => void) {
         }
 
         const data = await response.json();
-        setAutocompleteSuggestions(data.results);
-      } catch (err) {
-        // Don't show error for aborted requests
-        if ((err as Error).name !== 'AbortError') {
-          setAutocompleteSuggestions([]);
-          if (onError) {
-            onError(GLOBAL_ERROR_MESSAGE);
-          }
+        if (signal.aborted) {
+          return;
         }
-      } finally {
-        setIsLoading(false);
+        setAutocompleteSuggestions(data.results);
+      });
+
+      if (status !== 'cancelled') {
+        setPendingLoad(false);
       }
     },
-    [onError]
+    [run]
   );
 
   // Create debounced version of fetch
@@ -77,10 +66,10 @@ export function useAutocomplete(onError?: (message: string) => void) {
     (query: string) => {
       // Show loading immediately for better UX
       if (query.trim().length >= 2) {
-        setIsLoading(true);
+        setPendingLoad(true);
       } else {
         setAutocompleteSuggestions([]);
-        setIsLoading(false);
+        setPendingLoad(false);
       }
       // Debounce the actual fetch
       debouncedFetch(query);
@@ -90,21 +79,17 @@ export function useAutocomplete(onError?: (message: string) => void) {
 
   const clearAutocomplete = useCallback(() => {
     setAutocompleteSuggestions([]);
-    setIsLoading(false);
+    setPendingLoad(false);
     // Cancel any pending request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  }, []);
+    cancel();
+  }, [cancel]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      cancel();
     };
-  }, []);
+  }, [cancel]);
 
   return {
     autocompleteSuggestions,

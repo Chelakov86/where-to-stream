@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { CountryAvailability, TitleDetails, Genre } from '@/app/types';
 import { getCountryFlagUrl } from '@/app/utils/countries';
+import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
 import { ResultDetailsSkeleton } from './Skeleton';
 
 interface ResultDetailsProps {
@@ -13,8 +14,6 @@ interface ResultDetailsProps {
   };
   onError?: (message: string | null) => void;
 }
-
-type Status = 'loading' | 'error' | 'success';
 
 const formatRuntime = (runtime: number) => {
   const hours = Math.floor(runtime / 60);
@@ -241,48 +240,34 @@ const AvailabilityTable = ({
   );
 };
 
-const ERROR_MESSAGE = "We're having trouble fetching data right now. Please try again later.";
-
 const ResultDetails = ({ title: { id, type }, onError }: ResultDetailsProps) => {
-  const [status, setStatus] = useState<Status>('loading');
   const [details, setDetails] = useState<TitleDetails | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { run, isLoading } = useFetchLifecycle((message) => {
+    setError(message);
+    onError?.(message);
+  });
 
   useEffect(() => {
-    const controller = new AbortController();
-    const { signal } = controller;
-
-    const fetchData = async () => {
-      setStatus('loading');
-      try {
-        const response = await fetch(`/api/title/${type}/${id}`, { signal });
-        if (!response.ok) {
-          throw new Error('Failed to fetch');
-        }
-        const data = await response.json();
-        setDetails(data);
-        setStatus('success');
-        onError?.(null);
-      } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
-          setStatus('error');
-          onError?.(ERROR_MESSAGE);
-        }
+    run(async (signal) => {
+      const response = await fetch(`/api/title/${type}/${id}`, { signal });
+      if (!response.ok) {
+        throw new Error('Failed to fetch');
       }
-    };
+      const data = await response.json();
+      if (signal.aborted) {
+        return;
+      }
+      setDetails(data);
+    });
+  }, [id, onError, type, run]);
 
-    fetchData();
-
-    return () => {
-      controller.abort();
-    };
-  }, [id, onError, type]);
-
-  if (status === 'loading') {
+  if (isLoading) {
     return <ResultDetailsSkeleton />;
   }
 
-  if (status === 'error') {
-    return <div className="p-8 text-center text-red-400">{ERROR_MESSAGE}</div>;
+  if (error) {
+    return <div className="p-8 text-center text-red-400">{error}</div>;
   }
 
   if (!details) {

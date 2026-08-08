@@ -24,7 +24,7 @@ export const ERROR_MESSAGES = {
   SEARCH_QUERY_TOO_SHORT: 'Please enter at least 2 characters to search.',
 
   // Generic fallback
-  GENERIC_ERROR: "We're having trouble right now. Please try again later.",
+  GENERIC_ERROR: "We're having trouble fetching data right now. Please try again later.",
 } as const;
 
 /**

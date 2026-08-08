@@ -34,23 +34,13 @@ export async function GET(request: Request) {
 
     // Add movie providers
     for (const provider of movieProviders.results) {
-      providerMap.set(provider.provider_id, {
-        provider_id: provider.provider_id,
-        provider_name: provider.provider_name,
-        logo_path: provider.logo_path,
-        display_priority: provider.display_priority,
-      });
+      providerMap.set(provider.provider_id, provider);
     }
 
     // Add TV providers (will overwrite if already exists, which is fine)
     for (const provider of tvProviders.results) {
       if (!providerMap.has(provider.provider_id)) {
-        providerMap.set(provider.provider_id, {
-          provider_id: provider.provider_id,
-          provider_name: provider.provider_name,
-          logo_path: provider.logo_path,
-          display_priority: provider.display_priority,
-        });
+        providerMap.set(provider.provider_id, provider);
       }
     }
 

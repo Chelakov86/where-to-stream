@@ -3,6 +3,8 @@
  * Contains minimal interfaces covering the fields we need.
  */
 
+import { Genre, WatchProvider } from './types';
+
 export interface TmdbSearchResult {
   id: number;
   title?: string; // for movies
@@ -26,13 +28,8 @@ export interface TmdbSearchResponse {
   total_results: number;
 }
 
-export interface TmdbGenre {
-  id: number;
-  name: string;
-}
-
 export interface TmdbGenreList {
-  genres: TmdbGenre[];
+  genres: Genre[];
 }
 
 export interface TmdbProductionCompany {
@@ -65,7 +62,7 @@ export interface TmdbMovieDetails {
   popularity: number;
   overview: string;
   runtime: number | null;
-  genres: TmdbGenre[];
+  genres: Genre[];
   original_language: string;
   status: string;
   tagline: string | null;
@@ -88,7 +85,7 @@ export interface TmdbTvDetails {
   vote_count: number;
   popularity: number;
   overview: string;
-  genres: TmdbGenre[];
+  genres: Genre[];
   original_language: string;
   status: string;
   tagline: string | null;
@@ -121,15 +118,8 @@ export interface TmdbWatchProvidersResponse {
   results: Record<string, TmdbCountryWatchProviders>;
 }
 
-export interface TmdbProvider {
-  provider_id: number;
-  provider_name: string;
-  logo_path: string;
-  display_priority: number;
-}
-
 export interface TmdbProviderListResponse {
-  results: TmdbProvider[];
+  results: WatchProvider[];
 }
 
 export interface TmdbDiscoverResponse {

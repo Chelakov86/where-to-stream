@@ -21,17 +21,8 @@
  */
 
 import { TmdbWatchProviderInfo, TmdbWatchProvidersResponse } from './tmdbTypes';
+import { CountryAvailability } from './types';
 import { getCountryName, COUNTRY_NAMES } from './utils/countries';
-
-// --- Internal Availability Model ---
-
-export interface CountryAvailability {
-  countryCode: string;
-  countryName: string;
-  freeProviders: string[];
-  paidProviders: string[];
-  watchLink?: string;
-}
 
 export interface AvailabilityResult {
   userCountry: CountryAvailability | null; // Single country or null
