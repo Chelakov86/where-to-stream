@@ -247,7 +247,7 @@ describe('GET /api/search', () => {
       const data = await res.json();
 
       expect(res.status).toBe(502);
-      expect(data).toEqual({ error: 'Error from TMDB API' });
+      expect(data).toEqual({ error: 'Error fetching data from TMDB.' });
     });
 
     it('should return 503 on TMDB service unavailability', async () => {
@@ -258,7 +258,7 @@ describe('GET /api/search', () => {
       const data = await res.json();
 
       expect(res.status).toBe(503);
-      expect(data).toEqual({ error: 'Error from TMDB API' });
+      expect(data).toEqual({ error: 'Error fetching data from TMDB.' });
     });
   });
 });

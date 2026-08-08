@@ -7,9 +7,7 @@ import {
   SearchMoviesParams,
   SearchTvParams,
 } from '@/app/tmdbApi';
-import { TmdbError } from '@/app/tmdbClient';
 import { TmdbSearchResult, TmdbSearchResponse } from '@/app/tmdbTypes';
-import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { NormalizedSearchResult } from '@/app/types';
 import { normalizeTmdbMedia } from '@/app/titleNormalizer';
 import { filterResultsByProvider } from '@/app/availabilityMapper';
@@ -19,8 +17,8 @@ import {
   SearchResponse,
   parseSearchRequest,
 } from '@/app/searchContract';
-import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
-import { logger } from '@/app/utils/logger';
+import { withRouteGuard, rateLimitHeaders } from '@/app/api/routeGuard';
+import { getClientIdentifier } from '@/app/utils/rateLimiter';
 
 /**
  * API route handler for searching movies and TV shows.
@@ -145,122 +143,86 @@ const mapSearchParamsToTvParams = (params: SearchRequest): SearchTvParams => {
 };
 
 export async function GET(req: NextRequest) {
-  // Rate limiting - 100 requests per 15 minutes per IP
-  const identifier = getClientIdentifier(req);
-  const rateLimitResult = checkRateLimit(identifier, {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 100,
-  });
+  return withRouteGuard(
+    {
+      identifier: getClientIdentifier(req),
+      rateLimit: { windowMs: 15 * 60 * 1000, maxRequests: 100 },
+      context: 'search route',
+    },
+    async (rateLimitResult) => {
+      const params = parseSearchRequest(req.nextUrl.searchParams);
 
-  if (!rateLimitResult.allowed) {
-    const resetDate = new Date(rateLimitResult.resetTime);
-    const retryAfterSeconds = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
-
-    return NextResponse.json(
-      {
-        error: 'Rate limit exceeded. Please try again later.',
-        resetTime: resetDate.toISOString(),
-      },
-      {
-        status: 429,
-        headers: {
-          'Retry-After': retryAfterSeconds.toString(),
-          'X-RateLimit-Limit': '100',
-          'X-RateLimit-Remaining': '0',
-          'X-RateLimit-Reset': resetDate.toISOString(),
-        },
+      if (!params.query) {
+        return NextResponse.json({ error: 'Query parameter is required' }, { status: 400 });
       }
-    );
-  }
 
-  const params = parseSearchRequest(req.nextUrl.searchParams);
+      let results: NormalizedSearchResult[] = [];
+      let page = 1;
+      let totalPages = 1;
+      let totalResults = 0;
 
-  if (!params.query) {
-    return NextResponse.json({ error: 'Query parameter is required' }, { status: 400 });
-  }
+      // Always use search endpoints to ensure query relevance.
+      // We apply strict provider/region filtering post-search.
+      if (params.type === 'movie') {
+        const movieParams = mapSearchParamsToMovieParams(params);
+        const tmdbResponse = await searchMovies(movieParams);
+        page = tmdbResponse.page;
+        totalPages = tmdbResponse.total_pages;
+        totalResults = tmdbResponse.total_results;
+        results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode));
+      } else if (params.type === 'tv') {
+        const tvParams = mapSearchParamsToTvParams(params);
+        const tmdbResponse = await searchTv(tvParams);
+        page = tmdbResponse.page;
+        totalPages = tmdbResponse.total_pages;
+        totalResults = tmdbResponse.total_results;
+        results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode));
+      } else {
+        // type === 'all': Fetch both movies and TV in parallel
+        const movieParams = mapSearchParamsToMovieParams(params);
+        const tvParams = mapSearchParamsToTvParams(params);
+        const [movieResponse, tvResponse] = await Promise.all([
+          searchMovies(movieParams),
+          searchTv(tvParams),
+        ]);
 
-  try {
-    let results: NormalizedSearchResult[] = [];
-    let page = 1;
-    let totalPages = 1;
-    let totalResults = 0;
+        page = movieResponse.page;
+        totalPages = Math.max(movieResponse.total_pages, tvResponse.total_pages);
+        totalResults = movieResponse.total_results + tvResponse.total_results;
 
-    // Always use search endpoints to ensure query relevance.
-    // We apply strict provider/region filtering post-search.
-    if (params.type === 'movie') {
-      const movieParams = mapSearchParamsToMovieParams(params);
-      const tmdbResponse = await searchMovies(movieParams);
-      page = tmdbResponse.page;
-      totalPages = tmdbResponse.total_pages;
-      totalResults = tmdbResponse.total_results;
-      results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode));
-    } else if (params.type === 'tv') {
-      const tvParams = mapSearchParamsToTvParams(params);
-      const tmdbResponse = await searchTv(tvParams);
-      page = tmdbResponse.page;
-      totalPages = tmdbResponse.total_pages;
-      totalResults = tmdbResponse.total_results;
-      results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode));
-    } else {
-      // type === 'all': Fetch both movies and TV in parallel
-      const movieParams = mapSearchParamsToMovieParams(params);
-      const tvParams = mapSearchParamsToTvParams(params);
-      const [movieResponse, tvResponse] = await Promise.all([
-        searchMovies(movieParams),
-        searchTv(tvParams),
-      ]);
+        results = [
+          ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
+          ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
+        ];
 
-      page = movieResponse.page;
-      totalPages = Math.max(movieResponse.total_pages, tvResponse.total_pages);
-      totalResults = movieResponse.total_results + tvResponse.total_results;
+        // Sort by popularity (descending)
+        results.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+      }
 
-      results = [
-        ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
-        ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
-      ];
+      // Apply strict filtering if requested
+      if ((params.providerIds && params.providerIds.length > 0) || params.watchRegion) {
+        results = await filterResultsByProvider(
+          results,
+          { watchRegion: params.watchRegion, providerIds: params.providerIds },
+          (type, id) => (type === 'movie' ? getMovieWatchProviders(id) : getTvWatchProviders(id))
+        );
+      }
 
-      // Sort by popularity (descending)
-      results.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-    }
+      // Apply minRating filtering if requested
+      if (params.minRating !== undefined) {
+        results = results.filter((r) => r.rating !== undefined && r.rating >= params.minRating!);
+      }
 
-    // Apply strict filtering if requested
-    if ((params.providerIds && params.providerIds.length > 0) || params.watchRegion) {
-      results = await filterResultsByProvider(
+      const response: SearchResponse = {
+        page,
+        totalPages,
+        totalResults,
         results,
-        { watchRegion: params.watchRegion, providerIds: params.providerIds },
-        (type, id) => (type === 'movie' ? getMovieWatchProviders(id) : getTvWatchProviders(id))
-      );
-    }
+      };
 
-    // Apply minRating filtering if requested
-    if (params.minRating !== undefined) {
-      results = results.filter((r) => r.rating !== undefined && r.rating >= params.minRating!);
+      return NextResponse.json(response, {
+        headers: rateLimitHeaders(rateLimitResult, 100),
+      });
     }
-
-    const response: SearchResponse = {
-      page,
-      totalPages,
-      totalResults,
-      results,
-    };
-
-    // Add rate limit headers to successful response
-    const resetDate = new Date(rateLimitResult.resetTime);
-    return NextResponse.json(response, {
-      headers: {
-        'X-RateLimit-Limit': '100',
-        'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-        'X-RateLimit-Reset': resetDate.toISOString(),
-      },
-    });
-  } catch (error) {
-    if (error instanceof TmdbError) {
-      return NextResponse.json(
-        { error: 'Error from TMDB API' },
-        { status: mapTmdbErrorToHttpStatus(error) }
-      );
-    }
-    logger.error('Search API Error', { error });
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+  );
 }
