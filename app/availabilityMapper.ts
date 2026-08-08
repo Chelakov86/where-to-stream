@@ -20,22 +20,95 @@
  *   Countries with only buy/rent options are excluded.
  */
 
-import { TmdbWatchProviderInfo, TmdbWatchProvidersResponse } from './tmdbTypes';
+import {
+  TmdbCountryWatchProviders,
+  TmdbWatchProviderInfo,
+  TmdbWatchProvidersResponse,
+} from './tmdbTypes';
+import { CountryAvailability, NormalizedSearchResult } from './types';
 import { getCountryName, COUNTRY_NAMES } from './utils/countries';
-
-// --- Internal Availability Model ---
-
-export interface CountryAvailability {
-  countryCode: string;
-  countryName: string;
-  freeProviders: string[];
-  paidProviders: string[];
-  watchLink?: string;
-}
+import { logger } from './utils/logger';
 
 export interface AvailabilityResult {
   userCountry: CountryAvailability | null; // Single country or null
   otherCountries: CountryAvailability[];
+}
+
+/**
+ * Region used when filtering by providers but no watch region is selected.
+ */
+export const DEFAULT_WATCH_REGION = 'US';
+
+/**
+ * The streaming category rule: a provider streams in a region when it appears
+ * in the flatrate, ads, or free categories. Rent and buy are not streaming.
+ */
+export function isStreamingProvider(
+  providers: TmdbCountryWatchProviders,
+  providerIds: number[]
+): boolean {
+  const streamingProviders = [
+    ...(providers.flatrate || []),
+    ...(providers.ads || []),
+    ...(providers.free || []),
+  ];
+  return streamingProviders.some((p) => providerIds.includes(p.provider_id));
+}
+
+/**
+ * Whether a country code is one the app knows about (validated against the
+ * country name table). Invalid codes are treated as undetected.
+ */
+export function isKnownCountryCode(code: string | null): code is string {
+  return code !== null && code in COUNTRY_NAMES;
+}
+
+/**
+ * Filters search results down to titles available on at least one selected
+ * provider in the watch region, applying the streaming category rule.
+ * Items whose provider lookup fails are excluded (treated as unavailable).
+ *
+ * @param results - Normalized search results
+ * @param options - Watch region and selected provider IDs
+ * @param fetchWatchProviders - Injected fetcher (movie/tv watch providers)
+ * @returns Results available on a selected provider
+ */
+export async function filterResultsByProvider(
+  results: NormalizedSearchResult[],
+  options: { watchRegion?: string; providerIds?: number[] },
+  fetchWatchProviders: (type: 'movie' | 'tv', id: number) => Promise<TmdbWatchProvidersResponse>
+): Promise<NormalizedSearchResult[]> {
+  if (
+    (!options.watchRegion && (!options.providerIds || options.providerIds.length === 0)) ||
+    results.length === 0
+  ) {
+    return results;
+  }
+
+  // If only a region is selected, we can't filter efficiently without providers
+  if (!options.providerIds || options.providerIds.length === 0) {
+    return results;
+  }
+
+  const region = options.watchRegion || DEFAULT_WATCH_REGION;
+
+  const checks = await Promise.all(
+    results.map(async (item) => {
+      try {
+        const providersData = await fetchWatchProviders(item.type, item.id);
+        const regionData = providersData.results[region];
+        if (!regionData) {
+          return false;
+        }
+        return isStreamingProvider(regionData, options.providerIds!);
+      } catch (error) {
+        logger.error(`Failed to fetch providers for ${item.type} ${item.id}`, { error });
+        return false;
+      }
+    })
+  );
+
+  return results.filter((_, index) => checks[index]);
 }
 
 // --- Helper Functions ---
@@ -72,6 +145,26 @@ const getPaidProviders = (flatrateProviders: TmdbWatchProviderInfo[] = []): stri
   return Array.from(providers).sort();
 };
 
+/**
+ * Helper to build a CountryAvailability object from TMDB country watch provider data.
+ */
+const createCountryAvailability = (
+  countryCode: string,
+  countryData?: TmdbCountryWatchProviders
+): CountryAvailability => {
+  const flatrateProviders = countryData?.flatrate || [];
+  const adsProviders = countryData?.ads || [];
+  const freeProviders = countryData?.free || [];
+
+  return {
+    countryCode,
+    countryName: getCountryName(countryCode),
+    freeProviders: getFreeProviders(adsProviders, freeProviders),
+    paidProviders: getPaidProviders(flatrateProviders),
+    watchLink: countryData?.link,
+  };
+};
+
 // --- Mapper ---
 
 /**
@@ -99,19 +192,8 @@ export const mapAvailability = (
   const otherCountries: CountryAvailability[] = [];
 
   // 1. Process user's country if detected and valid
-  if (userCountryCode && userCountryCode in COUNTRY_NAMES) {
-    const countryData = tmdbResults[userCountryCode];
-    const flatrateProviders = countryData?.flatrate || [];
-    const adsProviders = countryData?.ads || [];
-    const freeProviders = countryData?.free || [];
-
-    userCountry = {
-      countryCode: userCountryCode,
-      countryName: getCountryName(userCountryCode),
-      freeProviders: getFreeProviders(adsProviders, freeProviders),
-      paidProviders: getPaidProviders(flatrateProviders),
-      watchLink: countryData?.link,
-    };
+  if (isKnownCountryCode(userCountryCode)) {
+    userCountry = createCountryAvailability(userCountryCode, tmdbResults[userCountryCode]);
   }
 
   // 2. Process other countries (exclude user's country if it was processed)
@@ -121,23 +203,11 @@ export const mapAvailability = (
       continue;
     }
 
-    const countryData = tmdbResults[countryCode];
-    const flatrateProviders = countryData?.flatrate || [];
-    const adsProviders = countryData?.ads || [];
-    const freeProviders = countryData?.free || [];
+    const country = createCountryAvailability(countryCode, tmdbResults[countryCode]);
 
     // Only include countries with streaming services (flatrate, ads, or free)
-    const free = getFreeProviders(adsProviders, freeProviders);
-    const paid = getPaidProviders(flatrateProviders);
-
-    if (free.length > 0 || paid.length > 0) {
-      otherCountries.push({
-        countryCode,
-        countryName: getCountryName(countryCode),
-        freeProviders: free,
-        paidProviders: paid,
-        watchLink: countryData?.link,
-      });
+    if (country.freeProviders.length > 0 || country.paidProviders.length > 0) {
+      otherCountries.push(country);
     }
   }
 

@@ -1,8 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { WatchProvider } from '@/app/types';
-
-const GLOBAL_ERROR_MESSAGE =
-  "We're having trouble fetching data right now. Please try again later.";
+import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
 
 /**
  * Custom hook for fetching and managing watch providers state with request cancellation.
@@ -13,12 +11,7 @@ const GLOBAL_ERROR_MESSAGE =
  */
 export function useProviders(watchRegion?: string) {
   const [providers, setProviders] = useState<WatchProvider[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const clearError = useCallback(() => setError(null), []);
-  const showError = useCallback((message: string) => setError(message), []);
+  const { run, isLoading, error, clearError } = useFetchLifecycle();
 
   useEffect(() => {
     // If no region is selected, clear providers and don't fetch
@@ -27,52 +20,29 @@ export function useProviders(watchRegion?: string) {
       return;
     }
 
-    const fetchProviders = async () => {
-      // Cancel previous request if any
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+    run(async (signal) => {
+      const url = new URL('/api/providers', window.location.origin);
+      if (watchRegion) {
+        url.searchParams.append('watchRegion', watchRegion);
       }
 
-      abortControllerRef.current = new AbortController();
-      setIsLoading(true);
+      const response = await fetch(url.toString(), { signal });
 
-      try {
-        const url = new URL('/api/providers', window.location.origin);
-        if (watchRegion) {
-          url.searchParams.append('watchRegion', watchRegion);
-        }
-
-        const response = await fetch(url.toString(), {
-          signal: abortControllerRef.current.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch providers');
-        }
-
-        const data = await response.json();
-        setProviders(Array.isArray(data.providers) ? data.providers : []);
-        clearError();
-      } catch (err) {
-        // Don't show error for aborted requests
-        if ((err as Error).name !== 'AbortError') {
-          setProviders([]);
-          showError(GLOBAL_ERROR_MESSAGE);
-        }
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch providers');
       }
-    };
 
-    fetchProviders();
-
-    // Cleanup on unmount
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      const data = await response.json();
+      if (signal.aborted) {
+        return;
       }
-    };
-  }, [watchRegion, clearError, showError]);
+      setProviders(Array.isArray(data.providers) ? data.providers : []);
+    }).then((status) => {
+      if (status === 'error') {
+        setProviders([]);
+      }
+    });
+  }, [watchRegion, run]);
 
   return {
     providers,

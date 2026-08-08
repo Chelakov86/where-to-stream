@@ -10,18 +10,6 @@ export interface NormalizedSearchResult {
   popularity?: number;
 }
 
-export interface SearchParams {
-  query: string;
-  type?: 'movie' | 'tv' | 'all';
-  yearFrom?: number;
-  yearTo?: number;
-  language?: string;
-  genreIds?: number[];
-  providerIds?: number[];
-  watchRegion?: string;
-  minRating?: number;
-}
-
 export type TMDBResult = NormalizedSearchResult;
 
 export interface ResultsListProps {

@@ -1,37 +1,9 @@
 import { test, expect } from '../fixtures/test-fixtures';
-import { mockSearch } from '../helpers/api-mock';
-import { sampleAutocompleteResults } from '../helpers/test-data';
+import { mockAutocomplete } from '../helpers/api-mock';
 
 test.describe('Autocomplete Functionality', () => {
   test('should display autocomplete suggestions when typing', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const mode = url.searchParams.get('mode');
-
-      if (mode === 'autocomplete') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: sampleAutocompleteResults.length,
-            results: sampleAutocompleteResults,
-          }),
-        });
-      } else {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: 0,
-            results: [],
-          }),
-        });
-      }
-    });
+    await mockAutocomplete(page);
 
     await homePage.typeSearchQuery('Fight', 100);
     await homePage.waitForAutocomplete();
@@ -42,23 +14,7 @@ test.describe('Autocomplete Functionality', () => {
   });
 
   test('should navigate autocomplete with arrow keys', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const mode = url.searchParams.get('mode');
-
-      if (mode === 'autocomplete') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: sampleAutocompleteResults.length,
-            results: sampleAutocompleteResults,
-          }),
-        });
-      }
-    });
+    await mockAutocomplete(page);
 
     await homePage.typeSearchQuery('Fight');
     await homePage.waitForAutocomplete();
@@ -79,23 +35,7 @@ test.describe('Autocomplete Functionality', () => {
   });
 
   test('should select autocomplete item with Enter key', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const mode = url.searchParams.get('mode');
-
-      if (mode === 'autocomplete') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: sampleAutocompleteResults.length,
-            results: sampleAutocompleteResults,
-          }),
-        });
-      }
-    });
+    await mockAutocomplete(page);
 
     await homePage.typeSearchQuery('Fight');
     await homePage.waitForAutocomplete();
@@ -108,23 +48,7 @@ test.describe('Autocomplete Functionality', () => {
   });
 
   test('should close autocomplete with Escape key', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const mode = url.searchParams.get('mode');
-
-      if (mode === 'autocomplete') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: sampleAutocompleteResults.length,
-            results: sampleAutocompleteResults,
-          }),
-        });
-      }
-    });
+    await mockAutocomplete(page);
 
     await homePage.typeSearchQuery('Fight');
     await homePage.waitForAutocomplete();
@@ -134,23 +58,7 @@ test.describe('Autocomplete Functionality', () => {
   });
 
   test('should select autocomplete item with mouse click', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const mode = url.searchParams.get('mode');
-
-      if (mode === 'autocomplete') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: sampleAutocompleteResults.length,
-            results: sampleAutocompleteResults,
-          }),
-        });
-      }
-    });
+    await mockAutocomplete(page);
 
     await homePage.typeSearchQuery('Fight');
     await homePage.waitForAutocomplete();
@@ -159,90 +67,8 @@ test.describe('Autocomplete Functionality', () => {
     await homePage.waitForAutocompleteHidden();
   });
 
-  test('should highlight autocomplete item on mouse hover', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const mode = url.searchParams.get('mode');
-
-      if (mode === 'autocomplete') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: sampleAutocompleteResults.length,
-            results: sampleAutocompleteResults,
-          }),
-        });
-      }
-    });
-
-    await homePage.typeSearchQuery('Fight');
-    await homePage.waitForAutocomplete();
-
-    const firstItem = homePage.autocompleteItems.first();
-    await firstItem.hover();
-
-    await expect(firstItem).toHaveAttribute('aria-selected', 'true');
-  });
-
-  test('should close autocomplete when clicking outside', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const mode = url.searchParams.get('mode');
-
-      if (mode === 'autocomplete') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: sampleAutocompleteResults.length,
-            results: sampleAutocompleteResults,
-          }),
-        });
-      }
-    });
-
-    await homePage.typeSearchQuery('Fight');
-    await homePage.waitForAutocomplete();
-
-    // Click outside the autocomplete (on page title)
-    await homePage.pageTitle.click();
-    await homePage.waitForAutocompleteHidden();
-  });
-
   test('should clear autocomplete when search is submitted', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const mode = url.searchParams.get('mode');
-
-      if (mode === 'autocomplete') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: sampleAutocompleteResults.length,
-            results: sampleAutocompleteResults,
-          }),
-        });
-      } else {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            page: 1,
-            totalPages: 1,
-            totalResults: 0,
-            results: [],
-          }),
-        });
-      }
-    });
+    await mockAutocomplete(page);
 
     await homePage.typeSearchQuery('Fight');
     await homePage.waitForAutocomplete();

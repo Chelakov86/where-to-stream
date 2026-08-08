@@ -6,10 +6,10 @@
  */
 
 import { getMovieWatchProvidersList, getTvWatchProvidersList } from '@/app/tmdbApi';
-import { TmdbError } from '@/app/tmdbClient';
-import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { WatchProvider } from '@/app/types';
-import { logger } from '@/app/utils/logger';
+import { withRouteGuard } from '@/app/api/routeGuard';
+import { getClientIdentifier } from '@/app/utils/rateLimiter';
+import { RATE_LIMIT_CONFIG } from '@/app/config';
 
 /**
  * GET /api/providers
@@ -19,67 +19,46 @@ import { logger } from '@/app/utils/logger';
  * @returns JSON response with providers array
  */
 export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const watchRegion = searchParams.get('watchRegion') || undefined;
+  return withRouteGuard(
+    {
+      identifier: getClientIdentifier(request),
+      rateLimit: RATE_LIMIT_CONFIG.providers,
+      context: 'providers route',
+    },
+    async () => {
+      const { searchParams } = new URL(request.url);
+      const watchRegion = searchParams.get('watchRegion') || undefined;
 
-    // Fetch both movie and TV providers in parallel
-    const [movieProviders, tvProviders] = await Promise.all([
-      getMovieWatchProvidersList(watchRegion),
-      getTvWatchProvidersList(watchRegion),
-    ]);
+      // Fetch both movie and TV providers in parallel
+      const [movieProviders, tvProviders] = await Promise.all([
+        getMovieWatchProvidersList(watchRegion),
+        getTvWatchProvidersList(watchRegion),
+      ]);
 
-    // Combine and deduplicate by provider_id
-    const providerMap = new Map<number, WatchProvider>();
+      // Combine and deduplicate by provider_id
+      const providerMap = new Map<number, WatchProvider>();
 
-    // Add movie providers
-    for (const provider of movieProviders.results) {
-      providerMap.set(provider.provider_id, {
-        provider_id: provider.provider_id,
-        provider_name: provider.provider_name,
-        logo_path: provider.logo_path,
-        display_priority: provider.display_priority,
-      });
-    }
-
-    // Add TV providers (will overwrite if already exists, which is fine)
-    for (const provider of tvProviders.results) {
-      if (!providerMap.has(provider.provider_id)) {
-        providerMap.set(provider.provider_id, {
-          provider_id: provider.provider_id,
-          provider_name: provider.provider_name,
-          logo_path: provider.logo_path,
-          display_priority: provider.display_priority,
-        });
+      // Add movie providers
+      for (const provider of movieProviders.results) {
+        providerMap.set(provider.provider_id, provider);
       }
-    }
 
-    // Convert to array and sort by display_priority (lower is better)
-    const providers = Array.from(providerMap.values()).sort(
-      (a, b) => a.display_priority - b.display_priority
-    );
+      // Add TV providers (will overwrite if already exists, which is fine)
+      for (const provider of tvProviders.results) {
+        if (!providerMap.has(provider.provider_id)) {
+          providerMap.set(provider.provider_id, provider);
+        }
+      }
 
-    return new Response(JSON.stringify({ providers }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    if (error instanceof TmdbError) {
-      const status = mapTmdbErrorToHttpStatus(error);
-      logger.error('TMDB API error in providers route', {
-        status: error.status,
-        message: error.message,
-      });
-      return new Response(JSON.stringify({ error: error.message }), {
-        status,
+      // Convert to array and sort by display_priority (lower is better)
+      const providers = Array.from(providerMap.values()).sort(
+        (a, b) => a.display_priority - b.display_priority
+      );
+
+      return new Response(JSON.stringify({ providers }), {
+        status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-
-    logger.error('Internal error in providers route', { error });
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  );
 }

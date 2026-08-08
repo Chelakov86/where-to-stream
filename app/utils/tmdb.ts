@@ -21,6 +21,9 @@ export type TmdbImageSize =
 /**
  * Extracts year from a date string (YYYY-MM-DD format).
  * Returns undefined if the date string is invalid or too short.
+ * Timezone-independent: parses the leading digits rather than going
+ * through Date, so dates near the year boundary (e.g. Jan 1) never
+ * shift into the previous year west of UTC.
  *
  * @param dateString - Date string in YYYY-MM-DD format
  * @returns Year as number, or undefined if invalid
@@ -33,12 +36,11 @@ export type TmdbImageSize =
  * ```
  */
 export function getYear(dateString?: string): number | undefined {
-  if (!dateString || dateString.length < 4) return undefined;
-  try {
-    return new Date(dateString).getFullYear();
-  } catch {
-    return undefined;
-  }
+  if (!dateString) return undefined;
+  const match = /^(\d{4})/.exec(dateString.trim());
+  if (!match) return undefined;
+  const year = parseInt(match[1], 10);
+  return isNaN(year) ? undefined : year;
 }
 
 /**

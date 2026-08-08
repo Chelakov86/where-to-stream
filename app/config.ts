@@ -15,6 +15,16 @@ export const PREFERRED_COUNTRIES = Object.freeze(['DE', 'GB', 'US', 'CA'] as con
 export const CACHE_TTL_SECONDS = 12 * 60 * 60; // 12 hours
 
 /**
+ * Rate limit configuration per API route (requests per window per client).
+ */
+export const RATE_LIMIT_CONFIG = Object.freeze({
+  search: { windowMs: 15 * 60 * 1000, maxRequests: 100 },
+  title: { windowMs: 15 * 60 * 1000, maxRequests: 50 },
+  providers: { windowMs: 15 * 60 * 1000, maxRequests: 100 },
+  genres: { windowMs: 15 * 60 * 1000, maxRequests: 100 },
+} as const);
+
+/**
  * Retrieves the TMDB API key from environment variables.
  * @throws {Error} If TMDB_API_KEY is not set or is empty
  * @returns {string} The TMDB API key

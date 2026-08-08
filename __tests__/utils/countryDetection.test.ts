@@ -1,4 +1,4 @@
-import { detectUserCountry, validateCountryCode } from '@/app/utils/countryDetection';
+import { detectUserCountry } from '@/app/utils/countryDetection';
 
 describe('countryDetection', () => {
   describe('detectUserCountry', () => {
@@ -177,101 +177,6 @@ describe('countryDetection', () => {
 
       const result = detectUserCountry(request);
       expect(result).toBeNull();
-    });
-  });
-
-  describe('validateCountryCode', () => {
-    const availableCountries = ['US', 'GB', 'DE', 'CA', 'FR'];
-
-    it('should return validated country code when it exists in available countries', () => {
-      const result = validateCountryCode('US', availableCountries);
-      expect(result).toBe('US');
-    });
-
-    it('should return null when country code is not in available countries', () => {
-      const result = validateCountryCode('XY', availableCountries);
-      expect(result).toBeNull();
-    });
-
-    it('should return null when detected code is null', () => {
-      const result = validateCountryCode(null, availableCountries);
-      expect(result).toBeNull();
-    });
-
-    it('should be case-insensitive when validating against available countries', () => {
-      const result = validateCountryCode('us', availableCountries);
-      expect(result).toBe('US');
-    });
-
-    it('should handle lowercase available countries', () => {
-      const lowercaseAvailable = ['us', 'gb', 'de', 'ca', 'fr'];
-      const result = validateCountryCode('US', lowercaseAvailable);
-      expect(result).toBe('US');
-    });
-
-    it('should handle mixed case available countries', () => {
-      const mixedCaseAvailable = ['Us', 'Gb', 'dE', 'cA', 'FR'];
-      const result = validateCountryCode('us', mixedCaseAvailable);
-      expect(result).toBe('US');
-    });
-
-    it('should return null when available countries list is empty', () => {
-      const result = validateCountryCode('US', []);
-      expect(result).toBeNull();
-    });
-
-    it('should validate all countries in available list', () => {
-      availableCountries.forEach((countryCode) => {
-        const result = validateCountryCode(countryCode, availableCountries);
-        expect(result).toBe(countryCode);
-      });
-    });
-
-    it('should return null for country codes not in TMDB results', () => {
-      // CU (Cuba) might not be in TMDB's available countries
-      const result = validateCountryCode('CU', availableCountries);
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('integration: detectUserCountry + validateCountryCode', () => {
-    it('should detect and validate a valid country code', () => {
-      const request = new Request('http://localhost:3000', {
-        headers: {
-          'x-vercel-ip-country': 'US',
-        },
-      });
-
-      const detectedCode = detectUserCountry(request);
-      const validatedCode = validateCountryCode(detectedCode, ['US', 'GB', 'DE']);
-
-      expect(validatedCode).toBe('US');
-    });
-
-    it('should detect but reject invalid country code', () => {
-      const request = new Request('http://localhost:3000', {
-        headers: {
-          'x-vercel-ip-country': 'XY',
-        },
-      });
-
-      const detectedCode = detectUserCountry(request);
-      const validatedCode = validateCountryCode(detectedCode, ['US', 'GB', 'DE']);
-
-      expect(detectedCode).toBe('XY');
-      expect(validatedCode).toBeNull();
-    });
-
-    it('should handle no detection and no validation', () => {
-      const request = new Request('http://localhost:3000', {
-        headers: {},
-      });
-
-      const detectedCode = detectUserCountry(request);
-      const validatedCode = validateCountryCode(detectedCode, ['US', 'GB', 'DE']);
-
-      expect(detectedCode).toBeNull();
-      expect(validatedCode).toBeNull();
     });
   });
 });

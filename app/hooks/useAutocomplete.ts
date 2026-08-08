@@ -1,9 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { debounce } from '@/app/utils/debounce';
+import { debounceWithCancel } from '@/app/utils/debounce';
 import { TMDBResult } from '@/app/types';
-
-const GLOBAL_ERROR_MESSAGE =
-  "We're having trouble fetching data right now. Please try again later.";
+import { serializeSearchRequest } from '@/app/searchContract';
+import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
 
 const DEBOUNCE_DELAY_MS = 300; // 300ms debounce delay
 
@@ -14,60 +13,49 @@ const DEBOUNCE_DELAY_MS = 300; // 300ms debounce delay
  * @param onError - Optional callback to handle errors
  * @returns Object containing autocomplete items, loading state, and handler functions
  */
-export function useAutocomplete(onError?: (message: string) => void) {
+export function useAutocomplete(onError?: (message: string | null) => void) {
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<TMDBResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  // Optimistic loading shown during the debounce window, before the fetch starts
+  const [pendingLoad, setPendingLoad] = useState(false);
+  const { run, cancel, isLoading: isFetching } = useFetchLifecycle(onError);
+  const isLoading = pendingLoad || isFetching;
 
   // Actual fetch function that will be debounced
   const fetchSuggestions = useCallback(
     async (query: string) => {
       if (query.trim().length < 2) {
         setAutocompleteSuggestions([]);
-        setIsLoading(false);
+        setPendingLoad(false);
         return;
       }
 
-      // Cancel previous request if any
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      abortControllerRef.current = new AbortController();
-      setIsLoading(true);
-
-      try {
-        const response = await fetch(
-          `/api/search?mode=autocomplete&query=${encodeURIComponent(query)}`,
-          { signal: abortControllerRef.current.signal }
-        );
+      const status = await run(async (signal) => {
+        const queryString = serializeSearchRequest({ query }, { mode: 'autocomplete' });
+        const response = await fetch(`/api/search?${queryString}`, { signal });
 
         if (!response.ok) {
           throw new Error('Failed to fetch autocomplete suggestions');
         }
 
         const data = await response.json();
-        setAutocompleteSuggestions(data.results);
-      } catch (err) {
-        // Don't show error for aborted requests
-        if ((err as Error).name !== 'AbortError') {
-          setAutocompleteSuggestions([]);
-          if (onError) {
-            onError(GLOBAL_ERROR_MESSAGE);
-          }
+        if (signal.aborted) {
+          return;
         }
-      } finally {
-        setIsLoading(false);
+        setAutocompleteSuggestions(data.results);
+      });
+
+      if (status !== 'cancelled') {
+        setPendingLoad(false);
       }
     },
-    [onError]
+    [run]
   );
 
   // Create debounced version of fetch
-  const debouncedFetch = useRef<(query: string) => void>(
-    debounce(
+  const debouncedFetch = useRef(
+    debounceWithCancel(
       ((query: string) => {
-        fetchSuggestions(query);
+        void fetchSuggestions(query);
       }) as (...args: unknown[]) => unknown,
       DEBOUNCE_DELAY_MS
     )
@@ -77,34 +65,32 @@ export function useAutocomplete(onError?: (message: string) => void) {
     (query: string) => {
       // Show loading immediately for better UX
       if (query.trim().length >= 2) {
-        setIsLoading(true);
+        setPendingLoad(true);
       } else {
         setAutocompleteSuggestions([]);
-        setIsLoading(false);
+        setPendingLoad(false);
       }
       // Debounce the actual fetch
-      debouncedFetch(query);
+      debouncedFetch.debounced(query);
     },
     [debouncedFetch]
   );
 
   const clearAutocomplete = useCallback(() => {
     setAutocompleteSuggestions([]);
-    setIsLoading(false);
+    setPendingLoad(false);
+    debouncedFetch.cancel();
     // Cancel any pending request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  }, []);
+    cancel();
+  }, [cancel, debouncedFetch]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      debouncedFetch.cancel();
+      cancel();
     };
-  }, []);
+  }, [cancel, debouncedFetch]);
 
   return {
     autocompleteSuggestions,

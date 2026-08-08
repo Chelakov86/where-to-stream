@@ -154,7 +154,7 @@ export const sampleTitleDetails = {
 export const emptySearchResults: NormalizedSearchResult[] = [];
 
 export const errorResponse = {
-  error: 'Error from TMDB API',
+  error: 'Error fetching data from TMDB.',
 };
 
 export const networkErrorResponse = {

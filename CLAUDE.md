@@ -47,7 +47,7 @@ This document provides comprehensive guidance for AI assistants working on the W
 - **ESLint** with Next.js config + Prettier integration
 - **Prettier** for code formatting
 - **Jest 30** + React Testing Library 16 for unit tests
-- **Playwright 1.56** for E2E tests with visual regression
+- **Playwright 1.62.1** for E2E tests with visual regression
 - **Node.js** (check `package.json` for version requirements)
 
 ### Key Dependencies
@@ -68,7 +68,7 @@ where-to-stream/
 │   │   ├── genres/route.ts       # GET /api/genres
 │   │   ├── search/route.ts       # GET /api/search
 │   │   ├── title/[type]/[id]/route.ts  # GET /api/title/:type/:id
-│   │   └── errorMapping.ts       # TMDB to HTTP status mapping
+│   │   └── routeGuard.ts         # Rate limiting + error responses
 │   ├── components/               # React components
 │   │   ├── AutocompleteList.tsx
 │   │   ├── ErrorBanner.tsx
@@ -366,9 +366,8 @@ if (!data) {
 
 #### 6. Error Handling
 
-- TMDB errors are mapped to HTTP status codes in `app/api/errorMapping.ts`
-- API routes should catch `TmdbError` and return appropriate responses
-- Components receive standardized error messages
+- Route handlers are wrapped by the route guard (`app/api/routeGuard.ts`), which enforces rate limits (429 + headers) and maps `TmdbError` to HTTP status codes (503 for retryable statuses, 502 otherwise; everything else → 500)
+- API routes should return their own logic inside `withRouteGuard` and never re-implement failure handling
 
 ---
 
@@ -417,7 +416,7 @@ describe('ComponentName', () => {
 
 **Naming:** `*.e2e.spec.ts`
 
-**Configuration:** Port 3001 for E2E tests (configured in `playwright.config.ts`)
+**Configuration:** Port 3001 for E2E tests (configured in `playwright.config.ts`). The web server is a production build (`next build && next start`) started automatically. Projects: `chromium` runs every spec; `Tablet` and `Mobile Chrome` run only the responsive and visual-regression specs. Snapshots are OS-independent and regenerated with `npx playwright test visual-regression --update-snapshots` after a Playwright upgrade. CI runs the suite via `.github/workflows/playwright.yml`.
 
 **Structure:**
 
@@ -447,9 +446,10 @@ test.describe('Feature Name', () => {
 - `autocomplete.e2e.spec.ts` - Autocomplete behavior
 - `filters.e2e.spec.ts` - Filter interactions
 - `results.e2e.spec.ts` - Result display
+- `search-history.e2e.spec.ts` - Search history behavior
 - `accessibility.e2e.spec.ts` - Accessibility compliance
-- `responsive.e2e.spec.ts` - Responsive design
-- `visual-regression.e2e.spec.ts` - Visual regression testing
+- `responsive.e2e.spec.ts` - Responsive design (runs on all viewport projects)
+- `visual-regression.e2e.spec.ts` - Visual regression testing (runs on all viewport projects)
 - `error-handling.e2e.spec.ts` - Error scenarios
 
 ### Testing Best Practices
@@ -824,3 +824,19 @@ When working on this project:
 **Last Updated:** 2026-01-18
 
 **Document Version:** 1.0.0
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues on Chelakov86/where-to-stream (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

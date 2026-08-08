@@ -117,7 +117,7 @@ describe('GET /api/providers', () => {
     const data = await response.json();
 
     expect(response.status).toBe(502); // Bad Gateway for TMDB errors
-    expect(data.error).toBe('TMDB API error: 500 TMDB service unavailable');
+    expect(data.error).toBe('Error fetching data from TMDB.');
   });
 
   it('handles internal errors gracefully', async () => {
@@ -129,7 +129,7 @@ describe('GET /api/providers', () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.error).toBe('Internal server error');
+    expect(data.error).toBe('Internal Server Error');
   });
 
   it('fetches movie and TV providers in parallel', async () => {

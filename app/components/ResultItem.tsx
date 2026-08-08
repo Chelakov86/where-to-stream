@@ -1,7 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
 import { NormalizedSearchResult } from '@/app/types';
-import { buildTmdbImageUrl } from '@/app/utils/tmdb';
 
 interface ResultItemProps {
   result: NormalizedSearchResult;
@@ -17,20 +16,6 @@ export const ResultItem: React.FC<ResultItemProps> = ({
   genreNamesById,
 }) => {
   const { title, year, type, posterUrl, rating, genres } = result;
-  // Extract poster path from full URL and rebuild with smaller size for list view
-  let posterPath: string | undefined = undefined;
-  if (posterUrl) {
-    if (posterUrl.startsWith('http')) {
-      // Extract path from full URL (e.g., "https://image.tmdb.org/t/p/w500/abc.jpg" -> "/abc.jpg")
-      const urlMatch = posterUrl.match(/\/t\/p\/w\d+\/(.+)$/);
-      if (urlMatch) {
-        posterPath = buildTmdbImageUrl(`/${urlMatch[1]}`, 'w200');
-      }
-    } else {
-      // Already a path, just rebuild with different size
-      posterPath = buildTmdbImageUrl(posterUrl, 'w200');
-    }
-  }
   const titleId = `result-${result.type}-${result.id}-title`;
   const titleWithYear = `${title}${year ? ` (${year})` : ''}`;
   const displayedGenres =
@@ -48,9 +33,9 @@ export const ResultItem: React.FC<ResultItemProps> = ({
       role="article"
     >
       <div className="flex-shrink-0">
-        {posterPath ? (
+        {posterUrl ? (
           <Image
-            src={posterPath}
+            src={posterUrl}
             alt={`${title} poster`}
             width={isFeatured ? 208 : 100}
             height={isFeatured ? 312 : 150}

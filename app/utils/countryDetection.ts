@@ -41,37 +41,3 @@ export function detectUserCountry(request: Request): string | null {
 
   return null;
 }
-
-/**
- * Validates a detected country code against the list of available countries from TMDB.
- * This ensures we only show countries that actually have streaming data.
- *
- * @param detectedCode - The country code detected from headers (or null)
- * @param availableCountries - Array of country codes that have streaming data from TMDB
- * @returns The validated country code or null if invalid/unavailable
- *
- * @example
- * const validatedCode = validateCountryCode("US", ["US", "GB", "DE"]);
- * // Returns: "US"
- *
- * const invalidCode = validateCountryCode("XY", ["US", "GB", "DE"]);
- * // Returns: null
- */
-export function validateCountryCode(
-  detectedCode: string | null,
-  availableCountries: string[]
-): string | null {
-  if (!detectedCode) {
-    return null;
-  }
-
-  // Normalize both the detected code and available countries for comparison
-  const normalizedDetected = detectedCode.toUpperCase();
-  const normalizedAvailable = availableCountries.map((code) => code.toUpperCase());
-
-  if (normalizedAvailable.includes(normalizedDetected)) {
-    return normalizedDetected;
-  }
-
-  return null;
-}

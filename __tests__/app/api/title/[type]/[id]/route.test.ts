@@ -24,12 +24,12 @@ jest.mock('@/app/tmdbApi', () => ({
 // Mock availabilityMapper
 jest.mock('@/app/availabilityMapper', () => ({
   mapAvailability: jest.fn(),
+  isKnownCountryCode: jest.fn((code: string | null) => code !== null),
 }));
 
 // Mock country detection utilities
 jest.mock('@/app/utils/countryDetection', () => ({
   detectUserCountry: jest.fn(),
-  validateCountryCode: jest.fn(),
 }));
 
 // Import the mocked modules AFTER jest.mock calls
@@ -45,7 +45,6 @@ const mockGetTvDetails = tmdbApi.getTvDetails as jest.Mock;
 const mockGetTvWatchProviders = tmdbApi.getTvWatchProviders as jest.Mock;
 const mockMapAvailability = availabilityMapper.mapAvailability as jest.Mock;
 const mockDetectUserCountry = countryDetection.detectUserCountry as jest.Mock;
-const mockValidateCountryCode = countryDetection.validateCountryCode as jest.Mock;
 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
@@ -113,7 +112,6 @@ describe('GET /api/title/[type]/[id]', () => {
 
     // Default: detect US and validate it
     mockDetectUserCountry.mockReturnValue('US');
-    mockValidateCountryCode.mockReturnValue('US');
 
     mockMapAvailability.mockReturnValue({
       userCountry: {
@@ -149,7 +147,6 @@ describe('GET /api/title/[type]/[id]', () => {
     expect(mockGetMovieDetails).toHaveBeenCalledWith(550);
     expect(mockGetMovieWatchProviders).toHaveBeenCalledWith(550);
     expect(mockDetectUserCountry).toHaveBeenCalledWith(req);
-    expect(mockValidateCountryCode).toHaveBeenCalledWith('US', expect.arrayContaining(['US']));
     expect(mockMapAvailability).toHaveBeenCalledWith(
       {
         id: 550,

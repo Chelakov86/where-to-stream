@@ -1,8 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Genre } from '@/app/types';
-
-const GLOBAL_ERROR_MESSAGE =
-  "We're having trouble fetching data right now. Please try again later.";
+import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
 
 /**
  * Custom hook for fetching and managing genres state with request cancellation.
@@ -13,60 +11,32 @@ const GLOBAL_ERROR_MESSAGE =
  */
 export function useGenres() {
   const [genres, setGenres] = useState<Genre[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const clearError = useCallback(() => setError(null), []);
-  const showError = useCallback((message: string) => setError(message), []);
+  const { run, isLoading, error, clearError } = useFetchLifecycle();
 
   useEffect(() => {
-    const fetchGenres = async () => {
-      // Cancel previous request if any
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+    run(async (signal) => {
+      const response = await fetch('/api/genres', { signal });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch genres');
       }
 
-      abortControllerRef.current = new AbortController();
-      setIsLoading(true);
-
-      try {
-        const response = await fetch('/api/genres', {
-          signal: abortControllerRef.current.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch genres');
-        }
-
-        const data = await response.json();
-        // API returns { movie: Genre[], tv: Genre[] }, combine and deduplicate by id
-        const allGenres = [...(data.movie || []), ...(data.tv || [])];
-        const uniqueGenres = Array.from(
-          new Map(allGenres.map((genre) => [genre.id, genre])).values()
-        );
-        setGenres(Array.isArray(uniqueGenres) ? uniqueGenres : []);
-        clearError();
-      } catch (err) {
-        // Don't show error for aborted requests
-        if ((err as Error).name !== 'AbortError') {
-          setGenres([]);
-          showError(GLOBAL_ERROR_MESSAGE);
-        }
-      } finally {
-        setIsLoading(false);
+      const data = await response.json();
+      if (signal.aborted) {
+        return;
       }
-    };
-
-    fetchGenres();
-
-    // Cleanup on unmount
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      // API returns { movie: Genre[], tv: Genre[] }, combine and deduplicate by id
+      const allGenres = [...(data.movie || []), ...(data.tv || [])];
+      const uniqueGenres = Array.from(
+        new Map(allGenres.map((genre) => [genre.id, genre])).values()
+      );
+      setGenres(Array.isArray(uniqueGenres) ? uniqueGenres : []);
+    }).then((status) => {
+      if (status === 'error') {
+        setGenres([]);
       }
-    };
-  }, [clearError, showError]);
+    });
+  }, [run]);
 
   return {
     genres,

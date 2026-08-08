@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { ResultDetailsPage } from './ResultDetailsPage';
 
 /**
  * HomePage Page Object Model
@@ -134,6 +135,19 @@ export class HomePage extends BasePage {
   async search(query: string): Promise<void> {
     await this.enterSearchQuery(query);
     await this.submitSearch();
+  }
+
+  /**
+   * Search for a query, open the first result and wait for its details to load.
+   * @returns The details page in its loaded state
+   */
+  async viewDetails(query: string): Promise<ResultDetailsPage> {
+    await this.search(query);
+    await this.waitForResults();
+    await this.clickResultItem(0);
+    const resultDetailsPage = new ResultDetailsPage(this.page);
+    await resultDetailsPage.waitForDetails();
+    return resultDetailsPage;
   }
 
   /**

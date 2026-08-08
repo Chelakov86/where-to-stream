@@ -1,8 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { SearchParams, TMDBResult } from '@/app/types';
-
-const GLOBAL_ERROR_MESSAGE =
-  "We're having trouble fetching data right now. Please try again later.";
+import { useState, useCallback } from 'react';
+import { TMDBResult } from '@/app/types';
+import { SearchParams, SearchResponse, serializeSearchRequest } from '@/app/searchContract';
+import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
 
 /**
  * Custom hook for managing search state and operations with request cancellation.
@@ -17,86 +16,36 @@ export function useSearch(onError?: (message: string | null) => void) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState<SearchParams | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const clearError = useCallback(() => {
-    if (onError) {
-      onError(null);
-    }
-  }, [onError]);
-
-  const showError = useCallback(
-    (message: string) => {
-      if (onError) {
-        onError(message);
-      }
-    },
-    [onError]
-  );
+  const { run, cancel, clearError, isLoading: isSearching } = useFetchLifecycle(onError);
 
   const handleSearch = useCallback(
     async (params: SearchParams, newPage = 1) => {
-      // Cancel previous search if any
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      abortControllerRef.current = new AbortController();
-
       setSearchQuery(params);
       setPage(newPage);
-      setIsSearching(true);
 
-      const queryParams = new URLSearchParams({
-        mode: 'full',
-        page: String(newPage),
-      });
+      const queryString = serializeSearchRequest(params, { page: newPage, mode: 'full' });
 
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          // Handle arrays (genreIds, providerIds)
-          if (Array.isArray(value)) {
-            if (value.length > 0) {
-              queryParams.append(key, value.join(','));
-            }
-          } else {
-            queryParams.append(key, String(value));
-          }
-        }
-      });
-
-      try {
-        const response = await fetch(`/api/search?${queryParams.toString()}`, {
-          signal: abortControllerRef.current.signal,
-        });
+      const status = await run(async (signal) => {
+        const response = await fetch(`/api/search?${queryString}`, { signal });
 
         if (!response.ok) {
           throw new Error('Failed to fetch search results');
         }
 
-        const data = await response.json();
-        setResults(Array.isArray(data.results) ? data.results : []);
-        setTotalPages(
-          typeof data.totalPages === 'number'
-            ? data.totalPages
-            : typeof data.total_pages === 'number'
-              ? data.total_pages
-              : 1
-        );
-        clearError();
-      } catch (err) {
-        // Don't show error for aborted requests
-        if ((err as Error).name !== 'AbortError') {
-          setResults([]);
-          setTotalPages(1);
-          showError(GLOBAL_ERROR_MESSAGE);
+        const data: SearchResponse = await response.json();
+        if (signal.aborted) {
+          return;
         }
-      } finally {
-        setIsSearching(false);
+        setResults(data.results);
+        setTotalPages(data.totalPages);
+      });
+
+      if (status === 'error') {
+        setResults([]);
+        setTotalPages(1);
       }
     },
-    [clearError, showError]
+    [run]
   );
 
   const handlePageChange = useCallback(
@@ -113,21 +62,9 @@ export function useSearch(onError?: (message: string | null) => void) {
     setSearchQuery(null);
     setPage(1);
     setTotalPages(1);
+    cancel();
     clearError();
-    // Cancel any pending request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  }, [clearError]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, []);
+  }, [cancel, clearError]);
 
   return {
     results,

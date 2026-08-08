@@ -92,6 +92,7 @@ Handles interactions with the main search page:
 - Result list interactions
 - Search history interactions
 - Error banner interactions
+- `viewDetails(query)`: search, open the first result, and wait for its details to load
 
 ### ResultDetailsPage
 
@@ -113,10 +114,14 @@ Custom fixtures are defined in `fixtures/test-fixtures.ts`:
 Tests use API mocking to avoid external dependencies and ensure fast, reliable tests. Mock utilities are in `helpers/api-mock.ts`:
 
 - `mockGenres()`: Mock genres API
-- `mockSearch()`: Mock search API
+- `mockSearch()`: Mock search API (full mode; pass custom results)
+- `mockAutocomplete()`: Mock the autocomplete mode of the search API
+- `mockEmptySearch()`: Mock search with no results
 - `mockTitleDetails()`: Mock title details API
+- `mockTitleDetailsError()`: Mock title details API errors
 - `mockSearchError()`: Mock search API errors
 - `mockNetworkFailure()`: Simulate network failures
+- `mockImages()`: Mock TMDB poster images with a deterministic placeholder (required for visual tests)
 
 ## Writing New Tests
 
@@ -212,10 +217,10 @@ Tests run automatically on push and pull requests via GitHub Actions (`.github/w
 
 The workflow:
 
-1. Installs dependencies
-2. Installs Playwright browsers
-3. Runs all E2E tests
-4. Uploads test reports and artifacts
+1. Installs dependencies (cached)
+2. Installs the Playwright Chromium browser (cached)
+3. Builds the app and runs all E2E tests (cached build)
+4. Uploads test reports and failure artifacts
 
 ## Test Coverage
 
@@ -235,13 +240,15 @@ The test suite covers:
 
 Test configuration is in `playwright.config.ts`:
 
-- **Browsers**: Chromium, Firefox, WebKit
+- **Browsers**: Chromium only (projects: `chromium`, `Tablet`, `Mobile Chrome`; tablet/mobile run only the responsive and visual-regression specs)
 - **Viewports**: Desktop, Mobile, Tablet
-- **Base URL**: `http://localhost:3000`
+- **Base URL**: `http://localhost:3001`
+- **Server**: a production build (`next build && next start`) is started automatically before the run
 - **Timeouts**: Configurable per test
-- **Retries**: 2 retries on CI, 0 locally
+- **Retries**: 1 on CI, 0 locally
 - **Screenshots**: On failure
 - **Videos**: On failure
+- **Snapshots**: OS-independent (no platform suffix); regenerate after a Playwright upgrade with `npx playwright test visual-regression --update-snapshots`
 
 ## Troubleshooting
 
@@ -259,9 +266,9 @@ Make sure the Next.js dev server is running or let Playwright start it automatic
 
 Run `npx playwright install` to install browsers.
 
-### Port 3000 already in use
+### Port 3001 already in use
 
-Stop any process using port 3000 or change the port in `playwright.config.ts`.
+Stop any process using port 3001 or change the port in `playwright.config.ts`.
 
 ## Resources
 
