@@ -121,4 +121,17 @@ describe('useAutocomplete', () => {
     expect(result.current.isLoading).toBe(false);
     expect(abortSpy).toHaveBeenCalled();
   });
+
+  it('clearAutocomplete cancels a debounce that has not started fetching', async () => {
+    const { result } = renderHook(() => useAutocomplete());
+
+    act(() => {
+      result.current.handleAutocompleteRequest('Fight');
+      result.current.clearAutocomplete();
+    });
+
+    await flushDebounce();
+
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
 });

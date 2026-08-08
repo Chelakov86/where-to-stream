@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { debounce } from '@/app/utils/debounce';
+import { debounceWithCancel } from '@/app/utils/debounce';
 import { TMDBResult } from '@/app/types';
 import { serializeSearchRequest } from '@/app/searchContract';
 import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
@@ -52,10 +52,10 @@ export function useAutocomplete(onError?: (message: string | null) => void) {
   );
 
   // Create debounced version of fetch
-  const debouncedFetch = useRef<(query: string) => void>(
-    debounce(
+  const debouncedFetch = useRef(
+    debounceWithCancel(
       ((query: string) => {
-        fetchSuggestions(query);
+        void fetchSuggestions(query);
       }) as (...args: unknown[]) => unknown,
       DEBOUNCE_DELAY_MS
     )
@@ -71,7 +71,7 @@ export function useAutocomplete(onError?: (message: string | null) => void) {
         setPendingLoad(false);
       }
       // Debounce the actual fetch
-      debouncedFetch(query);
+      debouncedFetch.debounced(query);
     },
     [debouncedFetch]
   );
@@ -79,16 +79,18 @@ export function useAutocomplete(onError?: (message: string | null) => void) {
   const clearAutocomplete = useCallback(() => {
     setAutocompleteSuggestions([]);
     setPendingLoad(false);
+    debouncedFetch.cancel();
     // Cancel any pending request
     cancel();
-  }, [cancel]);
+  }, [cancel, debouncedFetch]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      debouncedFetch.cancel();
       cancel();
     };
-  }, [cancel]);
+  }, [cancel, debouncedFetch]);
 
   return {
     autocompleteSuggestions,
