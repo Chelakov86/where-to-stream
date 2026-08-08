@@ -11,7 +11,7 @@ import { TmdbError } from '@/app/tmdbClient';
 import { TmdbSearchResult, TmdbSearchResponse, TmdbWatchProvidersResponse } from '@/app/tmdbTypes';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { NormalizedSearchResult } from '@/app/types';
-import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
+import { normalizeTmdbMedia } from '@/app/titleNormalizer';
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
 import { logger } from '@/app/utils/logger';
 
@@ -123,26 +123,36 @@ interface SearchResponse {
  * Normalizes a TMDB search result to a consistent structure.
  * Handles differences between movie and TV result formats (e.g., title vs name).
  * In autocomplete mode, returns only essential fields for performance.
+ * Posters are emitted at w200 for the list UI.
  */
 const normalizeTmdbResult = (
   result: TmdbSearchResult,
   type: 'movie' | 'tv',
   mode: SearchMode
 ): NormalizedSearchResult => {
-  const isMovie = type === 'movie';
+  const {
+    id,
+    type: resultType,
+    title,
+    year,
+    posterUrl,
+    rating,
+    overview,
+  } = normalizeTmdbMedia(result, type, { posterSize: 'w200' });
+
   const normalized: NormalizedSearchResult = {
-    id: result.id,
-    type: type,
-    title: (isMovie ? result.title : result.name) || '',
-    year: getYear(isMovie ? result.release_date : result.first_air_date),
-    posterUrl: buildTmdbImageUrl(result.poster_path, 'w500'),
+    id,
+    type: resultType,
+    title,
+    year,
+    posterUrl,
     popularity: result.popularity,
   };
 
   if (mode === 'full') {
-    normalized.rating = result.vote_average;
+    normalized.rating = rating;
     normalized.genres = result.genre_ids;
-    normalized.overview = result.overview;
+    normalized.overview = overview;
   }
 
   return normalized;

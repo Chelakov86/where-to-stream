@@ -8,7 +8,7 @@ import {
 import { mapAvailability, AvailabilityResult } from '@/app/availabilityMapper';
 import { TmdbError } from '@/app/tmdbClient';
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
-import { buildTmdbImageUrl, getYear } from '@/app/utils/tmdb';
+import { normalizeTmdbMedia } from '@/app/titleNormalizer';
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
 import { logger } from '@/app/utils/logger';
 import { detectUserCountry, validateCountryCode } from '@/app/utils/countryDetection';
@@ -116,16 +116,8 @@ export async function GET(
 
       // Normalize movie details to consistent structure
       normalizedTitle = {
-        id: movieDetails.id,
-        type: 'movie',
-        title: movieDetails.title,
-        originalTitle: movieDetails.original_title,
-        year: getYear(movieDetails.release_date),
+        ...normalizeTmdbMedia(movieDetails, 'movie'),
         genres: movieDetails.genres,
-        overview: movieDetails.overview,
-        rating: movieDetails.vote_average,
-        posterUrl: buildTmdbImageUrl(movieDetails.poster_path, 'w500'),
-        runtime: movieDetails.runtime,
         detectedCountry: null,
         availability: { userCountry: null, otherCountries: [] },
       };
@@ -141,17 +133,8 @@ export async function GET(
       // Normalize TV details to consistent structure
       // Note: TV shows use first_air_date instead of release_date, and name instead of title
       normalizedTitle = {
-        id: tvDetails.id,
-        type: 'tv',
-        title: tvDetails.name,
-        originalTitle: tvDetails.original_name,
-        year: getYear(tvDetails.first_air_date),
+        ...normalizeTmdbMedia(tvDetails, 'tv'),
         genres: tvDetails.genres,
-        overview: tvDetails.overview,
-        rating: tvDetails.vote_average,
-        posterUrl: buildTmdbImageUrl(tvDetails.poster_path, 'w500'),
-        // Use first episode runtime as representative runtime for TV shows
-        runtime: tvDetails.episode_run_time?.[0],
         detectedCountry: null,
         availability: { userCountry: null, otherCountries: [] },
       };

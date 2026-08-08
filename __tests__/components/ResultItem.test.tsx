@@ -25,12 +25,12 @@ describe('ResultItem', () => {
     expect(screen.getByText('Movie')).toBeInTheDocument();
   });
 
-  it('renders the poster image if posterUrl is provided', () => {
+  it('renders the poster image directly from posterUrl', () => {
     const onSelectResult = jest.fn();
     render(<ResultItem result={mockResult} onSelectResult={onSelectResult} />);
 
     const image = screen.getByRole('img');
-    expect(image).toHaveAttribute('src', 'https://image.tmdb.org/t/p/w200/test-poster.jpg');
+    expect(image).toHaveAttribute('src', '/test-poster.jpg');
     expect(image).toHaveAttribute('alt', 'Test Movie poster');
   });
 

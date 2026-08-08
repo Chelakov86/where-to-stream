@@ -94,7 +94,7 @@ describe('GET /api/search', () => {
             type: 'movie',
             title: 'Dune',
             year: 2021,
-            posterUrl: 'https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIY2VhrJUdJ9qpGu.jpg',
+            posterUrl: 'https://image.tmdb.org/t/p/w200/d5NXSklXo0qyIY2VhrJUdJ9qpGu.jpg',
             rating: 7.9,
             genres: [878, 12],
             overview: 'A mythic and emotionally charged hero’s journey...',
@@ -144,7 +144,7 @@ describe('GET /api/search', () => {
             type: 'tv',
             title: 'Chernobyl',
             year: 2019,
-            posterUrl: 'https://image.tmdb.org/t/p/w500/hlLXt2tOPT6RRnjiUmoxyG1LTFi.jpg',
+            posterUrl: 'https://image.tmdb.org/t/p/w200/hlLXt2tOPT6RRnjiUmoxyG1LTFi.jpg',
             rating: 8.6,
             genres: [18],
             overview: 'A dramatization of the 1986 nuclear accident...',
@@ -231,7 +231,7 @@ describe('GET /api/search', () => {
         type: 'movie',
         title: 'Dune',
         year: 2021,
-        posterUrl: 'https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIY2VhrJUdJ9qpGu.jpg',
+        posterUrl: 'https://image.tmdb.org/t/p/w200/d5NXSklXo0qyIY2VhrJUdJ9qpGu.jpg',
         popularity: 150.0,
       });
       expect(data.results[0]).not.toHaveProperty('rating');
