@@ -186,7 +186,7 @@ describe('Home Page', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        '/api/search?mode=autocomplete&query=test',
+        '/api/search?mode=autocomplete&page=1&query=test',
         expect.objectContaining({ signal: expect.any(Object) })
       );
       expect(screen.getByTestId('autocomplete-list')).toBeInTheDocument();
@@ -216,7 +216,7 @@ describe('Home Page', () => {
     searchDeferred.resolve(
       buildOkResponse({
         results: [{ id: 1, title: 'Loaded Movie', type: 'movie' }],
-        total_pages: 1,
+        totalPages: 1,
       })
     );
 
@@ -251,7 +251,7 @@ describe('Home Page', () => {
       .mockResolvedValueOnce(
         buildOkResponse({
           results: [],
-          total_pages: 1,
+          totalPages: 1,
         })
       );
 
@@ -279,7 +279,7 @@ describe('Home Page', () => {
       .mockResolvedValueOnce(
         buildOkResponse({
           results: [{ id: 42, title: 'Mystery Movie', type: 'movie' }],
-          total_pages: 1,
+          totalPages: 1,
         })
       );
 
@@ -309,7 +309,7 @@ describe('Home Page', () => {
       .mockResolvedValueOnce(
         buildOkResponse({
           results: [{ id: 42, title: 'Mystery Movie', type: 'movie' }],
-          total_pages: 1,
+          totalPages: 1,
         })
       );
 

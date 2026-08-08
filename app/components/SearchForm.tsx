@@ -4,21 +4,12 @@ import { COUNTRY_NAMES, getCountryFlagUrl } from '@/app/utils/countries';
 import { loadFilterState, saveFilterState } from '@/app/utils/filterStorage';
 import ProviderChips from './ProviderChips';
 import { WatchProvider } from '@/app/types';
+import { SearchParams } from '@/app/searchContract';
 
 interface SearchFormProps {
   genres: { id: number; name: string }[];
   providers: WatchProvider[];
-  onSearch: (params: {
-    query: string;
-    type: 'movie' | 'tv' | 'all';
-    yearFrom?: number;
-    yearTo?: number;
-    language?: string;
-    genreIds?: number[];
-    providerIds?: number[];
-    watchRegion?: string;
-    minRating?: number;
-  }) => void;
+  onSearch: (params: SearchParams) => void;
   onAutocompleteRequest?: (query: string) => void;
   isGenresLoading?: boolean;
   isProvidersLoading?: boolean;

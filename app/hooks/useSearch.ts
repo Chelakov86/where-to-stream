@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { SearchParams, TMDBResult } from '@/app/types';
+import { TMDBResult } from '@/app/types';
+import { SearchParams, SearchResponse, serializeSearchRequest } from '@/app/searchContract';
 import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
 
 /**
@@ -22,43 +23,21 @@ export function useSearch(onError?: (message: string | null) => void) {
       setSearchQuery(params);
       setPage(newPage);
 
-      const queryParams = new URLSearchParams({
-        mode: 'full',
-        page: String(newPage),
-      });
-
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          // Handle arrays (genreIds, providerIds)
-          if (Array.isArray(value)) {
-            if (value.length > 0) {
-              queryParams.append(key, value.join(','));
-            }
-          } else {
-            queryParams.append(key, String(value));
-          }
-        }
-      });
+      const queryString = serializeSearchRequest(params, { page: newPage, mode: 'full' });
 
       const status = await run(async (signal) => {
-        const response = await fetch(`/api/search?${queryParams.toString()}`, { signal });
+        const response = await fetch(`/api/search?${queryString}`, { signal });
 
         if (!response.ok) {
           throw new Error('Failed to fetch search results');
         }
 
-        const data = await response.json();
+        const data: SearchResponse = await response.json();
         if (signal.aborted) {
           return;
         }
-        setResults(Array.isArray(data.results) ? data.results : []);
-        setTotalPages(
-          typeof data.totalPages === 'number'
-            ? data.totalPages
-            : typeof data.total_pages === 'number'
-              ? data.total_pages
-              : 1
-        );
+        setResults(data.results);
+        setTotalPages(data.totalPages);
       });
 
       if (status === 'error') {

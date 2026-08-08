@@ -27,7 +27,7 @@ describe('Home Page Accessibility', () => {
         { id: 42, title: 'Matrix Reloaded', type: 'movie', year: 2003 },
         { id: 84, title: 'Matrix Revolutions', type: 'movie', year: 2003 },
       ],
-      total_pages: 1,
+      totalPages: 1,
     };
 
     fetchMock
@@ -56,7 +56,7 @@ describe('Home Page Accessibility', () => {
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
-        '/api/search?mode=autocomplete&query=Ma',
+        '/api/search?mode=autocomplete&page=1&query=Ma',
         expect.objectContaining({ signal: expect.any(Object) })
       )
     );

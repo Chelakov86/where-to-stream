@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { debounce } from '@/app/utils/debounce';
 import { TMDBResult } from '@/app/types';
+import { serializeSearchRequest } from '@/app/searchContract';
 import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
 
 const DEBOUNCE_DELAY_MS = 300; // 300ms debounce delay
@@ -29,10 +30,8 @@ export function useAutocomplete(onError?: (message: string | null) => void) {
       }
 
       const status = await run(async (signal) => {
-        const response = await fetch(
-          `/api/search?mode=autocomplete&query=${encodeURIComponent(query)}`,
-          { signal }
-        );
+        const queryString = serializeSearchRequest({ query }, { mode: 'autocomplete' });
+        const response = await fetch(`/api/search?${queryString}`, { signal });
 
         if (!response.ok) {
           throw new Error('Failed to fetch autocomplete suggestions');

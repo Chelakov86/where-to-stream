@@ -12,6 +12,12 @@ import { TmdbSearchResult, TmdbSearchResponse, TmdbWatchProvidersResponse } from
 import { mapTmdbErrorToHttpStatus } from '@/app/api/errorMapping';
 import { NormalizedSearchResult } from '@/app/types';
 import { normalizeTmdbMedia } from '@/app/titleNormalizer';
+import {
+  SearchMode,
+  SearchRequest,
+  SearchResponse,
+  parseSearchRequest,
+} from '@/app/searchContract';
 import { checkRateLimit, getClientIdentifier } from '@/app/utils/rateLimiter';
 import { logger } from '@/app/utils/logger';
 
@@ -95,30 +101,6 @@ async function filterResultsByProvider(
  * Results are normalized to a consistent structure regardless of source type.
  */
 
-type SearchType = 'movie' | 'tv' | 'all';
-type SearchMode = 'autocomplete' | 'full';
-
-interface SearchParams {
-  query: string;
-  type: SearchType;
-  yearFrom?: number;
-  yearTo?: number;
-  language?: string;
-  genreIds?: number[];
-  providerIds?: number[];
-  watchRegion?: string;
-  minRating?: number;
-  page: number;
-  mode: SearchMode;
-}
-
-interface SearchResponse {
-  page: number;
-  totalPages: number;
-  totalResults: number;
-  results: NormalizedSearchResult[];
-}
-
 /**
  * Normalizes a TMDB search result to a consistent structure.
  * Handles differences between movie and TV result formats (e.g., title vs name).
@@ -159,79 +141,10 @@ const normalizeTmdbResult = (
 };
 
 /**
- * Parses and validates query parameters from the request URL.
- * Normalizes invalid values to defaults (e.g., invalid type -> "all").
- * Handles comma-separated genreIds string conversion to number array.
- */
-const parseSearchParams = (searchParams: URLSearchParams): SearchParams => {
-  const type = (searchParams.get('type') as SearchType) || 'all';
-  const mode = (searchParams.get('mode') as SearchMode) || 'full';
-
-  const params: SearchParams = {
-    query: searchParams.get('query')?.trim() || '',
-    type: ['movie', 'tv', 'all'].includes(type) ? type : 'all',
-    page: parseInt(searchParams.get('page') || '1', 10) || 1,
-    mode: ['autocomplete', 'full'].includes(mode) ? mode : 'full',
-  };
-
-  const yearFrom = searchParams.get('yearFrom');
-  if (yearFrom) {
-    const year = parseInt(yearFrom, 10);
-    if (!isNaN(year) && year > 0) {
-      params.yearFrom = year;
-    }
-  }
-
-  const yearTo = searchParams.get('yearTo');
-  if (yearTo) {
-    const year = parseInt(yearTo, 10);
-    if (!isNaN(year) && year > 0) {
-      params.yearTo = year;
-    }
-  }
-
-  const language = searchParams.get('language');
-  if (language && language.trim()) {
-    params.language = language.trim();
-  }
-
-  const genreIds = searchParams.get('genreIds');
-  if (genreIds) {
-    params.genreIds = genreIds
-      .split(',')
-      .map((id) => parseInt(id.trim(), 10))
-      .filter((id) => !isNaN(id));
-  }
-
-  const providerIds = searchParams.get('providerIds');
-  if (providerIds) {
-    params.providerIds = providerIds
-      .split(',')
-      .map((id) => parseInt(id.trim(), 10))
-      .filter((id) => !isNaN(id));
-  }
-
-  const watchRegion = searchParams.get('watchRegion');
-  if (watchRegion && watchRegion.trim()) {
-    params.watchRegion = watchRegion.trim().toUpperCase();
-  }
-
-  const minRating = searchParams.get('minRating');
-  if (minRating) {
-    const rating = parseFloat(minRating);
-    if (!isNaN(rating)) {
-      params.minRating = rating;
-    }
-  }
-
-  return params;
-};
-
-/**
  * Maps search parameters to TMDB API parameters for movies.
  * Handles year range mapping (yearFrom/yearTo → year for movies).
  */
-const mapSearchParamsToMovieParams = (params: SearchParams): SearchMoviesParams => {
+const mapSearchParamsToMovieParams = (params: SearchRequest): SearchMoviesParams => {
   const movieParams: SearchMoviesParams = {
     query: params.query,
     page: params.page,
@@ -260,7 +173,7 @@ const mapSearchParamsToMovieParams = (params: SearchParams): SearchMoviesParams 
  * Maps search parameters to TMDB API parameters for TV shows.
  * Handles year range mapping (yearFrom/yearTo → firstAirDateYear for TV).
  */
-const mapSearchParamsToTvParams = (params: SearchParams): SearchTvParams => {
+const mapSearchParamsToTvParams = (params: SearchRequest): SearchTvParams => {
   const tvParams: SearchTvParams = {
     query: params.query,
     page: params.page,
@@ -314,7 +227,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const params = parseSearchParams(req.nextUrl.searchParams);
+  const params = parseSearchRequest(req.nextUrl.searchParams);
 
   if (!params.query) {
     return NextResponse.json({ error: 'Query parameter is required' }, { status: 400 });
