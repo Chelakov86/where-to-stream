@@ -14,12 +14,13 @@
 import { getMovieGenres, getTvGenres } from '@/app/tmdbApi';
 import { withRouteGuard } from '@/app/api/routeGuard';
 import { getClientIdentifier } from '@/app/utils/rateLimiter';
+import { RATE_LIMIT_CONFIG } from '@/app/config';
 
 export async function GET(request: Request) {
   return withRouteGuard(
     {
       identifier: getClientIdentifier(request),
-      rateLimit: { windowMs: 15 * 60 * 1000, maxRequests: 100 },
+      rateLimit: RATE_LIMIT_CONFIG.genres,
       context: 'genres route',
     },
     async () => {

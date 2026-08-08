@@ -9,6 +9,7 @@ import { mapAvailability, AvailabilityResult, isKnownCountryCode } from '@/app/a
 import { normalizeTmdbMedia } from '@/app/titleNormalizer';
 import { withRouteGuard, rateLimitHeaders } from '@/app/api/routeGuard';
 import { getClientIdentifier } from '@/app/utils/rateLimiter';
+import { RATE_LIMIT_CONFIG } from '@/app/config';
 import { detectUserCountry } from '@/app/utils/countryDetection';
 
 /**
@@ -60,7 +61,7 @@ export async function GET(
   return withRouteGuard(
     {
       identifier: getClientIdentifier(req),
-      rateLimit: { windowMs: 15 * 60 * 1000, maxRequests: 50 },
+      rateLimit: RATE_LIMIT_CONFIG.title,
       context: `title route (${req.nextUrl.pathname})`,
     },
     async (rateLimitResult) => {
@@ -131,7 +132,7 @@ export async function GET(
       normalizedTitle.availability = mapAvailability(watchProvidersResponse, validatedCountry);
 
       return NextResponse.json(normalizedTitle, {
-        headers: rateLimitHeaders(rateLimitResult, 50),
+        headers: rateLimitHeaders(rateLimitResult, RATE_LIMIT_CONFIG.title.maxRequests),
       });
     }
   );

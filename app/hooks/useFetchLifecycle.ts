@@ -63,9 +63,12 @@ export function useFetchLifecycle(
 
       try {
         await task(controller.signal);
-        if (abortRef.current === controller) {
-          notifyError(null);
+        // Superseded runs must not report their outcome, even if the task
+        // resolved (e.g. an abort racing an already-completed fetch)
+        if (abortRef.current !== controller) {
+          return 'cancelled';
         }
+        notifyError(null);
         return 'success';
       } catch (err) {
         // Superseded runs must not report their outcome

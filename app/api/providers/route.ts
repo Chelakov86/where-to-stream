@@ -9,6 +9,7 @@ import { getMovieWatchProvidersList, getTvWatchProvidersList } from '@/app/tmdbA
 import { WatchProvider } from '@/app/types';
 import { withRouteGuard } from '@/app/api/routeGuard';
 import { getClientIdentifier } from '@/app/utils/rateLimiter';
+import { RATE_LIMIT_CONFIG } from '@/app/config';
 
 /**
  * GET /api/providers
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
   return withRouteGuard(
     {
       identifier: getClientIdentifier(request),
-      rateLimit: { windowMs: 15 * 60 * 1000, maxRequests: 100 },
+      rateLimit: RATE_LIMIT_CONFIG.providers,
       context: 'providers route',
     },
     async () => {

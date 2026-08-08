@@ -160,6 +160,23 @@ describe('useFetchLifecycle', () => {
     expect(onError).toHaveBeenCalledWith(null);
   });
 
+  it('reports cancelled when a resolved task belongs to a superseded run', async () => {
+    const { result } = renderHook(() => useFetchLifecycle());
+
+    let staleStatus: string | undefined;
+    await act(async () => {
+      const staleRun = result.current.run(async () => {
+        // Resolves after the second run has already started
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      });
+      const currentRun = result.current.run(async () => undefined);
+      staleStatus = await staleRun;
+      await currentRun;
+    });
+
+    expect(staleStatus).toBe('cancelled');
+  });
+
   it('exposes clearError which clears internal state and notifies onError', async () => {
     const onError = jest.fn();
     const { result } = renderHook(() => useFetchLifecycle(onError));

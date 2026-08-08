@@ -19,6 +19,7 @@ import {
 } from '@/app/searchContract';
 import { withRouteGuard, rateLimitHeaders } from '@/app/api/routeGuard';
 import { getClientIdentifier } from '@/app/utils/rateLimiter';
+import { RATE_LIMIT_CONFIG } from '@/app/config';
 
 /**
  * API route handler for searching movies and TV shows.
@@ -146,7 +147,7 @@ export async function GET(req: NextRequest) {
   return withRouteGuard(
     {
       identifier: getClientIdentifier(req),
-      rateLimit: { windowMs: 15 * 60 * 1000, maxRequests: 100 },
+      rateLimit: RATE_LIMIT_CONFIG.search,
       context: 'search route',
     },
     async (rateLimitResult) => {
@@ -221,7 +222,7 @@ export async function GET(req: NextRequest) {
       };
 
       return NextResponse.json(response, {
-        headers: rateLimitHeaders(rateLimitResult, 100),
+        headers: rateLimitHeaders(rateLimitResult, RATE_LIMIT_CONFIG.search.maxRequests),
       });
     }
   );

@@ -30,7 +30,6 @@ jest.mock('@/app/availabilityMapper', () => ({
 // Mock country detection utilities
 jest.mock('@/app/utils/countryDetection', () => ({
   detectUserCountry: jest.fn(),
-  validateCountryCode: jest.fn(),
 }));
 
 // Import the mocked modules AFTER jest.mock calls
@@ -46,7 +45,6 @@ const mockGetTvDetails = tmdbApi.getTvDetails as jest.Mock;
 const mockGetTvWatchProviders = tmdbApi.getTvWatchProviders as jest.Mock;
 const mockMapAvailability = availabilityMapper.mapAvailability as jest.Mock;
 const mockDetectUserCountry = countryDetection.detectUserCountry as jest.Mock;
-const mockValidateCountryCode = countryDetection.validateCountryCode as jest.Mock;
 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
@@ -114,7 +112,6 @@ describe('GET /api/title/[type]/[id]', () => {
 
     // Default: detect US and validate it
     mockDetectUserCountry.mockReturnValue('US');
-    mockValidateCountryCode.mockReturnValue('US');
 
     mockMapAvailability.mockReturnValue({
       userCountry: {

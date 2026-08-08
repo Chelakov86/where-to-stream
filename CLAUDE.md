@@ -68,7 +68,7 @@ where-to-stream/
 │   │   ├── genres/route.ts       # GET /api/genres
 │   │   ├── search/route.ts       # GET /api/search
 │   │   ├── title/[type]/[id]/route.ts  # GET /api/title/:type/:id
-│   │   └── errorMapping.ts       # TMDB to HTTP status mapping
+│   │   └── routeGuard.ts         # Rate limiting + error responses
 │   ├── components/               # React components
 │   │   ├── AutocompleteList.tsx
 │   │   ├── ErrorBanner.tsx
@@ -366,9 +366,8 @@ if (!data) {
 
 #### 6. Error Handling
 
-- TMDB errors are mapped to HTTP status codes in `app/api/errorMapping.ts`
-- API routes should catch `TmdbError` and return appropriate responses
-- Components receive standardized error messages
+- Route handlers are wrapped by the route guard (`app/api/routeGuard.ts`), which enforces rate limits (429 + headers) and maps `TmdbError` to HTTP status codes (503 for retryable statuses, 502 otherwise; everything else → 500)
+- API routes should return their own logic inside `withRouteGuard` and never re-implement failure handling
 
 ---
 

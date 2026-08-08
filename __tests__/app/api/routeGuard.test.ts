@@ -6,6 +6,13 @@ import {
 } from '@/app/api/routeGuard';
 import { TmdbError } from '@/app/tmdbClient';
 import { clearRateLimits } from '@/app/utils/rateLimiter';
+import { logger } from '@/app/utils/logger';
+
+jest.mock('@/app/utils/logger', () => ({
+  logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() },
+}));
+
+const mockedLogger = logger as jest.Mocked<typeof logger>;
 
 const RATE_LIMIT_ERROR_MESSAGE = 'Rate limit exceeded. Please try again later.';
 const TMDB_ERROR_MESSAGE = 'Error fetching data from TMDB.';
@@ -127,6 +134,18 @@ describe('route guard', () => {
     it('returns 500 for non-TMDB errors', () => {
       const response = handleRouteError(new Error('boom'), 'test route');
       expect(response.status).toBe(500);
+    });
+
+    it('logs every handled error', () => {
+      handleRouteError(new Error('boom'), 'test route');
+      expect(mockedLogger.error).toHaveBeenCalled();
+
+      mockedLogger.error.mockClear();
+      handleRouteError(new TmdbError(500, 'TMDB down'), 'test route');
+      expect(mockedLogger.error).toHaveBeenCalledWith('TMDB API error in test route', {
+        status: 500,
+        message: 'TMDB API error: 500 TMDB down',
+      });
     });
 
     it('returns a mapped status for TMDB errors', () => {
