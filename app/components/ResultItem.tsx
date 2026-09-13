@@ -24,7 +24,7 @@ export const ResultItem: React.FC<ResultItemProps> = ({
   return (
     <article
       aria-labelledby={titleId}
-      className={`group h-full cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#141a22]/[0.88] text-text shadow-[0_18px_50px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 hover:border-accent-primary/[0.35] hover:shadow-[0_24px_70px_rgba(0,0,0,0.32)] ${
+      className={`group h-full cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#141a22]/[0.88] text-foreground shadow-[0_18px_50px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 hover:border-primary/[0.35] hover:shadow-[0_24px_70px_rgba(0,0,0,0.32)] ${
         isFeatured
           ? 'grid gap-5 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:p-5 lg:grid-cols-[13rem_minmax(0,1fr)]'
           : 'flex gap-3 p-3'
@@ -54,7 +54,7 @@ export const ResultItem: React.FC<ResultItemProps> = ({
                 : 'h-[7.5rem] w-20 sm:h-[8.5rem] sm:w-24'
             }`}
           >
-            <span className="text-xs font-black uppercase tracking-[0.12em] text-text-secondary">
+            <span className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">
               No Image
             </span>
           </div>
@@ -62,13 +62,13 @@ export const ResultItem: React.FC<ResultItemProps> = ({
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         {isFeatured && (
-          <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-accent-primary">
+          <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-primary">
             Best match
           </p>
         )}
         <h3
           id={titleId}
-          className={`font-black leading-tight text-text ${
+          className={`font-black leading-tight text-foreground ${
             isFeatured ? 'text-2xl sm:text-3xl' : 'text-base sm:text-lg'
           }`}
         >
@@ -78,8 +78,8 @@ export const ResultItem: React.FC<ResultItemProps> = ({
           <span
             className={`rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] ${
               type === 'movie'
-                ? 'bg-accent-secondary/[0.16] text-accent-secondary'
-                : 'bg-[#b28cff]/[0.18] text-[#d8c6ff]'
+                ? 'bg-success/15 text-success'
+                : 'bg-secondary text-secondary-foreground'
             }`}
           >
             {type === 'movie' ? 'Movie' : 'Series'}
@@ -87,7 +87,7 @@ export const ResultItem: React.FC<ResultItemProps> = ({
           {rating && (
             <div className="flex items-center text-sm font-black text-[#ffd36e]">
               <span aria-hidden="true">★</span>
-              <span className="ml-1 text-text">{rating.toFixed(1)}</span>
+              <span className="ml-1 text-foreground">{rating.toFixed(1)}</span>
             </div>
           )}
         </div>
@@ -95,14 +95,14 @@ export const ResultItem: React.FC<ResultItemProps> = ({
           {displayedGenres.map((genre) => (
             <span
               key={genre}
-              className="rounded-md bg-white/[0.06] px-2 py-1 text-[11px] font-bold text-text-secondary"
+              className="rounded-md bg-white/[0.06] px-2 py-1 text-[11px] font-bold text-muted-foreground"
             >
               {genre}
             </span>
           ))}
         </div>
         {isFeatured && (
-          <p className="mt-5 max-w-2xl text-sm font-semibold leading-6 text-text-secondary">
+          <p className="mt-5 max-w-2xl text-sm font-semibold leading-6 text-muted-foreground">
             {result.overview ||
               'Open details to compare streaming availability by country and provider.'}
           </p>
@@ -113,7 +113,7 @@ export const ResultItem: React.FC<ResultItemProps> = ({
               event.stopPropagation();
               onSelectResult(result);
             }}
-            className="rounded-lg bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#10141a] transition hover:bg-accent-primary focus:outline-none focus:ring-4 focus:ring-accent-primary/25"
+            className="rounded-lg bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#10141a] transition hover:bg-primary focus:outline-none focus:ring-4 focus:ring-primary/25"
           >
             Details
           </button>

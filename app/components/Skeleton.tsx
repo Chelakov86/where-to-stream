@@ -81,7 +81,7 @@ export const ResultItemSkeleton: React.FC = () => (
  */
 export const ResultDetailsSkeleton: React.FC = () => (
   <section
-    className="mx-auto max-w-5xl rounded-2xl border border-white/10 bg-[#141a22]/[0.88] p-4 text-text shadow-[0_28px_80px_rgba(0,0,0,0.3)] sm:p-5 md:p-6"
+    className="mx-auto max-w-5xl rounded-2xl border border-white/10 bg-[#141a22]/[0.88] p-4 text-foreground shadow-[0_28px_80px_rgba(0,0,0,0.3)] sm:p-5 md:p-6"
     role="status"
     aria-label="Loading title details"
   >

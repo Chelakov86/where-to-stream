@@ -82,11 +82,11 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
   };
 
   return (
-    <aside className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-text shadow-[0_24px_70px_rgba(0,0,0,0.22)] lg:mt-[8.25rem]">
+    <aside className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-foreground shadow-[0_24px_70px_rgba(0,0,0,0.22)] lg:mt-[8.25rem]">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-black">Search History</h2>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-text-secondary">
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Recently viewed
           </p>
         </div>
@@ -109,7 +109,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
               <button
                 type="button"
                 onClick={handleClearHistory}
-                className="rounded-md px-2 py-1 text-xs font-black uppercase tracking-[0.12em] text-text-secondary transition hover:bg-red-500/[0.12] hover:text-red-100"
+                className="rounded-md px-2 py-1 text-xs font-black uppercase tracking-[0.12em] text-muted-foreground transition hover:bg-red-500/[0.12] hover:text-red-100"
                 aria-label="Clear all search history"
               >
                 Clear All
@@ -117,7 +117,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
             </div>
           )}
           {history.length === 0 ? (
-            <p className="py-5 text-center text-sm leading-6 text-text-secondary">
+            <p className="py-5 text-center text-sm leading-6 text-muted-foreground">
               No viewed titles yet. Titles you view will appear here.
             </p>
           ) : (
@@ -130,11 +130,11 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
                   <button
                     type="button"
                     onClick={() => onSelectTitle(item.id, item.type)}
-                    className="min-w-0 flex-1 text-left text-sm transition hover:text-accent-primary"
+                    className="min-w-0 flex-1 text-left text-sm transition hover:text-primary"
                     aria-label={`View ${formatTitle(item)}`}
                   >
                     <div className="truncate font-black">{formatTitle(item)}</div>
-                    <div className="mt-0.5 text-xs font-semibold text-text-secondary">
+                    <div className="mt-0.5 text-xs font-semibold text-muted-foreground">
                       {formatTimestamp(item.timestamp)}
                     </div>
                   </button>

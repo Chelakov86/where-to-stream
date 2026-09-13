@@ -115,8 +115,8 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
           }}
           className={`flex cursor-pointer items-center gap-3 rounded-lg p-2 transition ${
             index === highlightedIndex
-              ? 'bg-accent-primary/[0.14] text-text'
-              : 'text-text-secondary hover:bg-white/[0.06] hover:text-text'
+              ? 'bg-primary/[0.14] text-foreground'
+              : 'text-muted-foreground hover:bg-white/[0.06] hover:text-foreground'
           }`}
           onMouseEnter={() => setHighlightedIndex(index)}
           onClick={() => onSelect(item)}
@@ -133,14 +133,14 @@ export const AutocompleteList: React.FC<AutocompleteListProps> = ({
             />
           ) : (
             <div className="grid h-[66px] w-11 place-items-center rounded-md border border-white/10 bg-white/[0.06]">
-              <span className="text-[10px] font-bold uppercase text-text-secondary">No art</span>
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">No art</span>
             </div>
           )}
           <div className="min-w-0 flex-grow">
             <p className="truncate text-sm font-black text-inherit">{item.title}</p>
-            <div className="mt-1 flex items-center gap-2 text-xs font-bold text-text-secondary">
+            <div className="mt-1 flex items-center gap-2 text-xs font-bold text-muted-foreground">
               <span>{item.year || 'Unknown year'}</span>
-              <span className="h-1 w-1 rounded-full bg-text-secondary/50" />
+              <span className="h-1 w-1 rounded-full bg-muted-foreground/50" />
               <span className="uppercase tracking-[0.12em]">
                 {item.type === 'movie' ? 'Movie' : 'Series'}
               </span>

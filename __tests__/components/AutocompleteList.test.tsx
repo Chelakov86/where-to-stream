@@ -54,9 +54,9 @@ describe('AutocompleteList', () => {
       <AutocompleteList items={mockItems} isOpen={true} onSelect={onSelect} onClose={onClose} />
     );
     const secondItem = screen.getByText('Breaking Bad').closest('li');
-    expect(secondItem).not.toHaveClass('bg-accent-primary/[0.14]');
+    expect(secondItem).not.toHaveClass('bg-primary/[0.14]');
     fireEvent.mouseEnter(secondItem!);
-    expect(secondItem).toHaveClass('bg-accent-primary/[0.14]');
+    expect(secondItem).toHaveClass('bg-primary/[0.14]');
     fireEvent.click(secondItem!);
     expect(onSelect).toHaveBeenCalledWith(mockItems[1]);
   });
@@ -68,23 +68,21 @@ describe('AutocompleteList', () => {
     const input = container.querySelector('ul'); // The list itself will capture these events
 
     // No item is highlighted initially
-    expect(screen.getByText('Inception').closest('li')).not.toHaveClass('bg-accent-primary/[0.14]');
+    expect(screen.getByText('Inception').closest('li')).not.toHaveClass('bg-primary/[0.14]');
 
     // Press down arrow, first item should be highlighted
     fireEvent.keyDown(input!, { key: 'ArrowDown' });
-    expect(screen.getByText('Inception').closest('li')).toHaveClass('bg-accent-primary/[0.14]');
+    expect(screen.getByText('Inception').closest('li')).toHaveClass('bg-primary/[0.14]');
 
     // Press down arrow, second item should be highlighted
     fireEvent.keyDown(input!, { key: 'ArrowDown' });
-    expect(screen.getByText('Inception').closest('li')).not.toHaveClass('bg-accent-primary/[0.14]');
-    expect(screen.getByText('Breaking Bad').closest('li')).toHaveClass('bg-accent-primary/[0.14]');
+    expect(screen.getByText('Inception').closest('li')).not.toHaveClass('bg-primary/[0.14]');
+    expect(screen.getByText('Breaking Bad').closest('li')).toHaveClass('bg-primary/[0.14]');
 
     // Press up arrow, first item should be highlighted again
     fireEvent.keyDown(input!, { key: 'ArrowUp' });
-    expect(screen.getByText('Inception').closest('li')).toHaveClass('bg-accent-primary/[0.14]');
-    expect(screen.getByText('Breaking Bad').closest('li')).not.toHaveClass(
-      'bg-accent-primary/[0.14]'
-    );
+    expect(screen.getByText('Inception').closest('li')).toHaveClass('bg-primary/[0.14]');
+    expect(screen.getByText('Breaking Bad').closest('li')).not.toHaveClass('bg-primary/[0.14]');
 
     // Press Enter, onSelect should be called with the first item
     fireEvent.keyDown(input!, { key: 'Enter' });
@@ -108,13 +106,11 @@ describe('AutocompleteList', () => {
 
     // Press up arrow, last item should be highlighted
     fireEvent.keyDown(input!, { key: 'ArrowUp' });
-    expect(screen.getByText('The Dark Knight').closest('li')).toHaveClass(
-      'bg-accent-primary/[0.14]'
-    );
+    expect(screen.getByText('The Dark Knight').closest('li')).toHaveClass('bg-primary/[0.14]');
 
     // Press down arrow, first item should be highlighted
     fireEvent.keyDown(input!, { key: 'ArrowDown' });
-    expect(screen.getByText('Inception').closest('li')).toHaveClass('bg-accent-primary/[0.14]');
+    expect(screen.getByText('Inception').closest('li')).toHaveClass('bg-primary/[0.14]');
   });
 
   it('uses listbox semantics with options reflecting the highlighted state', () => {

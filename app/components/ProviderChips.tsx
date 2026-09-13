@@ -57,10 +57,10 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
           }}
           className={`
           h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-white shadow-lg shadow-black/20 transition-all
-          focus:outline-none focus:ring-2 focus:ring-accent-primary/70
+          focus:outline-none focus:ring-2 focus:ring-primary/70
           ${
             isSelected
-              ? 'scale-105 ring-2 ring-accent-primary shadow-[0_0_24px_rgba(246,185,75,0.22)]'
+              ? 'scale-105 ring-2 ring-primary shadow-[0_0_24px_rgba(246,185,75,0.22)]'
               : 'ring-1 ring-white/[0.14] opacity-70 hover:-translate-y-0.5 hover:opacity-100 hover:ring-white/30'
           }
         `}
@@ -68,7 +68,7 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
           {logoUrl ? (
             <img src={logoUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-white/[0.08] text-xs font-black text-text-secondary">
+            <div className="flex h-full w-full items-center justify-center bg-white/[0.08] text-xs font-black text-muted-foreground">
               ?
             </div>
           )}
@@ -86,19 +86,19 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search providers..."
-        className="w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2.5 text-sm font-semibold text-text outline-none transition placeholder:text-text-secondary/60 focus:border-accent-primary/70 focus:ring-2 focus:ring-accent-primary/20"
+        className="w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2.5 text-sm font-semibold text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
         aria-label="Search streaming providers"
       />
 
       {filtered.length === 0 && (
-        <p className="text-sm text-text-secondary">No providers match &quot;{search}&quot;</p>
+        <p className="text-sm text-muted-foreground">No providers match &quot;{search}&quot;</p>
       )}
 
       {/* Popular section */}
       {popular.length > 0 && (
         <div>
           {!search && (
-            <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-text-secondary">
+            <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">
               Popular
             </span>
           )}
@@ -110,7 +110,7 @@ const ProviderChips: React.FC<ProviderChipsProps> = ({
       {others.length > 0 && (
         <div>
           {!search && popular.length > 0 && (
-            <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-text-secondary">
+            <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">
               All providers
             </span>
           )}

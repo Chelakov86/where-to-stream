@@ -135,10 +135,10 @@ export default function Home() {
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
           <div>
             <div className="max-w-3xl">
-              <h1 className="text-balance text-4xl font-black tracking-normal text-text sm:text-5xl md:text-6xl">
+              <h1 className="text-balance text-4xl font-black tracking-normal text-foreground sm:text-5xl md:text-6xl">
                 WhereToStream
               </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">
+              <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
                 Find where your favorite movies and TV shows are streaming before the trailer ends.
               </p>
             </div>
@@ -173,7 +173,7 @@ export default function Home() {
           </div>
           <section className="relative min-h-[8rem]">
             {isSearching && (
-              <div className="absolute inset-0 z-10 grid place-items-center rounded-xl border border-accent-primary/20 bg-background/[0.85] text-sm font-black uppercase tracking-[0.18em] text-accent-primary shadow-2xl shadow-black/40 backdrop-blur-md">
+              <div className="absolute inset-0 z-10 grid place-items-center rounded-xl border border-primary/20 bg-background/[0.85] text-sm font-black uppercase tracking-[0.18em] text-primary shadow-2xl shadow-black/40 backdrop-blur-md">
                 Searching...
               </div>
             )}
@@ -188,21 +188,21 @@ export default function Home() {
                 genreNamesById={genreNamesById}
               />
             ) : shouldShowNoResults ? (
-              <div className="max-w-xl border-l border-accent-primary/40 py-2 pl-5">
-                <p className="text-lg font-bold text-text">
+              <div className="max-w-xl border-l border-primary/40 py-2 pl-5">
+                <p className="text-lg font-bold text-foreground">
                   No titles found. Please check the spelling or try a different title.
                 </p>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   Shorter queries usually work better for older films, foreign-language releases,
                   and alternate titles.
                 </p>
               </div>
             ) : shouldShowInitialPrompt ? (
               <div className="max-w-xl border-l border-white/15 py-2 pl-5">
-                <p className="text-lg font-bold text-text">
+                <p className="text-lg font-bold text-foreground">
                   Search for a movie or series to see where it&apos;s streaming.
                 </p>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   Start with the title, then refine by country, service, year, or format only if the
                   first answer is noisy.
                 </p>

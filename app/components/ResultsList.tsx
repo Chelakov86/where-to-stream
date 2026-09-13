@@ -31,19 +31,19 @@ export const ResultsList: React.FC<ResultsListProps> = ({
   }
 
   if (results.length === 0) {
-    return <p className="text-center text-text-secondary">No results found.</p>;
+    return <p className="text-center text-muted-foreground">No results found.</p>;
   }
 
   return (
     <div className="space-y-5" aria-live="polite">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-text sm:text-3xl">Search results</h2>
-          <p className="mt-1 text-sm font-semibold text-text-secondary">
+          <h2 className="text-2xl font-black text-foreground sm:text-3xl">Search results</h2>
+          <p className="mt-1 text-sm font-semibold text-muted-foreground">
             Best match first, then adjacent titles and alternates.
           </p>
         </div>
-        <p className="hidden text-xs font-black uppercase tracking-[0.16em] text-text-secondary sm:block">
+        <p className="hidden text-xs font-black uppercase tracking-[0.16em] text-muted-foreground sm:block">
           {results.length} titles
         </p>
       </div>
@@ -77,7 +77,7 @@ export const ResultsList: React.FC<ResultsListProps> = ({
         >
           Previous
         </button>
-        <span className="text-sm font-bold text-text-secondary">
+        <span className="text-sm font-bold text-muted-foreground">
           Page {page} of {totalPages}
         </span>
         <button

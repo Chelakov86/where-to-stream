@@ -86,8 +86,8 @@ const CountryPicker: React.FC<CountryPickerProps> = ({ value, onChange, fieldCla
           onClick={() => selectCountry(code)}
           className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition ${
             isSelected
-              ? 'border-accent-primary/40 bg-accent-primary/[0.16] text-text'
-              : 'border-white/[0.08] bg-white/[0.045] text-text-secondary hover:border-white/20 hover:bg-white/[0.08] hover:text-text'
+              ? 'border-primary/40 bg-primary/[0.16] text-foreground'
+              : 'border-white/[0.08] bg-white/[0.045] text-muted-foreground hover:border-white/20 hover:bg-white/[0.08] hover:text-foreground'
           }`}
           role="option"
           aria-selected={isSelected}
@@ -99,7 +99,7 @@ const CountryPicker: React.FC<CountryPickerProps> = ({ value, onChange, fieldCla
             loading="lazy"
           />
           <span className="min-w-0 flex-1 truncate text-sm font-black">{name}</span>
-          <span className="rounded-md bg-white/[0.08] px-2 py-1 text-[11px] font-black text-text-secondary">
+          <span className="rounded-md bg-white/[0.08] px-2 py-1 text-[11px] font-black text-muted-foreground">
             {code}
           </span>
         </button>
@@ -134,11 +134,11 @@ const CountryPicker: React.FC<CountryPickerProps> = ({ value, onChange, fieldCla
           ) : (
             <span className="h-[15px] w-5 rounded-[2px] border border-white/20 bg-white/[0.08]" />
           )}
-          <span className={`truncate ${value ? 'text-text' : 'text-text-secondary/70'}`}>
+          <span className={`truncate ${value ? 'text-foreground' : 'text-muted-foreground/70'}`}>
             {selectedCountry || 'Select streaming country'}
           </span>
         </span>
-        <span className="rounded-md bg-accent-primary/15 px-2 py-1 text-xs font-black text-accent-primary">
+        <span className="rounded-md bg-primary/15 px-2 py-1 text-xs font-black text-primary">
           {value || 'SET'}
         </span>
       </button>
@@ -151,7 +151,7 @@ const CountryPicker: React.FC<CountryPickerProps> = ({ value, onChange, fieldCla
               value={countrySearch}
               onChange={(event) => setCountrySearch(event.target.value)}
               placeholder="Search country or code"
-              className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-text outline-none placeholder:text-text-secondary/60 focus:border-accent-primary/70 focus:ring-2 focus:ring-accent-primary/20"
+              className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
               aria-label="Search countries"
               autoFocus
             />
@@ -159,7 +159,7 @@ const CountryPicker: React.FC<CountryPickerProps> = ({ value, onChange, fieldCla
               <button
                 type="button"
                 onClick={clearCountry}
-                className="rounded-lg border border-white/10 bg-white/[0.05] px-3 text-xs font-black uppercase tracking-[0.12em] text-text-secondary transition hover:bg-white/[0.09] hover:text-text"
+                className="rounded-lg border border-white/10 bg-white/[0.05] px-3 text-xs font-black uppercase tracking-[0.12em] text-muted-foreground transition hover:bg-white/[0.09] hover:text-foreground"
               >
                 Clear
               </button>
@@ -168,7 +168,7 @@ const CountryPicker: React.FC<CountryPickerProps> = ({ value, onChange, fieldCla
 
           {!countrySearch && (
             <div className="mt-3">
-              <p className="mb-2 px-1 text-xs font-black uppercase tracking-[0.16em] text-text-secondary">
+              <p className="mb-2 px-1 text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Popular countries
               </p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -179,8 +179,8 @@ const CountryPicker: React.FC<CountryPickerProps> = ({ value, onChange, fieldCla
                     onClick={() => selectCountry(code)}
                     className={`flex min-w-0 items-center gap-2 rounded-lg border px-2 py-2 text-left text-xs font-black transition ${
                       code === value
-                        ? 'border-accent-primary/50 bg-accent-primary/[0.14] text-text'
-                        : 'border-white/10 bg-white/[0.04] text-text-secondary hover:border-white/20 hover:text-text'
+                        ? 'border-primary/50 bg-primary/[0.14] text-foreground'
+                        : 'border-white/10 bg-white/[0.04] text-muted-foreground hover:border-white/20 hover:text-foreground'
                     }`}
                   >
                     <img
@@ -189,7 +189,7 @@ const CountryPicker: React.FC<CountryPickerProps> = ({ value, onChange, fieldCla
                       className="h-[15px] w-5 rounded-[2px] object-cover"
                     />
                     <span className="min-w-0 truncate">{COUNTRY_NAMES[code]}</span>
-                    <span className="ml-auto text-[10px] text-text-secondary">{code}</span>
+                    <span className="ml-auto text-[10px] text-muted-foreground">{code}</span>
                   </button>
                 ))}
               </div>
@@ -204,7 +204,7 @@ const CountryPicker: React.FC<CountryPickerProps> = ({ value, onChange, fieldCla
             {filteredCountries.length > 0 ? (
               filteredCountries.map(renderCountryOption)
             ) : (
-              <li className="px-3 py-4 text-center text-sm font-semibold text-text-secondary">
+              <li className="px-3 py-4 text-center text-sm font-semibold text-muted-foreground">
                 No countries match &quot;{countrySearch}&quot;
               </li>
             )}
@@ -433,14 +433,14 @@ const SearchForm: React.FC<SearchFormProps> = ({
   };
 
   const fieldClass =
-    'w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2.5 text-sm font-semibold text-text outline-none transition placeholder:text-text-secondary/60 focus:border-accent-primary/70 focus:bg-white/[0.09] focus:ring-2 focus:ring-accent-primary/20';
-  const labelClass = 'block text-xs font-black uppercase tracking-[0.16em] text-text-secondary';
+    'w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2.5 text-sm font-semibold text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-primary/70 focus:bg-white/[0.09] focus:ring-2 focus:ring-primary/20';
+  const labelClass = 'block text-xs font-black uppercase tracking-[0.16em] text-muted-foreground';
   const filterPanelClass = 'rounded-xl border border-white/10 bg-black/[0.18] p-4';
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative z-20 rounded-2xl border border-white/[0.12] bg-[#121821]/[0.85] p-3 text-text shadow-[0_28px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl sm:p-4"
+      className="relative z-20 rounded-2xl border border-white/[0.12] bg-[#121821]/[0.85] p-3 text-foreground shadow-[0_28px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl sm:p-4"
     >
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_11rem]">
         <div ref={wrapperRef} className="relative">
@@ -456,7 +456,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
             onChange={handleQueryChange}
             onKeyDown={handleInputKeyDown}
             placeholder="Search for a movie or series"
-            className="h-14 w-full rounded-xl border border-white/[0.12] bg-[#eef1ea] px-4 text-base font-black text-[#10141a] shadow-inner outline-none transition placeholder:text-[#59615b] focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/20 sm:px-5 sm:text-lg"
+            className="h-14 w-full rounded-xl border border-white/[0.12] bg-[#eef1ea] px-4 text-base font-black text-[#10141a] shadow-inner outline-none transition placeholder:text-[#59615b] focus:border-primary focus:ring-4 focus:ring-primary/20 sm:px-5 sm:text-lg"
             aria-autocomplete="list"
             aria-haspopup="listbox"
             aria-controls={autocompleteListId}
@@ -490,7 +490,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
         <button
           type="submit"
-          className="h-14 rounded-xl bg-accent-primary px-6 text-sm font-black uppercase tracking-[0.14em] text-[#161006] shadow-[0_16px_34px_rgba(246,185,75,0.22)] transition hover:-translate-y-0.5 hover:bg-[#ffcb66] focus:outline-none focus:ring-4 focus:ring-accent-primary/25"
+          className="h-14 rounded-xl bg-primary px-6 text-sm font-black uppercase tracking-[0.14em] text-[#161006] shadow-[0_16px_34px_rgba(246,185,75,0.22)] transition hover:-translate-y-0.5 hover:bg-[#ffcb66] focus:outline-none focus:ring-4 focus:ring-primary/25"
         >
           Search
         </button>
@@ -500,7 +500,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
         <button
           type="button"
           onClick={() => setShowFilters(!showFilters)}
-          className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-black text-text transition hover:border-white/20 hover:bg-white/[0.07]"
+          className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-black text-foreground transition hover:border-white/20 hover:bg-white/[0.07]"
           aria-expanded={showFilters}
           aria-controls="filter-section"
           aria-label={showFilters ? 'Hide search filters' : 'Show search filters'}
@@ -508,12 +508,12 @@ const SearchForm: React.FC<SearchFormProps> = ({
           <span className="flex items-center gap-3">
             <span>{showFilters ? 'Hide filters' : 'Refine search'}</span>
             {activeFilterCount > 0 && (
-              <span className="rounded-full bg-accent-secondary/[0.18] px-2.5 py-1 text-xs font-black text-accent-secondary">
+              <span className="rounded-full bg-success/15 px-2.5 py-1 text-xs font-black text-success">
                 {activeFilterCount} active
               </span>
             )}
           </span>
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-white/[0.08] text-lg leading-none text-accent-primary">
+          <span className="grid h-7 w-7 place-items-center rounded-md bg-white/[0.08] text-lg leading-none text-primary">
             {showFilters ? '−' : '+'}
           </span>
         </button>
@@ -521,7 +521,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
       <div id="filter-section" className={`mt-4 space-y-4 ${showFilters ? '' : 'hidden'}`}>
         <div className={filterPanelClass}>
-          <h3 className="mb-4 text-sm font-black text-text">Format and release</h3>
+          <h3 className="mb-4 text-sm font-black text-foreground">Format and release</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label htmlFor="type" className={labelClass}>
@@ -595,7 +595,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           <div className="mt-4 border-t border-white/10 pt-4">
             <div className="flex items-center justify-between">
               <span className={labelClass}>Minimum Rating</span>
-              <label htmlFor="minRating" className="text-xs font-black text-accent-primary">
+              <label htmlFor="minRating" className="text-xs font-black text-primary">
                 ★ <span>{minRating.toFixed(1)}</span>
               </label>
             </div>
@@ -609,7 +609,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 step="0.5"
                 value={minRating}
                 onChange={(e) => setMinRating(Number(e.target.value))}
-                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-white/10 accent-accent-primary"
+                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-white/10 accent-primary"
                 aria-label="Filter by minimum rating"
                 aria-valuemin={0}
                 aria-valuemax={10}
@@ -620,15 +620,15 @@ const SearchForm: React.FC<SearchFormProps> = ({
         </div>
 
         <div className={filterPanelClass}>
-          <label className="mb-3 block text-sm font-black text-text">Genres</label>
+          <label className="mb-3 block text-sm font-black text-foreground">Genres</label>
           {isGenresLoading ? (
-            <p className="text-sm text-text-secondary">Loading filters...</p>
+            <p className="text-sm text-muted-foreground">Loading filters...</p>
           ) : Array.isArray(genres) && genres.length > 0 ? (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
               {genres.map((genre) => (
                 <label
                   key={genre.id}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-text-secondary transition hover:border-white/[0.18] hover:text-text"
+                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:border-white/[0.18] hover:text-foreground"
                 >
                   <input
                     type="checkbox"
@@ -642,14 +642,14 @@ const SearchForm: React.FC<SearchFormProps> = ({
                         setSelectedGenres(selectedGenres.filter((id) => id !== genre.id));
                       }
                     }}
-                    className="h-4 w-4 rounded border-white/20 bg-white/10 accent-accent-primary"
+                    className="h-4 w-4 rounded border-white/20 bg-white/10 accent-primary"
                   />
                   <span>{genre.name}</span>
                 </label>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-text-secondary">No genres available</p>
+            <p className="text-sm text-muted-foreground">No genres available</p>
           )}
         </div>
 
@@ -666,13 +666,15 @@ const SearchForm: React.FC<SearchFormProps> = ({
           </div>
 
           <div>
-            <label className="mb-3 block text-sm font-black text-text">Streaming services</label>
+            <label className="mb-3 block text-sm font-black text-foreground">
+              Streaming services
+            </label>
             {!watchRegion ? (
-              <p className="rounded-lg border border-accent-primary/20 bg-accent-primary/10 p-3 text-sm font-semibold text-[#ffd98d]">
+              <p className="rounded-lg border border-primary/20 bg-primary/10 p-3 text-sm font-semibold text-[#ffd98d]">
                 Please select a country above to view available streaming providers.
               </p>
             ) : isProvidersLoading ? (
-              <p className="text-sm text-text-secondary">Loading providers...</p>
+              <p className="text-sm text-muted-foreground">Loading providers...</p>
             ) : Array.isArray(providers) && providers.length > 0 ? (
               <div>
                 <ProviderChips
@@ -682,7 +684,9 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 />
               </div>
             ) : (
-              <p className="text-sm text-text-secondary">No providers available for this region</p>
+              <p className="text-sm text-muted-foreground">
+                No providers available for this region
+              </p>
             )}
           </div>
         </div>
@@ -692,7 +696,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
             <button
               type="button"
               onClick={handleClearFilters}
-              className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-black text-text-secondary transition hover:border-red-300/40 hover:bg-red-500/10 hover:text-red-100"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-black text-muted-foreground transition hover:border-red-300/40 hover:bg-red-500/10 hover:text-red-100"
               aria-label="Clear all filters"
             >
               Clear all filters ({activeFilterCount})
