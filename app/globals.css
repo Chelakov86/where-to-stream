@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    border-color: var(--border);
+  }
+
   :root {
     --radius: 0.625rem;
 

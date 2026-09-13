@@ -60,6 +60,8 @@ const config: Config = {
         lg: 'var(--radius)',
         xl: 'calc(var(--radius) + 4px)',
         '2xl': 'calc(var(--radius) + 8px)',
+        '3xl': 'calc(var(--radius) + 12px)',
+        '4xl': 'calc(var(--radius) + 16px)',
       },
       fontFamily: {
         display: ['var(--font-display)'],
