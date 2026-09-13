@@ -128,7 +128,8 @@ Screenshots and videos are captured on failure and saved in `test-results/`. Use
 
 ## CI/CD Integration
 
-Tests run automatically on push and pull requests via GitHub Actions (`.github/workflows/playwright.yml`).
+The suite runs on GitHub Actions (`.github/workflows/playwright.yml`) only when dispatched manually,
+e.g. `gh workflow run playwright.yml --ref <branch>`; it does not run on push or pull requests.
 
 The workflow:
 

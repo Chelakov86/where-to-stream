@@ -437,7 +437,7 @@ describe('ComponentName', () => {
 
 **Naming:** `*.e2e.spec.ts`
 
-**Configuration:** Port 3001 for E2E tests (configured in `playwright.config.ts`). The web server is a production build (`next build && next start`) started automatically. Projects: `chromium` runs every spec; `Tablet` and `Mobile Chrome` run only the responsive and visual-regression specs. Snapshots are OS-independent and regenerated with `npx playwright test visual-regression --update-snapshots` after a Playwright upgrade. CI runs the suite via `.github/workflows/playwright.yml`.
+**Configuration:** Port 3001 for E2E tests (configured in `playwright.config.ts`). The web server is a production build (`next build && next start`) started automatically. Projects: `chromium` runs every spec; `Tablet` and `Mobile Chrome` run only the responsive and visual-regression specs. Snapshots are OS-independent and regenerated with `npx playwright test visual-regression --update-snapshots` after a Playwright upgrade. CI runs the suite via `.github/workflows/playwright.yml` on manual dispatch only (`gh workflow run playwright.yml --ref <branch>`).
 
 **Structure:**
 
