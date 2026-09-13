@@ -3,41 +3,55 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    background: #090b10;
+  :root {
+    --radius: 0.625rem;
+
+    --background: 0.18 0.006 70;
+    --foreground: 0.96 0.015 85;
+    --card: 0.25 0.007 70;
+    --card-foreground: 0.96 0.015 85;
+    --popover: 0.22 0.007 70;
+    --popover-foreground: 0.96 0.015 85;
+    --primary: 0.79 0.14 71;
+    --primary-foreground: 0.19 0.012 68;
+    --secondary: 0.3 0.008 70;
+    --secondary-foreground: 0.94 0.012 85;
+    --muted: 0.28 0.007 70;
+    --muted-foreground: 0.72 0.012 80;
+    --accent: 0.34 0.025 71;
+    --accent-foreground: 0.97 0.012 85;
+    --destructive: 0.65 0.18 25;
+    --destructive-foreground: 0.98 0.008 85;
+    --success: 0.74 0.14 151;
+    --success-foreground: 0.18 0.025 151;
+    --warning: 0.8 0.14 80;
+    --warning-foreground: 0.2 0.025 75;
+    --ring: 0.79 0.14 71;
+    --border: oklch(0.96 0.015 85 / 13%);
+    --input: oklch(0.96 0.015 85 / 18%);
   }
 
   body {
-    @apply bg-background text-text;
-    /* Ensure emoji fonts are available as fallback */
-    font-family:
-      Inter,
-      -apple-system,
-      BlinkMacSystemFont,
-      'Segoe UI',
-      Roboto,
-      'Apple Color Emoji',
-      'Segoe UI Emoji',
-      'Segoe UI Symbol',
-      'Noto Color Emoji',
-      sans-serif;
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
   }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      radial-gradient(circle at 18% 8%, rgba(246, 185, 75, 0.13), transparent 28rem),
-      radial-gradient(circle at 86% 12%, rgba(83, 210, 198, 0.12), transparent 30rem),
-      linear-gradient(180deg, #10141d 0%, #090b10 36rem);
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
   }
 
   ::selection {
-    background: rgba(246, 185, 75, 0.32);
-    color: #fff8ea;
+    background-color: oklch(var(--primary) / 32%);
+    color: oklch(var(--foreground));
+  }
+
+  :focus-visible {
+    outline: 2px solid oklch(var(--ring));
+    outline-offset: 2px;
   }
 }
 
@@ -54,10 +68,21 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(100, 116, 139, 0.5);
+    background-color: oklch(var(--muted-foreground) / 50%);
     border-radius: 2px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(148, 163, 184, 0.6);
+    background-color: oklch(var(--foreground) / 40%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
