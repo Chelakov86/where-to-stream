@@ -1,86 +1,67 @@
 import { test, expect } from '../fixtures/test-fixtures';
-import { mockAutocomplete } from '../helpers/api-mock';
+import { mockSearchError } from '../helpers/api-mock';
 
 test.describe('Accessibility', () => {
-  test('should have proper page structure', async ({ homePage }) => {
-    // Check main heading and description
-    await expect(homePage.pageTitle).toBeVisible();
-    await expect(homePage.pageTitle).toHaveText('WhereToStream');
-    await expect(homePage.pageDescription).toBeVisible();
-
-    // Check search form is present
-    await expect(homePage.searchInput).toBeVisible();
-    await expect(homePage.searchButton).toBeVisible();
+  test('has landmarks and a single page heading', async ({ homePage, page }) => {
+    await expect(homePage.header).toBeVisible();
+    await expect(page.getByRole('main')).toBeVisible();
+    await expect(page.getByRole('contentinfo')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   });
 
-  test('should have accessible search form', async ({ homePage }) => {
-    // Check input has label
+  test('labels the header controls', async ({ homePage }) => {
+    await expect(homePage.savedLink).toBeVisible();
+    await expect(homePage.servicesButton).toHaveAccessibleName('My services (0 selected)');
+    await expect(homePage.countryButton).toHaveAccessibleName(
+      'Country: United States. Change country'
+    );
+  });
+
+  test('exposes combobox semantics on the search box', async ({ homePage, page }) => {
     const input = homePage.searchInput;
-    await expect(input).toBeVisible();
-
-    // Check aria attributes
     await expect(input).toHaveAttribute('aria-autocomplete', 'list');
-    await expect(input).toHaveAttribute('aria-haspopup', 'listbox');
+    await expect(input).toHaveAttribute('aria-controls', 'search-suggestions');
+    await expect(input).toHaveAttribute('aria-expanded', 'false');
+
+    await homePage.typeSearchQuery('Fig');
+    await expect(homePage.suggestionList).toHaveAttribute('role', 'listbox');
+    await expect(input).toHaveAttribute('aria-expanded', 'true');
+
+    await page.keyboard.press('ArrowDown');
+    const firstId = await homePage.suggestions.first().getAttribute('id');
+    await expect(input).toHaveAttribute('aria-activedescendant', firstId!);
   });
 
-  test('should have accessible autocomplete', async ({ homePage, page }) => {
-    await mockAutocomplete(page);
-
-    await homePage.typeSearchQuery('test');
-    await homePage.waitForAutocomplete();
-
-    // Check autocomplete list has proper role
-    await expect(homePage.autocompleteList).toHaveAttribute('role', 'listbox');
-
-    // Check items have proper role
-    const firstItem = homePage.autocompleteItems.first();
-    await expect(firstItem).toHaveAttribute('role', 'option');
+  test('uses pressed state for toggle buttons', async ({ homePage }) => {
+    const all = homePage.typeGroup.getByRole('button', { name: 'All' });
+    const series = homePage.typeGroup.getByRole('button', { name: 'Series' });
+    await expect(all).toHaveAttribute('aria-pressed', 'true');
+    await expect(series).toHaveAttribute('aria-pressed', 'false');
   });
 
-  test('should have accessible error banner', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Server error' }),
-      });
-    });
+  test('traps the services dialog and returns focus on close', async ({ homePage, page }) => {
+    await homePage.openServices();
+    await expect(homePage.servicesDialog).toHaveAccessibleDescription(
+      /Pick what you already pay for/
+    );
 
-    await homePage.search('test');
-    await homePage.waitForError();
-
-    // Check error banner has proper role
-    await expect(homePage.errorBanner).toHaveAttribute('role', 'alert');
-
-    // Check dismiss button has proper label
-    await expect(homePage.dismissErrorButton).toHaveAttribute('aria-label', 'Dismiss error');
+    await homePage.closeDialog();
+    await expect(homePage.servicesDialog).toBeHidden();
+    await expect(homePage.servicesButton).toBeFocused();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
-  test('should have accessible filters', async ({ homePage }) => {
-    await homePage.toggleFilters();
-
-    // Check filter toggle button has proper attributes
-    await expect(homePage.filterToggleButton).toHaveAttribute('aria-expanded');
-    await expect(homePage.filterToggleButton).toHaveAttribute('aria-controls', 'filter-section');
-
-    // Check filter section has proper id
-    await expect(homePage.filterSection).toHaveAttribute('id', 'filter-section');
+  test('announces load failures as alerts', async ({ homePage, page }) => {
+    await mockSearchError(page, 500);
+    await homePage.goto();
+    await expect(homePage.errorAlert).toBeVisible();
   });
 
-  test('should have accessible results list', async ({ homePage }) => {
-    await homePage.search('test');
-    await homePage.waitForResults();
-
-    // Check results list has proper role
-    await expect(homePage.resultsList).toHaveAttribute('role', 'list');
-    await expect(homePage.resultsList).toHaveAttribute('aria-live', 'polite');
-  });
-
-  test('should have accessible result details', async ({ homePage }) => {
-    const resultDetailsPage = await homePage.viewDetails('test');
-
-    // Check details section has proper attributes
-    await expect(resultDetailsPage.detailsSection).toHaveAttribute('role', 'region');
-    await expect(resultDetailsPage.detailsSection).toHaveAttribute('aria-labelledby');
+  test('labels availability on the title page', async ({ titlePage, page }) => {
+    await titlePage.gotoTitle('movie', 550);
+    await expect(
+      page.getByRole('region', { name: /Where to watch in United States/ })
+    ).toBeVisible();
+    await expect(titlePage.verdict).toBeVisible();
   });
 });

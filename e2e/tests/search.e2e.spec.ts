@@ -1,88 +1,80 @@
 import { test, expect } from '../fixtures/test-fixtures';
-import { mockSearch, mockEmptySearch } from '../helpers/api-mock';
+import { mockSearch } from '../helpers/api-mock';
 import { sampleSearchResults } from '../helpers/test-data';
 
 test.describe('Search Functionality', () => {
-  test('should display search results', async ({ homePage, page }) => {
-    await mockSearch(page);
-
-    await homePage.search('Fight Club');
+  test('shows popular titles in the user country before searching', async ({ homePage }) => {
+    await expect(homePage.heroHeading).toHaveText('Where can I stream it in United States?');
+    await expect(homePage.resultsHeading).toHaveText('Popular in United States');
     await homePage.waitForResults();
-
-    await expect(homePage.resultsList).toBeVisible();
-    const resultsCount = await homePage.getResultsCount();
-    expect(resultsCount).toBeGreaterThan(0);
+    await expect(homePage.titleCards).toHaveCount(sampleSearchResults.length);
   });
 
-  test('should show no results message when no results found', async ({ homePage, page }) => {
-    await mockEmptySearch(page);
+  test('requests popular titles for the country', async ({ homePage }) => {
+    const request = homePage.nextSearchRequest();
+    await homePage.goto();
+    const params = new URL((await request).url()).searchParams;
 
+    expect(params.get('query')).toBe('');
+    expect(params.get('watchRegion')).toBe('US');
+    expect(params.get('sort')).toBe('popularity');
+  });
+
+  test('searches as you type and keeps the query in the URL', async ({ homePage, page }) => {
+    await homePage.search('Fight Club');
+
+    await expect(homePage.resultsHeading).toHaveText('Results for “Fight Club”');
+    await homePage.waitForResults();
+    expect(new URL(page.url()).searchParams.get('q')).toBe('Fight Club');
+  });
+
+  test('opens a title from the results', async ({ homePage, page }) => {
+    await homePage.waitForResults();
+    await homePage.openTitleCard('Fight Club');
+
+    await page.waitForURL('**/title/movie/550?country=US');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Fight Club');
+  });
+
+  test('shows a no results message', async ({ homePage }) => {
     await homePage.search('nonexistent movie');
-    await homePage.waitForSearchComplete();
-
-    await expect(homePage.noResultsMessage).toBeVisible();
-    await expect(homePage.noResultsMessage).toContainText('No titles found');
+    await expect(homePage.emptyState).toHaveText('No titles found');
   });
 
-  test('should validate empty search query', async ({ homePage }) => {
-    await homePage.searchInput.fill('');
-    await homePage.submitSearch();
+  test('restores a search from a shared URL', async ({ homePage }) => {
+    await homePage.goto('q=Breaking&type=tv');
 
-    // Check for validation error
-    const errorMessage = await homePage.page.locator('#search-form-query-error').textContent();
-    expect(errorMessage).toContain('Please enter a search query');
+    await expect(homePage.searchInput).toHaveValue('Breaking');
+    await expect(homePage.resultsHeading).toHaveText('Results for “Breaking”');
+    await expect(homePage.typeGroup.getByRole('button', { name: 'Series' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 
-  test('should clear search results when new search is performed', async ({ homePage, page }) => {
-    await mockSearch(page);
-
+  test('clears the search back to popular titles', async ({ homePage, page }) => {
     await homePage.search('Fight Club');
-    await homePage.waitForResults();
+    await homePage.clearSearchButton.click();
 
-    await mockEmptySearch(page);
-    await homePage.search('nonexistent');
-    await homePage.waitForSearchComplete();
-
-    await expect(homePage.noResultsMessage).toBeVisible();
+    await expect(homePage.resultsHeading).toHaveText('Popular in United States');
+    expect(new URL(page.url()).searchParams.has('q')).toBe(false);
   });
 
-  test('should navigate pagination across pages', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      const url = new URL(route.request().url());
-      const requestedPage = parseInt(url.searchParams.get('page') || '1', 10);
-
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          page: requestedPage,
-          totalPages: 3,
-          totalResults: 30,
-          results: sampleSearchResults,
-        }),
-      });
-    });
-
-    await homePage.search('test');
+  test('paginates through results', async ({ homePage, page }) => {
+    await mockSearch(page, sampleSearchResults, { totalPages: 3 });
+    await homePage.goto('q=test');
     await homePage.waitForResults();
 
-    // Initial state: first page, next enabled, previous disabled
-    await expect(homePage.paginationPrevious).toBeDisabled();
-    await expect(homePage.paginationNext).toBeEnabled();
+    await expect(homePage.previousPageButton).toBeDisabled();
+    await homePage.nextPageButton.click();
+    await expect(page).toHaveURL(/page=2/);
+    await expect(homePage.pagination).toContainText('Page 2 of 3');
 
-    // Navigate to the last page
-    await homePage.goToNextPage();
-    await homePage.waitForResults();
-    expect(await homePage.getPaginationInfo()).toContain('Page 2');
+    await homePage.nextPageButton.click();
+    await expect(homePage.pagination).toContainText('Page 3 of 3');
+    await expect(homePage.nextPageButton).toBeDisabled();
 
-    await homePage.goToNextPage();
-    await homePage.waitForResults();
-    await expect(homePage.paginationNext).toBeDisabled();
-    await expect(homePage.paginationPrevious).toBeEnabled();
-
-    // Navigate back
-    await homePage.goToPreviousPage();
-    await homePage.waitForResults();
-    expect(await homePage.getPaginationInfo()).toContain('Page 2');
+    await page.goBack();
+    await expect(homePage.pagination).toContainText('Page 2 of 3');
   });
 });

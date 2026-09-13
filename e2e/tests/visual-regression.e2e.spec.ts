@@ -1,108 +1,96 @@
+import { Page } from '@playwright/test';
 import { test, expect } from '../fixtures/test-fixtures';
-import {
-  mockAutocomplete,
-  mockEmptySearch,
-  mockImages,
-  mockSearchError,
-} from '../helpers/api-mock';
+import { mockEmptySearch, mockSearchError } from '../helpers/api-mock';
+
+/** Wait for data, images and fonts so screenshots are stable. */
+async function settle(page: Page): Promise<void> {
+  await page.waitForLoadState('networkidle');
+  await page.evaluate(() => document.fonts.ready);
+}
 
 test.describe('Visual Regression', () => {
-  test('should match home page screenshot', async ({ homePage }) => {
-    await expect(homePage.pageTitle).toBeVisible();
-
-    // Take screenshot
-    await expect(homePage.page).toHaveScreenshot('home-page.png', {
-      fullPage: true,
-    });
+  test('should match home page screenshot', async ({ homePage, page }) => {
+    await homePage.waitForResults();
+    await settle(page);
+    await expect(page).toHaveScreenshot('home-page.png', { fullPage: true });
   });
 
   test('should match search results screenshot', async ({ homePage, page }) => {
-    await mockImages(page);
-
-    await homePage.search('test');
+    await homePage.goto('q=test&type=movie');
     await homePage.waitForResults();
-
-    await expect(homePage.resultsList).toBeVisible();
-
-    // Take screenshot of results
-    await expect(homePage.page).toHaveScreenshot('search-results.png', {
-      fullPage: true,
-    });
+    await settle(page);
+    await expect(page).toHaveScreenshot('search-results.png', { fullPage: true });
   });
 
-  test('should match result details screenshot', async ({ homePage, page }) => {
-    await mockImages(page);
-    const resultDetailsPage = await homePage.viewDetails('test');
+  test('should match title page screenshot', async ({ titlePage, page }) => {
+    await titlePage.gotoTitle('movie', 550);
+    await titlePage.waitForTitle();
+    await settle(page);
+    await expect(page).toHaveScreenshot('title-page.png', { fullPage: true });
+  });
 
-    // Take screenshot of details
-    await expect(resultDetailsPage.detailsSection).toHaveScreenshot('result-details.png');
+  test('should match country comparison screenshot', async ({ countriesPage, page }) => {
+    await countriesPage.gotoCountries('movie', 550);
+    await expect(countriesPage.countryCards).toHaveCount(3);
+    await settle(page);
+    await expect(page).toHaveScreenshot('countries-page.png', { fullPage: true });
+  });
+
+  test('should match saved titles empty state screenshot', async ({ savedPage, page }) => {
+    await savedPage.gotoSaved();
+    await expect(savedPage.emptyState).toBeVisible();
+    await settle(page);
+    await expect(page).toHaveScreenshot('saved-empty.png', { fullPage: true });
+  });
+
+  test('should match services dialog screenshot', async ({ homePage, page }) => {
+    await homePage.openServices();
+    await expect(homePage.servicesDialog.getByRole('button', { name: 'Netflix' })).toBeVisible();
+    await settle(page);
+    await expect(homePage.servicesDialog).toHaveScreenshot('services-dialog.png');
+  });
+
+  test('should match filters popover screenshot', async ({ homePage, page }) => {
+    await homePage.openFilters();
+    await expect(homePage.filtersPopover.getByRole('button', { name: 'Action' })).toBeVisible();
+    await settle(page);
+    await expect(homePage.filtersPopover).toHaveScreenshot('filters-popover.png');
+  });
+
+  test('should match autocomplete screenshot', async ({ homePage, page }) => {
+    await homePage.typeSearchQuery('test');
+    await expect(homePage.suggestions).toHaveCount(3);
+    await settle(page);
+    await expect(homePage.suggestionList).toHaveScreenshot('autocomplete-list.png');
   });
 
   test('should match error state screenshot', async ({ homePage, page }) => {
     await mockSearchError(page, 500);
-
-    await homePage.search('test');
-    await homePage.waitForError();
-
-    // Take screenshot of error state
-    await expect(homePage.errorBanner).toHaveScreenshot('error-banner.png');
-  });
-
-  test('should match filters panel screenshot', async ({ homePage }) => {
-    await homePage.toggleFilters();
-    await expect(homePage.filterSection).toBeVisible();
-
-    // Take screenshot of filters
-    await expect(homePage.filterSection).toHaveScreenshot('filters-panel.png');
-  });
-
-  test('should match autocomplete screenshot', async ({ homePage, page }) => {
-    await mockAutocomplete(page);
-    await mockImages(page);
-
-    await homePage.typeSearchQuery('test');
-    await homePage.waitForAutocomplete();
-
-    // Wait for the mocked results to render before capturing
-    await expect(homePage.autocompleteItems).toHaveCount(3);
-
-    // Take screenshot of autocomplete
-    await expect(homePage.autocompleteList).toHaveScreenshot('autocomplete-list.png');
-  });
-
-  test('should match mobile viewport screenshot', async ({ homePage, page }) => {
-    await page.setViewportSize({ width: 375, height: 667 });
-
-    await expect(homePage.pageTitle).toBeVisible();
-
-    // Take screenshot of mobile view
-    await expect(homePage.page).toHaveScreenshot('home-page-mobile.png', {
-      fullPage: true,
-    });
-  });
-
-  test('should match tablet viewport screenshot', async ({ homePage, page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-
-    await expect(homePage.pageTitle).toBeVisible();
-
-    // Take screenshot of tablet view
-    await expect(homePage.page).toHaveScreenshot('home-page-tablet.png', {
-      fullPage: true,
-    });
+    await homePage.goto();
+    await expect(homePage.errorAlert).toBeVisible();
+    await settle(page);
+    await expect(homePage.errorAlert).toHaveScreenshot('error-state.png');
   });
 
   test('should match no results state screenshot', async ({ homePage, page }) => {
     await mockEmptySearch(page);
+    await homePage.goto('q=test');
+    await expect(homePage.emptyState).toBeVisible();
+    await settle(page);
+    await expect(page).toHaveScreenshot('no-results.png', { fullPage: true });
+  });
 
-    await homePage.search('nonexistent');
-    await homePage.waitForSearchComplete();
+  test('should match mobile viewport screenshot', async ({ homePage, page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await homePage.waitForResults();
+    await settle(page);
+    await expect(page).toHaveScreenshot('home-page-mobile.png', { fullPage: true });
+  });
 
-    await expect(homePage.noResultsMessage).toBeVisible();
-
-    // Take screenshot of no results state
-    await expect(homePage.page).toHaveScreenshot('no-results.png', {
-      fullPage: true,
-    });
+  test('should match tablet viewport screenshot', async ({ homePage, page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await homePage.waitForResults();
+    await settle(page);
+    await expect(page).toHaveScreenshot('home-page-tablet.png', { fullPage: true });
   });
 });

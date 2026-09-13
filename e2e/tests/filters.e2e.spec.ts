@@ -1,68 +1,77 @@
 import { test, expect } from '../fixtures/test-fixtures';
-import { mockGenres } from '../helpers/api-mock';
 
 test.describe('Filter Functionality', () => {
-  test('should toggle filters panel', async ({ homePage }) => {
-    await expect(homePage.filterSection).not.toBeVisible();
+  test('filters by media type', async ({ homePage, page }) => {
+    const request = homePage.nextSearchRequest();
+    await homePage.selectType('Movies');
 
-    await homePage.toggleFilters();
-    await expect(homePage.filterSection).toBeVisible();
-
-    await homePage.toggleFilters();
-    await expect(homePage.filterSection).not.toBeVisible();
+    await expect(page).toHaveURL(/type=movie/);
+    expect(new URL((await request).url()).searchParams.get('type')).toBe('movie');
+    await expect(homePage.typeGroup.getByRole('button', { name: 'Movies' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 
-  test('should set minimum rating slider', async ({ homePage, page }) => {
-    await mockGenres(page);
+  test('picks genres, rating, years and language from the filters popover', async ({
+    homePage,
+    page,
+  }) => {
+    await homePage.openFilters();
 
-    await homePage.toggleFilters();
-    await homePage.setMinRating(7.5);
+    await homePage.filtersPopover.getByRole('button', { name: 'Action' }).click();
+    await expect(page).toHaveURL(/genre=28/);
 
-    const ratingValue = await homePage.minRatingValue.textContent();
-    expect(ratingValue).toContain('7.5');
+    await homePage.filtersPopover.getByRole('button', { name: '7+' }).click();
+    await expect(page).toHaveURL(/rating=7/);
+
+    await homePage.filtersPopover.getByLabel('Year from').fill('2010');
+    await expect(page).toHaveURL(/from=2010/);
+
+    await homePage.filtersPopover.getByLabel('Original language').selectOption('de');
+    await expect(page).toHaveURL(/lang=de/);
+
+    await expect(homePage.filtersButton).toContainText('4');
   });
 
-  test('should check and uncheck genre checkbox', async ({ homePage, page }) => {
-    await mockGenres(page);
+  test('sends filters to the search API', async ({ homePage }) => {
+    const request = homePage.nextSearchRequest();
+    await homePage.goto('genre=28,12&rating=7&from=2010&to=2020&lang=en');
+    const params = new URL((await request).url()).searchParams;
 
-    await homePage.toggleFilters();
-    await homePage.selectGenre(28); // Action genre
-
-    const checkbox = page.locator('input[name="genre"][value="28"]');
-    await expect(checkbox).toBeChecked();
-
-    await homePage.unselectGenre(28);
-    await expect(checkbox).not.toBeChecked();
+    expect(params.get('genreIds')).toBe('28,12');
+    expect(params.get('minRating')).toBe('7');
+    expect(params.get('yearFrom')).toBe('2010');
+    expect(params.get('yearTo')).toBe('2020');
+    expect(params.get('language')).toBe('en');
   });
 
-  test('should apply multiple filters together', async ({ homePage, page }) => {
-    await mockGenres(page);
+  test('restores filters from the URL and resets them', async ({ homePage, page }) => {
+    await homePage.goto('genre=28&rating=7');
+    await expect(homePage.filtersButton).toContainText('2');
 
-    await homePage.toggleFilters();
-    await homePage.selectType('movie');
-    await homePage.setYearRange(2010, 2020);
-    await homePage.selectLanguage('en');
-    await homePage.setMinRating(7.0);
-    await homePage.selectGenre(28);
+    await homePage.openFilters();
+    await expect(homePage.filtersPopover.getByRole('button', { name: 'Action' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
 
-    await homePage.search('test');
-    await homePage.waitForSearchComplete();
+    await homePage.filtersPopover.getByRole('button', { name: 'Reset filters' }).click();
+    await expect(page).not.toHaveURL(/genre=|rating=/);
   });
 
-  test('should persist filter values when toggling panel', async ({ homePage, page }) => {
-    await mockGenres(page);
+  test('sorts results, offering best match only for searches', async ({ homePage, page }) => {
+    await expect(homePage.sortSelect).toHaveValue('popularity');
+    await expect(homePage.sortSelect.locator('option', { hasText: 'Best match' })).toHaveCount(0);
 
-    await homePage.toggleFilters();
-    await homePage.selectType('movie');
-    await homePage.setYearRange(2010, 2020);
-    await homePage.selectGenre(28);
+    await homePage.sortSelect.selectOption('rating');
+    await expect(page).toHaveURL(/sort=rating/);
 
-    await homePage.toggleFilters();
-    await homePage.toggleFilters();
+    await homePage.goto('q=Fight');
+    await expect(homePage.sortSelect).toHaveValue('relevance');
+  });
 
-    await expect(homePage.typeSelect).toHaveValue('movie');
-    await expect(homePage.yearFromInput).toHaveValue('2010');
-    await expect(homePage.yearToInput).toHaveValue('2020');
-    await expect(page.locator('input[name="genre"][value="28"]')).toBeChecked();
+  test('keeps "only my services" disabled until services are picked', async ({ homePage }) => {
+    await expect(homePage.onlyMineSwitch).toBeDisabled();
   });
 });

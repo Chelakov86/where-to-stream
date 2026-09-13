@@ -1,79 +1,61 @@
 import { test, expect } from '../fixtures/test-fixtures';
-import { mockAutocomplete } from '../helpers/api-mock';
 
 test.describe('Autocomplete Functionality', () => {
-  test('should display autocomplete suggestions when typing', async ({ homePage, page }) => {
-    await mockAutocomplete(page);
+  test('suggests titles while typing', async ({ homePage }) => {
+    await homePage.typeSearchQuery('Fig');
 
-    await homePage.typeSearchQuery('Fight', 100);
-    await homePage.waitForAutocomplete();
-
-    await expect(homePage.autocompleteList).toBeVisible();
-    const count = await homePage.getAutocompleteCount();
-    expect(count).toBeGreaterThan(0);
+    await expect(homePage.suggestions).toHaveCount(3);
+    await expect(homePage.searchInput).toHaveAttribute('aria-expanded', 'true');
   });
 
-  test('should navigate autocomplete with arrow keys', async ({ homePage, page }) => {
-    await mockAutocomplete(page);
+  test('moves through suggestions with arrow keys', async ({ homePage, page }) => {
+    await homePage.typeSearchQuery('Fig');
+    await expect(homePage.suggestions).toHaveCount(3);
 
-    await homePage.typeSearchQuery('Fight');
-    await homePage.waitForAutocomplete();
-
-    // Navigate down
-    await homePage.navigateAutocomplete('down');
-    const firstItem = homePage.autocompleteItems.first();
-    await expect(firstItem).toHaveAttribute('aria-selected', 'true');
-
-    // Navigate down again
-    await homePage.navigateAutocomplete('down');
-    const secondItem = homePage.autocompleteItems.nth(1);
-    await expect(secondItem).toHaveAttribute('aria-selected', 'true');
-
-    // Navigate up
-    await homePage.navigateAutocomplete('up');
-    await expect(firstItem).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('ArrowDown');
+    await expect(homePage.suggestions.nth(0)).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('ArrowDown');
+    await expect(homePage.suggestions.nth(1)).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('ArrowUp');
+    await expect(homePage.suggestions.nth(0)).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('should select autocomplete item with Enter key', async ({ homePage, page }) => {
-    await mockAutocomplete(page);
+  test('opens the highlighted title with Enter', async ({ homePage, page }) => {
+    await homePage.typeSearchQuery('Bre');
+    await expect(homePage.suggestions).toHaveCount(3);
 
-    await homePage.typeSearchQuery('Fight');
-    await homePage.waitForAutocomplete();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
 
-    await homePage.navigateAutocomplete('down');
-    await homePage.pressEnterOnAutocomplete();
-
-    // Autocomplete should close and item should be selected
-    await homePage.waitForAutocompleteHidden();
+    await page.waitForURL('**/title/tv/1396?country=US');
   });
 
-  test('should close autocomplete with Escape key', async ({ homePage, page }) => {
-    await mockAutocomplete(page);
+  test('opens a title on click', async ({ homePage, page }) => {
+    await homePage.typeSearchQuery('Shaw');
+    await homePage.suggestions.filter({ hasText: 'The Shawshank Redemption' }).click();
 
-    await homePage.typeSearchQuery('Fight');
-    await homePage.waitForAutocomplete();
-
-    await homePage.pressEscapeOnAutocomplete();
-    await homePage.waitForAutocompleteHidden();
+    await page.waitForURL('**/title/movie/278?country=US');
   });
 
-  test('should select autocomplete item with mouse click', async ({ homePage, page }) => {
-    await mockAutocomplete(page);
+  test('closes suggestions with Escape', async ({ homePage, page }) => {
+    await homePage.typeSearchQuery('Fig');
+    await expect(homePage.suggestions).toHaveCount(3);
 
-    await homePage.typeSearchQuery('Fight');
-    await homePage.waitForAutocomplete();
-
-    await homePage.selectAutocompleteItem(0);
-    await homePage.waitForAutocompleteHidden();
+    await page.keyboard.press('Escape');
+    await expect(homePage.suggestions).toHaveCount(0);
+    await expect(homePage.searchInput).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('should clear autocomplete when search is submitted', async ({ homePage, page }) => {
-    await mockAutocomplete(page);
+  test('searches immediately with Enter when nothing is highlighted', async ({
+    homePage,
+    page,
+  }) => {
+    await homePage.typeSearchQuery('Fig');
+    await page.keyboard.press('Enter');
 
-    await homePage.typeSearchQuery('Fight');
-    await homePage.waitForAutocomplete();
-
-    await homePage.submitSearch();
-    await homePage.waitForAutocompleteHidden();
+    await expect(page).toHaveURL(/q=Fig/);
+    await expect(homePage.suggestions).toHaveCount(0);
+    await expect(homePage.resultsHeading).toHaveText('Results for “Fig”');
   });
 });
