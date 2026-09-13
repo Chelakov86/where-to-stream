@@ -66,36 +66,57 @@ where-to-stream/
 ├── app/                          # Next.js App Router directory
 │   ├── api/                      # API Routes
 │   │   ├── genres/route.ts       # GET /api/genres
-│   │   ├── search/route.ts       # GET /api/search
+│   │   ├── providers/route.ts    # GET /api/providers
+│   │   ├── search/route.ts       # GET /api/search (search + browse)
 │   │   ├── title/[type]/[id]/route.ts  # GET /api/title/:type/:id
 │   │   └── routeGuard.ts         # Rate limiting + error responses
 │   ├── components/               # React components
-│   │   ├── AutocompleteList.tsx
-│   │   ├── ErrorBanner.tsx
+│   │   ├── ui/                   # shadcn primitives (lowercase filenames, re-generatable)
+│   │   ├── AppHeader.tsx         # Logo, saved link, services dialog, country picker
+│   │   ├── AvailabilityPanel.tsx # Verdict + offers grouped by kind
+│   │   ├── CountryFlag.tsx
+│   │   ├── CountryPicker.tsx
+│   │   ├── EmptyState.tsx
 │   │   ├── ErrorBoundary.tsx
+│   │   ├── FiltersBar.tsx        # Type, filters popover, "only my services", sort
 │   │   ├── Footer.tsx
-│   │   ├── Header.tsx
-│   │   ├── ResultDetails.tsx
-│   │   ├── ResultItem.tsx
-│   │   ├── ResultsList.tsx
-│   │   ├── SearchForm.tsx
-│   │   └── SearchHistory.tsx
+│   │   ├── PageContainer.tsx
+│   │   ├── SearchBox.tsx         # Search combobox: suggestions + recently viewed
+│   │   ├── SegmentedControl.tsx
+│   │   ├── ServicesDialog.tsx
+│   │   ├── Skeleton.tsx
+│   │   └── TitleCard.tsx         # Poster grid card
 │   ├── hooks/                    # Custom React hooks
+│   │   ├── useApiResource.ts     # URL-keyed fetch with a short client cache
 │   │   ├── useAutocomplete.ts
+│   │   ├── useFetchLifecycle.ts
 │   │   ├── useGenres.ts
-│   │   ├── useSearch.ts
-│   │   └── useSearchHistory.ts
+│   │   ├── usePreferences.ts     # Country, pinned countries, services, saved titles
+│   │   ├── useProviders.ts
+│   │   └── useSearchHistory.ts   # Recently viewed titles
+│   ├── views/                    # Client page views rendered by the routes
+│   │   ├── SearchView.tsx        # /
+│   │   ├── TitleView.tsx         # /title/[type]/[id]
+│   │   ├── CountriesView.tsx     # /title/[type]/[id]/countries
+│   │   └── SavedView.tsx         # /saved
 │   ├── utils/                    # Utility functions
+│   │   ├── availability.ts       # Verdict + country ranking (client-safe)
 │   │   ├── countries.ts          # Country data/utilities
+│   │   ├── format.ts             # Runtime, language and plural labels
 │   │   ├── logger.ts             # Logging utilities
-│   │   ├── searchHistory.ts      # Search history management
+│   │   ├── preferences.ts        # localStorage preferences
+│   │   ├── searchHistory.ts      # Recently viewed titles storage
+│   │   ├── searchPageState.ts    # Search page URL state ↔ API params
+│   │   ├── titleRoute.ts         # Title route param validation
 │   │   └── tmdb.ts               # TMDB utility functions
+│   ├── saved/page.tsx            # Saved titles route
+│   ├── title/[type]/[id]/        # Title detail + countries/ comparison routes
 │   ├── availabilityMapper.ts     # Maps TMDB providers to availability model
 │   ├── cache.ts                  # In-memory cache with TTL
 │   ├── config.ts                 # Configuration & env validation
-│   ├── globals.css               # Global styles + Tailwind
+│   ├── globals.css               # Global styles + Tailwind (Cinema Ember tokens)
 │   ├── layout.tsx                # Root layout
-│   ├── page.tsx                  # Home page
+│   ├── page.tsx                  # Search page route
 │   ├── tmdbApi.ts                # High-level TMDB API methods
 │   ├── tmdbClient.ts             # Low-level TMDB HTTP client
 │   ├── tmdbTypes.ts              # TMDB API type definitions
@@ -442,11 +463,13 @@ test.describe('Feature Name', () => {
 
 **Test Categories:**
 
-- `search.e2e.spec.ts` - Search functionality
+- `search.e2e.spec.ts` - Popular titles, search, shared URLs, pagination
 - `autocomplete.e2e.spec.ts` - Autocomplete behavior
 - `filters.e2e.spec.ts` - Filter interactions
-- `results.e2e.spec.ts` - Result display
-- `search-history.e2e.spec.ts` - Search history behavior
+- `preferences.e2e.spec.ts` - My services and country
+- `title-page.e2e.spec.ts` - Title page and country comparison
+- `saved.e2e.spec.ts` - Saved titles (watchlist)
+- `search-history.e2e.spec.ts` - Recently viewed titles
 - `accessibility.e2e.spec.ts` - Accessibility compliance
 - `responsive.e2e.spec.ts` - Responsive design (runs on all viewport projects)
 - `visual-regression.e2e.spec.ts` - Visual regression testing (runs on all viewport projects)
@@ -483,18 +506,22 @@ Returns combined movie and TV genres.
 
 #### GET `/api/search`
 
-Search for movies/TV with filters.
+Search for movies/TV with filters. Without a `query` (full mode only), browses the titles popular in
+`watchRegion` via TMDB discover.
 
 **Query Parameters:**
 
-- `query` (required): Search term
+- `query`: Search term (required in autocomplete mode; omit to browse)
 - `type`: `"movie" | "tv" | "all"` (default: `"all"`)
 - `mode`: `"autocomplete" | "full"` (default: `"full"`)
 - `page`: Page number (default: 1)
 - `yearFrom`, `yearTo`: Year range
 - `language`: ISO 639-1 code
 - `genreIds`: Comma-separated genre IDs
+- `providerIds`: Comma-separated provider IDs ("only my services")
+- `watchRegion`: ISO 3166-1 country code (browsing defaults to `US`)
 - `minRating`: Minimum rating (0-10)
+- `sort`: `"relevance" | "popularity" | "rating" | "newest" | "oldest" | "title"`
 
 **Response:**
 
@@ -545,21 +572,40 @@ Get detailed information about a specific title.
   "overview": "...",
   "rating": 8.4,
   "posterUrl": "https://...",
+  "backdropUrl": "https://...",
   "runtime": 139,
+  "cast": [{ "name": "Edward Norton", "character": "Narrator", "profileUrl": "https://..." }],
+  "trailerUrl": "https://www.youtube.com/watch?v=...",
+  "detectedCountry": "US",
   "availability": {
-    "preferredCountries": [
-      {
-        "countryCode": "US",
-        "countryName": "United States",
-        "hasNetflix": true,
-        "freeOrAdsProviders": ["Netflix"],
-        "watchLink": "https://..."
-      }
-    ],
-    "otherCountries": [...]
+    "US": {
+      "countryCode": "US",
+      "countryName": "United States",
+      "watchLink": "https://...",
+      "flatrate": [{ "id": 8, "name": "Netflix", "logoUrl": "https://..." }],
+      "free": [],
+      "rent": [],
+      "buy": []
+    }
   }
 }
 ```
+
+Availability is keyed by country code and includes every country with at least one offer. The
+client derives the headline verdict (`mine | free | stream | paid | unavailable | nodata`) with
+`verdictFor()` in `app/utils/availability.ts`.
+
+#### GET `/api/providers`
+
+Returns watch providers for `watchRegion` (movie + TV, deduplicated, by display priority) for the
+"My services" dialog.
+
+### Client State
+
+- **URL**: search page state (`q, type, genre, from, to, rating, lang, sort, page, mine`) and an
+  optional `country` override — see `app/utils/searchPageState.ts`
+- **localStorage** (`app/utils/preferences.ts`): country, pinned countries, my services, saved
+  titles; recently viewed titles live in `app/utils/searchHistory.ts`
 
 ### Error Responses
 

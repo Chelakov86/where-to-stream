@@ -161,6 +161,16 @@ own build order:
 7. Polish — accessibility/responsive/loading/empty/error states, Playwright
    visual-regression re-baseline.
 
+### Rollout update (2026-09-13)
+
+Stage 1 shipped as planned but produced no visible change, because the old palette was already
+dark + amber. Stages 2–7 were therefore delivered together as one visible overhaul on the same
+branch (routes, availability model + verdict, My Services, Saved, country comparison, polish and
+visual re-baseline), plus a "Popular in {country}" browse feed on the search page that this spec
+had missed: `/api/search` without a query now browses TMDB discover for the watch region.
+Deviation: `verdictFor`/`rankCountries` live in `app/utils/availability.ts` (client-safe) rather
+than in `availabilityMapper.ts`, which imports the server logger.
+
 ## Testing impact
 
 - Jest: update tests for every restructured component; add tests for new hooks
