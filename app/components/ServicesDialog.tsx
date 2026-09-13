@@ -16,7 +16,6 @@ import { Skeleton } from '@/app/components/Skeleton';
 import { useMyServices } from '@/app/hooks/usePreferences';
 import { useProviders } from '@/app/hooks/useProviders';
 import { getCountryName } from '@/app/utils/countries';
-import { buildTmdbImageUrl } from '@/app/utils/tmdb';
 import { cn } from '@/app/utils/cn';
 
 interface ServicesDialogProps {
@@ -75,15 +74,14 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country }) => {
           <>
             <ul className="-mx-1 grid max-h-[45vh] grid-cols-2 gap-2 overflow-y-auto px-1 sm:grid-cols-3">
               {providers.slice(0, MAX_PROVIDERS).map((provider) => {
-                const active = services.includes(provider.provider_id);
-                const logoUrl = buildTmdbImageUrl(provider.logo_path, 'w92');
+                const active = services.includes(provider.id);
                 return (
-                  <li key={provider.provider_id}>
+                  <li key={provider.id}>
                     <Button
                       type="button"
                       variant="outline"
                       aria-pressed={active}
-                      onClick={() => toggleService(provider.provider_id)}
+                      onClick={() => toggleService(provider.id)}
                       className={cn(
                         'h-auto min-h-14 w-full justify-start gap-2 whitespace-normal p-2 text-left text-sm shadow-none',
                         active
@@ -91,9 +89,9 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country }) => {
                           : 'border-border bg-card text-muted-foreground hover:border-primary/40'
                       )}
                     >
-                      {logoUrl ? (
+                      {provider.logoUrl ? (
                         <Image
-                          src={logoUrl}
+                          src={provider.logoUrl}
                           alt=""
                           width={36}
                           height={36}
@@ -102,9 +100,7 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country }) => {
                       ) : (
                         <span className="size-9 shrink-0 rounded-lg bg-muted" />
                       )}
-                      <span className="line-clamp-2 flex-1 leading-tight">
-                        {provider.provider_name}
-                      </span>
+                      <span className="line-clamp-2 flex-1 leading-tight">{provider.name}</span>
                       {active && <Check className="text-primary" aria-hidden="true" />}
                     </Button>
                   </li>

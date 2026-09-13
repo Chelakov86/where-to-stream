@@ -71,6 +71,13 @@ describe('verdictFor', () => {
     const availability = { DE: entry('DE', { buy: [googlePlay] }) };
     expect(verdictFor(availability, 'DE', []).detail).toBe('Available to buy from Google Play.');
   });
+
+  it('reports unavailable when the country entry has no offers in any tier', () => {
+    const availability = { DE: entry('DE', {}) };
+    const verdict = verdictFor(availability, 'DE', []);
+    expect(verdict.status).toBe('unavailable');
+    expect(verdict.detail).not.toContain('undefined');
+  });
 });
 
 describe('providersOnMyServices', () => {

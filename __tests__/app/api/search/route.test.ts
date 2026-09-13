@@ -220,6 +220,26 @@ describe('GET /api/search', () => {
       const data = await res.json();
       expect(data.results.map((r: { id: number }) => r.id)).toEqual([2, 3]);
     });
+
+    it('filters search results to a year range when both bounds are given', async () => {
+      const res = await GET(
+        createRequest({ query: 'x', type: 'movie', yearFrom: '2000', yearTo: '2009' })
+      );
+      const data = await res.json();
+      expect(data.results.map((r: { id: number }) => r.id)).toEqual([1]);
+    });
+
+    it('filters search results by yearFrom alone', async () => {
+      const res = await GET(createRequest({ query: 'x', type: 'movie', yearFrom: '2005' }));
+      const data = await res.json();
+      expect(data.results.map((r: { id: number }) => r.id)).toEqual([3]);
+    });
+
+    it('filters search results by yearTo alone', async () => {
+      const res = await GET(createRequest({ query: 'x', type: 'movie', yearTo: '2000' }));
+      const data = await res.json();
+      expect(data.results.map((r: { id: number }) => r.id)).toEqual([2]);
+    });
   });
 
   describe('TMDB Integration', () => {

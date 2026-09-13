@@ -25,11 +25,7 @@ import {
 import { getCountryName, COUNTRY_NAMES } from './utils/countries';
 import { buildTmdbImageUrl } from './utils/tmdb';
 import { logger } from './utils/logger';
-
-/**
- * Region used when filtering by providers but no watch region is selected.
- */
-export const DEFAULT_WATCH_REGION = 'US';
+import { DEFAULT_COUNTRY } from './config';
 
 /**
  * The streaming category rule: a provider streams in a region when it appears
@@ -82,7 +78,7 @@ export async function filterResultsByProvider(
     return results;
   }
 
-  const region = options.watchRegion || DEFAULT_WATCH_REGION;
+  const region = options.watchRegion || DEFAULT_COUNTRY;
 
   const checks = await Promise.all(
     results.map(async (item) => {

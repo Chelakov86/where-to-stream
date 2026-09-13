@@ -3,7 +3,7 @@
  * Contains minimal interfaces covering the fields we need.
  */
 
-import { Genre, WatchProvider } from './types';
+import { Genre } from './types';
 
 export interface TmdbSearchResult {
   id: number;
@@ -141,7 +141,7 @@ export interface TmdbWatchProvidersResponse {
 }
 
 export interface TmdbProviderListResponse {
-  results: WatchProvider[];
+  results: TmdbWatchProviderInfo[];
 }
 
 export interface TmdbDiscoverResponse {

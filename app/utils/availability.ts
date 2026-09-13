@@ -94,12 +94,21 @@ export function verdictFor(
       entry,
     };
   }
+  if (entry.rent.length > 0 || entry.buy.length > 0) {
+    return {
+      status: 'paid',
+      label: 'Rent or buy only',
+      detail: `Available to ${entry.rent.length > 0 ? 'rent' : 'buy'} from ${names(
+        [...entry.rent, ...entry.buy].slice(0, 3)
+      )}.`,
+      matched: [],
+      entry,
+    };
+  }
   return {
-    status: 'paid',
-    label: 'Rent or buy only',
-    detail: `Available to ${entry.rent.length > 0 ? 'rent' : 'buy'} from ${names(
-      [...entry.rent, ...entry.buy].slice(0, 3)
-    )}.`,
+    status: 'unavailable',
+    label: 'Not available here',
+    detail: 'Nothing to stream, rent or buy in this country.',
     matched: [],
     entry,
   };

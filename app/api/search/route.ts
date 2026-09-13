@@ -4,15 +4,14 @@ import {
   searchTv,
   discoverMovies,
   discoverTv,
-  getMovieWatchProviders,
-  getTvWatchProviders,
+  getWatchProviders,
   SearchMoviesParams,
   SearchTvParams,
 } from '@/app/tmdbApi';
 import { TmdbSearchResult, TmdbSearchResponse } from '@/app/tmdbTypes';
 import { NormalizedSearchResult } from '@/app/types';
 import { normalizeTmdbMedia } from '@/app/titleNormalizer';
-import { DEFAULT_WATCH_REGION, filterResultsByProvider } from '@/app/availabilityMapper';
+import { filterResultsByProvider } from '@/app/availabilityMapper';
 import {
   SearchMode,
   SearchRequest,
@@ -22,7 +21,7 @@ import {
 } from '@/app/searchContract';
 import { withRouteGuard, rateLimitHeaders } from '@/app/api/routeGuard';
 import { getClientIdentifier } from '@/app/utils/rateLimiter';
-import { RATE_LIMIT_CONFIG } from '@/app/config';
+import { RATE_LIMIT_CONFIG, DEFAULT_COUNTRY } from '@/app/config';
 
 /**
  * API route handler for searching and browsing movies and TV shows.
@@ -205,7 +204,7 @@ const typesFor = (params: SearchRequest): ('movie' | 'tv')[] =>
  * Browses popular titles that have an offer in the watch region.
  */
 async function browse(params: SearchRequest): Promise<SearchResponse> {
-  const watchRegion = params.watchRegion || DEFAULT_WATCH_REGION;
+  const watchRegion = params.watchRegion || DEFAULT_COUNTRY;
   const withWatchProviders = params.providerIds?.length ? params.providerIds.join('|') : undefined;
   // Genre IDs differ between movies and TV, so match any selected genre
   const withGenres = params.genreIds?.length ? params.genreIds.join('|') : undefined;
@@ -269,7 +268,7 @@ async function search(params: SearchRequest): Promise<SearchResponse> {
     results = await filterResultsByProvider(
       results,
       { watchRegion: params.watchRegion, providerIds: params.providerIds },
-      (type, id) => (type === 'movie' ? getMovieWatchProviders(id) : getTvWatchProviders(id))
+      getWatchProviders
     );
   }
 
@@ -277,8 +276,13 @@ async function search(params: SearchRequest): Promise<SearchResponse> {
     results = results.filter((r) => r.genres?.some((g) => params.genreIds!.includes(g)));
   }
 
-  if (params.yearFrom && params.yearTo) {
-    results = results.filter((r) => r.year !== undefined && r.year <= params.yearTo!);
+  if (params.yearFrom !== undefined || params.yearTo !== undefined) {
+    results = results.filter((r) => {
+      if (r.year === undefined) return false;
+      if (params.yearFrom !== undefined && r.year < params.yearFrom) return false;
+      if (params.yearTo !== undefined && r.year > params.yearTo) return false;
+      return true;
+    });
   }
 
   // Apply minRating filtering if requested

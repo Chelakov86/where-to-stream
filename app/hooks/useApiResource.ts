@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
-
-/** How long a fetched response is reused on the client (e.g. when navigating back). */
-const CLIENT_CACHE_TTL_MS = 5 * 60 * 1000;
-const MAX_CACHE_ENTRIES = 100;
+import { CLIENT_CACHE_TTL_MS, MAX_CLIENT_CACHE_ENTRIES } from '@/app/config';
 
 const responseCache = new Map<string, { data: unknown; expiresAt: number }>();
 
@@ -20,7 +17,7 @@ function readCached<T>(url: string): T | undefined {
 }
 
 function writeCached(url: string, data: unknown): void {
-  if (responseCache.size >= MAX_CACHE_ENTRIES) {
+  if (responseCache.size >= MAX_CLIENT_CACHE_ENTRIES) {
     responseCache.clear();
   }
   responseCache.set(url, { data, expiresAt: Date.now() + CLIENT_CACHE_TTL_MS });

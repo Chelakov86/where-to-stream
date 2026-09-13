@@ -15,12 +15,17 @@ describe('useProviders', () => {
 
   it('fetches providers on mount', async () => {
     const mockProviders = [
-      { provider_id: 8, provider_name: 'Netflix', logo_path: '/netflix.jpg', display_priority: 1 },
       {
-        provider_id: 9,
-        provider_name: 'Amazon Prime Video',
-        logo_path: '/prime.jpg',
-        display_priority: 2,
+        id: 8,
+        name: 'Netflix',
+        logoUrl: 'https://image.tmdb.org/t/p/w92/netflix.jpg',
+        priority: 1,
+      },
+      {
+        id: 9,
+        name: 'Amazon Prime Video',
+        logoUrl: 'https://image.tmdb.org/t/p/w92/prime.jpg',
+        priority: 2,
       },
     ];
 

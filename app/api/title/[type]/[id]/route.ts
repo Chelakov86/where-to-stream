@@ -5,10 +5,9 @@ import {
   getTvDetails,
   getTvWatchProviders,
 } from '@/app/tmdbApi';
-import { TmdbDetailExtras } from '@/app/tmdbTypes';
-import { CastMember, TitleDetails } from '@/app/types';
+import { TitleDetails } from '@/app/types';
 import { mapAvailability, isKnownCountryCode } from '@/app/availabilityMapper';
-import { normalizeTmdbMedia } from '@/app/titleNormalizer';
+import { normalizeTmdbMedia, mapCast, findTrailerUrl } from '@/app/titleNormalizer';
 import { buildTmdbImageUrl } from '@/app/utils/tmdb';
 import { withRouteGuard, rateLimitHeaders } from '@/app/api/routeGuard';
 import { getClientIdentifier } from '@/app/utils/rateLimiter';
@@ -36,28 +35,6 @@ import { detectUserCountry } from '@/app/utils/countryDetection';
  *
  * The endpoint fetches details and watch providers in parallel for performance.
  */
-
-/** Number of cast members returned for the detail page. */
-const CAST_LIMIT = 12;
-
-const mapCast = (extras: TmdbDetailExtras): CastMember[] =>
-  (extras.credits?.cast ?? []).slice(0, CAST_LIMIT).map((member) => {
-    const cast: CastMember = { name: member.name, character: member.character ?? '' };
-    const profileUrl = buildTmdbImageUrl(member.profile_path, 'w185');
-    if (profileUrl) {
-      cast.profileUrl = profileUrl;
-    }
-    return cast;
-  });
-
-const findTrailerUrl = (extras: TmdbDetailExtras): string | undefined => {
-  const videos = (extras.videos?.results ?? []).filter((v) => v.site === 'YouTube');
-  const trailer =
-    videos.find((v) => v.type === 'Trailer' && v.official) ??
-    videos.find((v) => v.type === 'Trailer') ??
-    videos.find((v) => v.type === 'Teaser');
-  return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : undefined;
-};
 
 export async function GET(
   req: NextRequest,

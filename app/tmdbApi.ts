@@ -283,6 +283,27 @@ export async function getTvWatchProviders(id: number): Promise<TmdbWatchProvider
 }
 
 /**
+ * Get watch provider information for a movie or TV show, dispatching to the
+ * type-specific endpoint.
+ *
+ * @param type - "movie" or "tv"
+ * @param id - The TMDB ID
+ * @returns Promise resolving to watch providers by country
+ *
+ * @example
+ * ```typescript
+ * const providers = await getWatchProviders('movie', 550);
+ * console.log(providers.results.US?.flatrate); // Netflix, Amazon Prime, etc.
+ * ```
+ */
+export function getWatchProviders(
+  type: 'movie' | 'tv',
+  id: number
+): Promise<TmdbWatchProvidersResponse> {
+  return type === 'movie' ? getMovieWatchProviders(id) : getTvWatchProviders(id);
+}
+
+/**
  * Get the list of official movie genres.
  *
  * @returns Promise resolving to list of movie genres with IDs and names

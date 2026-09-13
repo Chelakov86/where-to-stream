@@ -8,6 +8,11 @@
  */
 
 import { TmdbImageSize, buildTmdbImageUrl, getYear } from './utils/tmdb';
+import { TmdbDetailExtras } from './tmdbTypes';
+import { CastMember } from './types';
+
+/** Number of cast members surfaced for the detail page. */
+const CAST_LIMIT = 12;
 
 /**
  * The subset of TMDB media shapes the normalizer needs.
@@ -100,4 +105,30 @@ export function normalizeTmdbMedia(
   }
 
   return normalized;
+}
+
+/**
+ * Maps a TMDB credits response to the app's cast shape, capped at CAST_LIMIT members.
+ */
+export function mapCast(extras: TmdbDetailExtras): CastMember[] {
+  return (extras.credits?.cast ?? []).slice(0, CAST_LIMIT).map((member) => {
+    const cast: CastMember = { name: member.name, character: member.character ?? '' };
+    const profileUrl = buildTmdbImageUrl(member.profile_path, 'w185');
+    if (profileUrl) {
+      cast.profileUrl = profileUrl;
+    }
+    return cast;
+  });
+}
+
+/**
+ * Finds the best YouTube trailer (or teaser) URL from a TMDB videos response.
+ */
+export function findTrailerUrl(extras: TmdbDetailExtras): string | undefined {
+  const videos = (extras.videos?.results ?? []).filter((v) => v.site === 'YouTube');
+  const trailer =
+    videos.find((v) => v.type === 'Trailer' && v.official) ??
+    videos.find((v) => v.type === 'Trailer') ??
+    videos.find((v) => v.type === 'Teaser');
+  return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : undefined;
 }

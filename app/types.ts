@@ -94,9 +94,6 @@ export interface SavedTitle {
   addedAt: number; // Unix timestamp
 }
 
-export interface WatchProvider {
-  provider_id: number;
-  provider_name: string;
-  logo_path: string;
-  display_priority: number;
+export interface WatchProvider extends ProviderRef {
+  priority: number;
 }

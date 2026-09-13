@@ -16,6 +16,12 @@ export const DEFAULT_COUNTRY = 'US' as const;
 
 export const CACHE_TTL_SECONDS = 12 * 60 * 60; // 12 hours
 
+/** How long a client-fetched API response is reused (e.g. when navigating back). */
+export const CLIENT_CACHE_TTL_MS = 5 * 60 * 1000;
+
+/** Maximum entries kept in the client response cache before it is cleared. */
+export const MAX_CLIENT_CACHE_ENTRIES = 100;
+
 /**
  * Rate limit configuration per API route (requests per window per client).
  */
