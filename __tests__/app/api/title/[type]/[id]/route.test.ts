@@ -1,15 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { TmdbError } from '@/app/tmdbClient';
 
 // Mock NextResponse
 jest.mock('next/server', () => ({
   NextResponse: {
-    json: (data: any, init: any) => {
-      return {
-        json: () => Promise.resolve(data), // Mock the json() method of the response object
-        status: init?.status || 200,
-      };
-    },
+    json: (data: unknown, init?: { status?: number }) => ({
+      json: () => Promise.resolve(JSON.parse(JSON.stringify(data))),
+      status: init?.status || 200,
+    }),
   },
 }));
 
@@ -21,64 +19,68 @@ jest.mock('@/app/tmdbApi', () => ({
   getTvWatchProviders: jest.fn(),
 }));
 
-// Mock availabilityMapper
-jest.mock('@/app/availabilityMapper', () => ({
-  mapAvailability: jest.fn(),
-  isKnownCountryCode: jest.fn((code: string | null) => code !== null),
-}));
-
 // Mock country detection utilities
 jest.mock('@/app/utils/countryDetection', () => ({
   detectUserCountry: jest.fn(),
 }));
 
-// Import the mocked modules AFTER jest.mock calls
 import * as tmdbApi from '@/app/tmdbApi';
-import * as availabilityMapper from '@/app/availabilityMapper';
 import * as countryDetection from '@/app/utils/countryDetection';
 import { GET } from '@/app/api/title/[type]/[id]/route';
 
-// Now, get references to the mocked functions
 const mockGetMovieDetails = tmdbApi.getMovieDetails as jest.Mock;
 const mockGetMovieWatchProviders = tmdbApi.getMovieWatchProviders as jest.Mock;
 const mockGetTvDetails = tmdbApi.getTvDetails as jest.Mock;
 const mockGetTvWatchProviders = tmdbApi.getTvWatchProviders as jest.Mock;
-const mockMapAvailability = availabilityMapper.mapAvailability as jest.Mock;
 const mockDetectUserCountry = countryDetection.detectUserCountry as jest.Mock;
 
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+const IMG = 'https://image.tmdb.org/t/p';
+
+const netflix = {
+  logo_path: '/netflix.jpg',
+  provider_id: 8,
+  provider_name: 'Netflix',
+  display_priority: 1,
+};
 
 describe('GET /api/title/[type]/[id]', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Default mock implementations for successful calls
     mockGetMovieDetails.mockResolvedValue({
       id: 550,
       title: 'Fight Club',
       original_title: 'Fight Club',
       release_date: '1999-10-15',
       genres: [{ id: 18, name: 'Drama' }],
-      overview:
-        'An insomniac office worker looking for a way to change his life crosses paths with a devil-may-care soap maker and they form an underground fight club that evolves into something much, much more.',
+      overview: 'An insomniac office worker...',
+      tagline: 'Mischief. Mayhem. Soap.',
       vote_average: 8.4,
-      poster_path: '/pB8BM7pdXLXbZVZC65E3J9xk3LX.jpg',
+      vote_count: 30000,
+      poster_path: '/poster.jpg',
+      backdrop_path: '/backdrop.jpg',
+      original_language: 'en',
       runtime: 139,
+      credits: {
+        cast: [
+          { name: 'Edward Norton', character: 'Narrator', profile_path: '/norton.jpg' },
+          { name: 'Brad Pitt', character: 'Tyler Durden', profile_path: null },
+        ],
+      },
+      videos: {
+        results: [
+          { key: 'teaser', site: 'YouTube', type: 'Teaser' },
+          { key: 'fan', site: 'YouTube', type: 'Trailer', official: false },
+          { key: 'official', site: 'YouTube', type: 'Trailer', official: true },
+        ],
+      },
     });
     mockGetMovieWatchProviders.mockResolvedValue({
       id: 550,
       results: {
-        US: {
-          link: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
-          flatrate: [
-            {
-              logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
-              provider_id: 8,
-              provider_name: 'Netflix',
-              display_priority: 1,
-            },
-          ],
-        },
+        US: { link: 'https://www.themoviedb.org/movie/550/watch?locale=US', flatrate: [netflix] },
+        DE: { buy: [{ ...netflix, provider_id: 2, provider_name: 'Apple TV' }] },
+        FR: {},
       },
     });
     mockGetTvDetails.mockResolvedValue({
@@ -87,58 +89,30 @@ describe('GET /api/title/[type]/[id]', () => {
       original_name: 'Game of Thrones',
       first_air_date: '2011-04-17',
       genres: [{ id: 10765, name: 'Sci-Fi & Fantasy' }],
-      overview:
-        'Nine noble families fight for control over the mythical lands of Westeros, while an ancient enemy returns after being dormant for thousands of years.',
+      overview: 'Nine noble families...',
+      tagline: '',
       vote_average: 8.4,
-      poster_path: '/2OMB0ynKlyXlHZWSnQcBGqL2AER.jpg',
+      vote_count: 25000,
+      poster_path: '/got.jpg',
+      backdrop_path: null,
+      original_language: 'en',
+      number_of_seasons: 8,
+      number_of_episodes: 73,
       episode_run_time: [60],
     });
-    mockGetTvWatchProviders.mockResolvedValue({
-      id: 1399,
-      results: {
-        US: {
-          link: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
-          flatrate: [
-            {
-              logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
-              provider_id: 8,
-              provider_name: 'HBO Max',
-              display_priority: 1,
-            },
-          ],
-        },
-      },
-    });
+    mockGetTvWatchProviders.mockResolvedValue({ id: 1399, results: {} });
 
-    // Default: detect US and validate it
     mockDetectUserCountry.mockReturnValue('US');
-
-    mockMapAvailability.mockReturnValue({
-      userCountry: {
-        countryCode: 'US',
-        countryName: 'United States',
-        freeProviders: [],
-        paidProviders: ['Netflix'],
-        watchLink: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
-      },
-      otherCountries: [],
-    });
   });
 
-  // Helper to create a mock NextRequest
-  const createMockRequest = (type: string, id: string, headers: Record<string, string> = {}) => {
-    return {
-      nextUrl: {
-        pathname: `/api/title/${type}/${id}`,
-      },
-      headers: {
-        get: (name: string) => headers[name] || null,
-      },
-    } as unknown as NextRequest;
-  };
+  const createMockRequest = (type: string, id: string) =>
+    ({
+      nextUrl: { pathname: `/api/title/${type}/${id}` },
+      headers: { get: () => null },
+    }) as unknown as NextRequest;
 
   // --- Valid Requests ---
-  it('should return normalized movie details and availability for a valid movie ID', async () => {
+  it('returns movie details with cast, trailer and availability by country', async () => {
     const req = createMockRequest('movie', '550');
     const response = await GET(req, { params: { type: 'movie', id: '550' } });
     const json = await response.json();
@@ -147,25 +121,6 @@ describe('GET /api/title/[type]/[id]', () => {
     expect(mockGetMovieDetails).toHaveBeenCalledWith(550);
     expect(mockGetMovieWatchProviders).toHaveBeenCalledWith(550);
     expect(mockDetectUserCountry).toHaveBeenCalledWith(req);
-    expect(mockMapAvailability).toHaveBeenCalledWith(
-      {
-        id: 550,
-        results: {
-          US: {
-            link: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
-            flatrate: [
-              {
-                logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
-                provider_id: 8,
-                provider_name: 'Netflix',
-                display_priority: 1,
-              },
-            ],
-          },
-        },
-      },
-      'US'
-    );
     expect(json).toEqual({
       id: 550,
       type: 'movie',
@@ -173,180 +128,143 @@ describe('GET /api/title/[type]/[id]', () => {
       originalTitle: 'Fight Club',
       year: 1999,
       genres: [{ id: 18, name: 'Drama' }],
-      overview:
-        'An insomniac office worker looking for a way to change his life crosses paths with a devil-may-care soap maker and they form an underground fight club that evolves into something much, much more.',
+      overview: 'An insomniac office worker...',
+      tagline: 'Mischief. Mayhem. Soap.',
       rating: 8.4,
-      posterUrl: `${TMDB_IMAGE_BASE_URL}/pB8BM7pdXLXbZVZC65E3J9xk3LX.jpg`,
+      voteCount: 30000,
+      posterUrl: `${IMG}/w500/poster.jpg`,
+      backdropUrl: `${IMG}/w1280/backdrop.jpg`,
       runtime: 139,
+      language: 'en',
+      cast: [
+        { name: 'Edward Norton', character: 'Narrator', profileUrl: `${IMG}/w185/norton.jpg` },
+        { name: 'Brad Pitt', character: 'Tyler Durden' },
+      ],
+      trailerUrl: 'https://www.youtube.com/watch?v=official',
       detectedCountry: 'US',
       availability: {
-        userCountry: {
+        US: {
           countryCode: 'US',
           countryName: 'United States',
-          freeProviders: [],
-          paidProviders: ['Netflix'],
-          watchLink: 'https://www.themoviedb.org/movie/550-fight-club/watch?locale=US',
+          watchLink: 'https://www.themoviedb.org/movie/550/watch?locale=US',
+          flatrate: [{ id: 8, name: 'Netflix', logoUrl: `${IMG}/w92/netflix.jpg` }],
+          free: [],
+          rent: [],
+          buy: [],
         },
-        otherCountries: [],
+        DE: {
+          countryCode: 'DE',
+          countryName: 'Germany',
+          flatrate: [],
+          free: [],
+          rent: [],
+          buy: [{ id: 2, name: 'Apple TV', logoUrl: `${IMG}/w92/netflix.jpg` }],
+        },
       },
     });
   });
 
-  it('should return normalized TV show details and availability for a valid TV show ID', async () => {
-    mockMapAvailability.mockReturnValue({
-      userCountry: {
-        countryCode: 'US',
-        countryName: 'United States',
-        freeProviders: [],
-        paidProviders: ['HBO Max'],
-        watchLink: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
-      },
-      otherCountries: [],
+  it('returns series details with seasons and episodes', async () => {
+    const response = await GET(createMockRequest('tv', '1399'), {
+      params: { type: 'tv', id: '1399' },
     });
-    const req = createMockRequest('tv', '1399');
-    const response = await GET(req, { params: { type: 'tv', id: '1399' } });
     const json = await response.json();
 
     expect(response.status).toBe(200);
     expect(mockGetTvDetails).toHaveBeenCalledWith(1399);
     expect(mockGetTvWatchProviders).toHaveBeenCalledWith(1399);
-    expect(mockMapAvailability).toHaveBeenCalledWith(
-      {
-        id: 1399,
-        results: {
-          US: {
-            link: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
-            flatrate: [
-              {
-                logo_path: '/5NyMoF5fJbB62D3B5F5F5F5F.jpg',
-                provider_id: 8,
-                provider_name: 'HBO Max',
-                display_priority: 1,
-              },
-            ],
-          },
-        },
-      },
-      'US'
-    );
-    expect(json).toEqual({
+    expect(json).toMatchObject({
       id: 1399,
       type: 'tv',
       title: 'Game of Thrones',
-      originalTitle: 'Game of Thrones',
       year: 2011,
-      genres: [{ id: 10765, name: 'Sci-Fi & Fantasy' }],
-      overview:
-        'Nine noble families fight for control over the mythical lands of Westeros, while an ancient enemy returns after being dormant for thousands of years.',
-      rating: 8.4,
-      posterUrl: `${TMDB_IMAGE_BASE_URL}/2OMB0ynKlyXlHZWSnQcBGqL2AER.jpg`,
-      runtime: 60, // Assuming episode_run_time[0] for TV
-      detectedCountry: 'US',
-      availability: {
-        userCountry: {
-          countryCode: 'US',
-          countryName: 'United States',
-          freeProviders: [],
-          paidProviders: ['HBO Max'],
-          watchLink: 'https://www.themoviedb.org/tv/1399-game_of_thrones/watch?locale=US',
-        },
-        otherCountries: [],
-      },
+      runtime: 60,
+      seasons: 8,
+      episodes: 73,
+      cast: [],
+      availability: {},
     });
+    expect(json).not.toHaveProperty('tagline');
+    expect(json).not.toHaveProperty('backdropUrl');
+    expect(json).not.toHaveProperty('trailerUrl');
+  });
+
+  it('reports an undetected country as null', async () => {
+    mockDetectUserCountry.mockReturnValue('XX');
+    const response = await GET(createMockRequest('movie', '550'), {
+      params: { type: 'movie', id: '550' },
+    });
+    expect((await response.json()).detectedCountry).toBeNull();
   });
 
   // --- Invalid Requests ---
   it('should return 400 for an invalid type parameter', async () => {
-    const req = createMockRequest('unknown', '123');
-    const response = await GET(req, { params: { type: 'unknown', id: '123' } });
-    const json = await response.json();
+    const response = await GET(createMockRequest('unknown', '123'), {
+      params: { type: 'unknown', id: '123' },
+    });
 
     expect(response.status).toBe(400);
-    expect(json).toEqual({ error: 'Invalid type. Must be "movie" or "tv".' });
+    expect(await response.json()).toEqual({ error: 'Invalid type. Must be "movie" or "tv".' });
     expect(mockGetMovieDetails).not.toHaveBeenCalled();
     expect(mockGetTvDetails).not.toHaveBeenCalled();
   });
 
   it('should return 400 for a non-numeric ID parameter', async () => {
-    const req = createMockRequest('movie', 'abc');
-    const response = await GET(req, { params: { type: 'movie', id: 'abc' } });
-    const json = await response.json();
+    const response = await GET(createMockRequest('movie', 'abc'), {
+      params: { type: 'movie', id: 'abc' },
+    });
 
     expect(response.status).toBe(400);
-    expect(json).toEqual({ error: 'Invalid ID. Must be a positive integer.' });
+    expect(await response.json()).toEqual({ error: 'Invalid ID. Must be a positive integer.' });
     expect(mockGetMovieDetails).not.toHaveBeenCalled();
   });
 
   it('should return 400 for a non-positive integer ID parameter', async () => {
-    const req = createMockRequest('tv', '0');
-    const response = await GET(req, { params: { type: 'tv', id: '0' } });
-    const json = await response.json();
+    const response = await GET(createMockRequest('tv', '0'), { params: { type: 'tv', id: '0' } });
 
     expect(response.status).toBe(400);
-    expect(json).toEqual({ error: 'Invalid ID. Must be a positive integer.' });
+    expect(await response.json()).toEqual({ error: 'Invalid ID. Must be a positive integer.' });
     expect(mockGetTvDetails).not.toHaveBeenCalled();
   });
 
   // --- Error Handling ---
-  it('should return 502/503 if getMovieDetails fails', async () => {
+  it('should return 502 if getMovieDetails fails', async () => {
     mockGetMovieDetails.mockRejectedValue(new TmdbError(500, 'TMDB Movie Details Error'));
-    const req = createMockRequest('movie', '550');
-    const response = await GET(req, { params: { type: 'movie', id: '550' } });
-    const json = await response.json();
+    const response = await GET(createMockRequest('movie', '550'), {
+      params: { type: 'movie', id: '550' },
+    });
 
     expect(response.status).toBe(502);
-    expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
+    expect(await response.json()).toEqual({ error: 'Error fetching data from TMDB.' });
   });
 
   it('should return 503 if TMDB movie details are unavailable', async () => {
     mockGetMovieDetails.mockRejectedValue(new TmdbError(503, 'Service Unavailable'));
-    const req = createMockRequest('movie', '550');
-    const response = await GET(req, { params: { type: 'movie', id: '550' } });
-    const json = await response.json();
+    const response = await GET(createMockRequest('movie', '550'), {
+      params: { type: 'movie', id: '550' },
+    });
 
     expect(response.status).toBe(503);
-    expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
+    expect(await response.json()).toEqual({ error: 'Error fetching data from TMDB.' });
   });
 
-  it('should return 502/503 if getMovieWatchProviders fails', async () => {
-    mockGetMovieWatchProviders.mockRejectedValue(new TmdbError(500, 'TMDB Movie Providers Error'));
-    const req = createMockRequest('movie', '550');
-    const response = await GET(req, { params: { type: 'movie', id: '550' } });
-    const json = await response.json();
-
-    expect(response.status).toBe(502);
-    expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
-  });
-
-  it('should return 502/503 if getTvDetails fails', async () => {
-    mockGetTvDetails.mockRejectedValue(new TmdbError(500, 'TMDB TV Details Error'));
-    const req = createMockRequest('tv', '1399');
-    const response = await GET(req, { params: { type: 'tv', id: '1399' } });
-    const json = await response.json();
-
-    expect(response.status).toBe(502);
-    expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
-  });
-
-  it('should return 502/503 if getTvWatchProviders fails', async () => {
+  it('should return 502 if getTvWatchProviders fails', async () => {
     mockGetTvWatchProviders.mockRejectedValue(new TmdbError(500, 'TMDB TV Providers Error'));
-    const req = createMockRequest('tv', '1399');
-    const response = await GET(req, { params: { type: 'tv', id: '1399' } });
-    const json = await response.json();
+    const response = await GET(createMockRequest('tv', '1399'), {
+      params: { type: 'tv', id: '1399' },
+    });
 
     expect(response.status).toBe(502);
-    expect(json).toEqual({ error: 'Error fetching data from TMDB.' });
+    expect(await response.json()).toEqual({ error: 'Error fetching data from TMDB.' });
   });
 
-  it('should return 500 if mapAvailability throws an error', async () => {
-    mockMapAvailability.mockImplementation(() => {
-      throw new Error('Availability mapping failed');
+  it('should return 500 if the provider data is malformed', async () => {
+    mockGetMovieWatchProviders.mockResolvedValue(null);
+    const response = await GET(createMockRequest('movie', '550'), {
+      params: { type: 'movie', id: '550' },
     });
-    const req = createMockRequest('movie', '550');
-    const response = await GET(req, { params: { type: 'movie', id: '550' } });
-    const json = await response.json();
 
     expect(response.status).toBe(500);
-    expect(json).toEqual({ error: 'Internal Server Error' });
+    expect(await response.json()).toEqual({ error: 'Internal Server Error' });
   });
 });

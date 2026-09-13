@@ -2,15 +2,28 @@
  * Search contract module.
  *
  * Owns the wire format for the search endpoint: the parameter type, client
- * serialization, server parsing/validation, and the response shape. The form,
- * the search hook, and the search route all consume this module, so the
- * contract can only drift when it is changed here.
+ * serialization, server parsing/validation, and the response shape. The search
+ * page, the autocomplete hook, and the search route all consume this module, so
+ * the contract can only drift when it is changed here.
+ *
+ * A request with a query searches by title; a request without one browses what
+ * is popular in the watch region (full mode only).
  */
 
 import { NormalizedSearchResult } from './types';
 
 export type SearchType = 'movie' | 'tv' | 'all';
 export type SearchMode = 'autocomplete' | 'full';
+export type SortOption = 'relevance' | 'popularity' | 'rating' | 'newest' | 'oldest' | 'title';
+
+export const SORT_OPTIONS: readonly SortOption[] = [
+  'relevance',
+  'popularity',
+  'rating',
+  'newest',
+  'oldest',
+  'title',
+];
 
 /**
  * Search parameters as used by the UI and the search hook.
@@ -25,6 +38,7 @@ export interface SearchParams {
   providerIds?: number[];
   watchRegion?: string;
   minRating?: number;
+  sort?: SortOption;
 }
 
 /**
@@ -84,6 +98,14 @@ export function serializeSearchRequest(
   return queryParams.toString();
 }
 
+const parseIdList = (raw: string | null): number[] | undefined =>
+  raw
+    ? raw
+        .split(',')
+        .map((id) => parseInt(id.trim(), 10))
+        .filter((id) => !isNaN(id))
+    : undefined;
+
 /**
  * Parses and validates /api/search query parameters into a SearchRequest.
  * Invalid values are normalized to defaults (e.g. invalid type -> "all").
@@ -123,20 +145,14 @@ export function parseSearchRequest(searchParams: URLSearchParams): SearchRequest
     params.language = language.trim();
   }
 
-  const genreIds = searchParams.get('genreIds');
+  const genreIds = parseIdList(searchParams.get('genreIds'));
   if (genreIds) {
-    params.genreIds = genreIds
-      .split(',')
-      .map((id) => parseInt(id.trim(), 10))
-      .filter((id) => !isNaN(id));
+    params.genreIds = genreIds;
   }
 
-  const providerIds = searchParams.get('providerIds');
+  const providerIds = parseIdList(searchParams.get('providerIds'));
   if (providerIds) {
-    params.providerIds = providerIds
-      .split(',')
-      .map((id) => parseInt(id.trim(), 10))
-      .filter((id) => !isNaN(id));
+    params.providerIds = providerIds;
   }
 
   const watchRegion = searchParams.get('watchRegion');
@@ -150,6 +166,11 @@ export function parseSearchRequest(searchParams: URLSearchParams): SearchRequest
     if (!isNaN(rating)) {
       params.minRating = rating;
     }
+  }
+
+  const sort = searchParams.get('sort') as SortOption | null;
+  if (sort && SORT_OPTIONS.includes(sort)) {
+    params.sort = sort;
   }
 
   return params;

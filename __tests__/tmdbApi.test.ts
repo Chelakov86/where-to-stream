@@ -219,7 +219,9 @@ describe('tmdbApi', () => {
 
       const result = await getMovieDetails(550);
 
-      expect(mockTmdbGet).toHaveBeenCalledWith('/movie/550');
+      expect(mockTmdbGet).toHaveBeenCalledWith('/movie/550', {
+        append_to_response: 'credits,videos',
+      });
       expect(result).toEqual(mockResponse);
     });
 
@@ -245,7 +247,9 @@ describe('tmdbApi', () => {
 
       await getMovieDetails(12345);
 
-      expect(mockTmdbGet).toHaveBeenCalledWith('/movie/12345');
+      expect(mockTmdbGet).toHaveBeenCalledWith('/movie/12345', {
+        append_to_response: 'credits,videos',
+      });
     });
   });
 
@@ -273,7 +277,9 @@ describe('tmdbApi', () => {
 
       const result = await getTvDetails(1396);
 
-      expect(mockTmdbGet).toHaveBeenCalledWith('/tv/1396');
+      expect(mockTmdbGet).toHaveBeenCalledWith('/tv/1396', {
+        append_to_response: 'credits,videos',
+      });
       expect(result).toEqual(mockResponse);
     });
 
@@ -300,7 +306,9 @@ describe('tmdbApi', () => {
 
       await getTvDetails(67890);
 
-      expect(mockTmdbGet).toHaveBeenCalledWith('/tv/67890');
+      expect(mockTmdbGet).toHaveBeenCalledWith('/tv/67890', {
+        append_to_response: 'credits,videos',
+      });
     });
   });
 

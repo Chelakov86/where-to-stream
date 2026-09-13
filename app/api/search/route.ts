@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   searchMovies,
   searchTv,
+  discoverMovies,
+  discoverTv,
   getMovieWatchProviders,
   getTvWatchProviders,
   SearchMoviesParams,
@@ -10,11 +12,12 @@ import {
 import { TmdbSearchResult, TmdbSearchResponse } from '@/app/tmdbTypes';
 import { NormalizedSearchResult } from '@/app/types';
 import { normalizeTmdbMedia } from '@/app/titleNormalizer';
-import { filterResultsByProvider } from '@/app/availabilityMapper';
+import { DEFAULT_WATCH_REGION, filterResultsByProvider } from '@/app/availabilityMapper';
 import {
   SearchMode,
   SearchRequest,
   SearchResponse,
+  SortOption,
   parseSearchRequest,
 } from '@/app/searchContract';
 import { withRouteGuard, rateLimitHeaders } from '@/app/api/routeGuard';
@@ -22,16 +25,17 @@ import { getClientIdentifier } from '@/app/utils/rateLimiter';
 import { RATE_LIMIT_CONFIG } from '@/app/config';
 
 /**
- * API route handler for searching movies and TV shows.
+ * API route handler for searching and browsing movies and TV shows.
  *
  * GET /api/search
  *
- * Searches TMDB for movies and/or TV shows based on query parameters.
- * Supports filtering by type, year range, language, genres, and rating.
+ * With a query, searches TMDB by title. Without a query (full mode only), browses
+ * the titles that are popular in the watch region via TMDB discover, which filters
+ * by region, providers, genres, rating and release years natively.
  * Returns normalized results with consistent structure regardless of content type.
  *
  * Query Parameters:
- * - query (required): Search query string
+ * - query: Search query string (required in autocomplete mode)
  * - type: "movie" | "tv" | "all" (default: "all")
  * - mode: "autocomplete" | "full" (default: "full")
  *   - autocomplete: Returns minimal fields (id, type, title, year, posterUrl, popularity)
@@ -40,17 +44,25 @@ import { RATE_LIMIT_CONFIG } from '@/app/config';
  * - yearFrom, yearTo: Year range filters (optional)
  * - language: ISO 639-1 language code (optional)
  * - genreIds: Comma-separated genre IDs (optional)
+ * - providerIds: Comma-separated provider IDs (optional)
+ * - watchRegion: ISO 3166-1 country code (optional, default for browsing: "US")
  * - minRating: Minimum rating filter (optional)
+ * - sort: "relevance" | "popularity" | "rating" | "newest" | "oldest" | "title" (optional)
  *
- * When type="all", results from both movies and TV are merged and sorted by popularity.
- * Results are normalized to a consistent structure regardless of source type.
+ * When type="all", results from both movies and TV are merged and sorted.
  */
+
+/** Minimum vote count for browsed titles, so obscure entries don't dominate rating sorts. */
+const BROWSE_MIN_VOTES = 50;
+
+/** TMDB caps paging at 500 pages. */
+const MAX_PAGES = 500;
 
 /**
  * Normalizes a TMDB search result to a consistent structure.
  * Handles differences between movie and TV result formats (e.g., title vs name).
  * In autocomplete mode, returns only essential fields for performance.
- * Posters are emitted at w200 for the list UI.
+ * Posters are emitted at w342 for the poster grid.
  */
 const normalizeTmdbResult = (
   result: TmdbSearchResult,
@@ -65,7 +77,7 @@ const normalizeTmdbResult = (
     posterUrl,
     rating,
     overview,
-  } = normalizeTmdbMedia(result, type, { posterSize: 'w200' });
+  } = normalizeTmdbMedia(result, type, { posterSize: 'w342' });
 
   const normalized: NormalizedSearchResult = {
     id,
@@ -83,6 +95,18 @@ const normalizeTmdbResult = (
   }
 
   return normalized;
+};
+
+const SORTERS: Record<
+  SortOption,
+  (a: NormalizedSearchResult, b: NormalizedSearchResult) => number
+> = {
+  relevance: () => 0,
+  popularity: (a, b) => (b.popularity || 0) - (a.popularity || 0),
+  rating: (a, b) => (b.rating || 0) - (a.rating || 0),
+  newest: (a, b) => (b.year || 0) - (a.year || 0),
+  oldest: (a, b) => (a.year || Number.MAX_SAFE_INTEGER) - (b.year || Number.MAX_SAFE_INTEGER),
+  title: (a, b) => a.title.localeCompare(b.title),
 };
 
 /**
@@ -143,6 +167,132 @@ const mapSearchParamsToTvParams = (params: SearchRequest): SearchTvParams => {
   return tvParams;
 };
 
+/**
+ * Maps the app's sort option to a TMDB discover `sort_by` value.
+ */
+const discoverSortBy = (sort: SortOption | undefined, type: 'movie' | 'tv'): string => {
+  const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date';
+  switch (sort) {
+    case 'rating':
+      return 'vote_average.desc';
+    case 'newest':
+      return `${dateField}.desc`;
+    case 'oldest':
+      return `${dateField}.asc`;
+    case 'title':
+      return type === 'movie' ? 'title.asc' : 'name.asc';
+    default:
+      return 'popularity.desc';
+  }
+};
+
+const collectResults = (
+  responses: { type: 'movie' | 'tv'; response: TmdbSearchResponse }[],
+  mode: SearchMode
+): SearchResponse => ({
+  page: responses[0]?.response.page ?? 1,
+  totalPages: Math.min(Math.max(1, ...responses.map((r) => r.response.total_pages)), MAX_PAGES),
+  totalResults: responses.reduce((sum, r) => sum + r.response.total_results, 0),
+  results: responses.flatMap(({ type, response }) =>
+    response.results.map((r) => normalizeTmdbResult(r, type, mode))
+  ),
+});
+
+const typesFor = (params: SearchRequest): ('movie' | 'tv')[] =>
+  params.type === 'movie' ? ['movie'] : params.type === 'tv' ? ['tv'] : ['movie', 'tv'];
+
+/**
+ * Browses popular titles that have an offer in the watch region.
+ */
+async function browse(params: SearchRequest): Promise<SearchResponse> {
+  const watchRegion = params.watchRegion || DEFAULT_WATCH_REGION;
+  const withWatchProviders = params.providerIds?.length ? params.providerIds.join('|') : undefined;
+  // Genre IDs differ between movies and TV, so match any selected genre
+  const withGenres = params.genreIds?.length ? params.genreIds.join('|') : undefined;
+  const today = new Date().toISOString().slice(0, 10);
+  const from = params.yearFrom ? `${params.yearFrom}-01-01` : undefined;
+  // "Newest" should not surface unreleased titles
+  const to = params.yearTo
+    ? `${params.yearTo}-12-31`
+    : params.sort === 'newest'
+      ? today
+      : undefined;
+
+  const responses = await Promise.all(
+    typesFor(params).map(async (type) => {
+      const shared = {
+        page: params.page,
+        watchRegion,
+        withWatchProviders,
+        withGenres,
+        language: params.language,
+        sortBy: discoverSortBy(params.sort, type),
+        voteAverageGte: params.minRating || undefined,
+        voteCountGte: BROWSE_MIN_VOTES,
+      };
+      const response =
+        type === 'movie'
+          ? await discoverMovies({ ...shared, releaseDateGte: from, releaseDateLte: to })
+          : await discoverTv({ ...shared, firstAirDateGte: from, firstAirDateLte: to });
+      return { type, response };
+    })
+  );
+
+  const collected = collectResults(responses, 'full');
+  collected.results.sort(SORTERS[params.sort ?? 'popularity']);
+  return collected;
+}
+
+/**
+ * Searches titles by query, then applies the filters TMDB search can't.
+ */
+async function search(params: SearchRequest): Promise<SearchResponse> {
+  const responses = await Promise.all(
+    typesFor(params).map(async (type) => ({
+      type,
+      response:
+        type === 'movie'
+          ? await searchMovies(mapSearchParamsToMovieParams(params))
+          : await searchTv(mapSearchParamsToTvParams(params)),
+    }))
+  );
+
+  const collected = collectResults(responses, params.mode);
+  let results = collected.results;
+
+  if (params.type === 'all') {
+    results.sort(SORTERS.popularity);
+  }
+
+  // Apply strict filtering if requested
+  if ((params.providerIds && params.providerIds.length > 0) || params.watchRegion) {
+    results = await filterResultsByProvider(
+      results,
+      { watchRegion: params.watchRegion, providerIds: params.providerIds },
+      (type, id) => (type === 'movie' ? getMovieWatchProviders(id) : getTvWatchProviders(id))
+    );
+  }
+
+  if (params.genreIds && params.genreIds.length > 0 && params.mode === 'full') {
+    results = results.filter((r) => r.genres?.some((g) => params.genreIds!.includes(g)));
+  }
+
+  if (params.yearFrom && params.yearTo) {
+    results = results.filter((r) => r.year !== undefined && r.year <= params.yearTo!);
+  }
+
+  // Apply minRating filtering if requested
+  if (params.minRating !== undefined) {
+    results = results.filter((r) => r.rating !== undefined && r.rating >= params.minRating!);
+  }
+
+  if (params.sort && params.sort !== 'relevance') {
+    results = [...results].sort(SORTERS[params.sort]);
+  }
+
+  return { ...collected, results };
+}
+
 export async function GET(req: NextRequest) {
   return withRouteGuard(
     {
@@ -153,73 +303,11 @@ export async function GET(req: NextRequest) {
     async (rateLimitResult) => {
       const params = parseSearchRequest(req.nextUrl.searchParams);
 
-      if (!params.query) {
+      if (!params.query && params.mode === 'autocomplete') {
         return NextResponse.json({ error: 'Query parameter is required' }, { status: 400 });
       }
 
-      let results: NormalizedSearchResult[] = [];
-      let page = 1;
-      let totalPages = 1;
-      let totalResults = 0;
-
-      // Always use search endpoints to ensure query relevance.
-      // We apply strict provider/region filtering post-search.
-      if (params.type === 'movie') {
-        const movieParams = mapSearchParamsToMovieParams(params);
-        const tmdbResponse = await searchMovies(movieParams);
-        page = tmdbResponse.page;
-        totalPages = tmdbResponse.total_pages;
-        totalResults = tmdbResponse.total_results;
-        results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode));
-      } else if (params.type === 'tv') {
-        const tvParams = mapSearchParamsToTvParams(params);
-        const tmdbResponse = await searchTv(tvParams);
-        page = tmdbResponse.page;
-        totalPages = tmdbResponse.total_pages;
-        totalResults = tmdbResponse.total_results;
-        results = tmdbResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode));
-      } else {
-        // type === 'all': Fetch both movies and TV in parallel
-        const movieParams = mapSearchParamsToMovieParams(params);
-        const tvParams = mapSearchParamsToTvParams(params);
-        const [movieResponse, tvResponse] = await Promise.all([
-          searchMovies(movieParams),
-          searchTv(tvParams),
-        ]);
-
-        page = movieResponse.page;
-        totalPages = Math.max(movieResponse.total_pages, tvResponse.total_pages);
-        totalResults = movieResponse.total_results + tvResponse.total_results;
-
-        results = [
-          ...movieResponse.results.map((r) => normalizeTmdbResult(r, 'movie', params.mode)),
-          ...tvResponse.results.map((r) => normalizeTmdbResult(r, 'tv', params.mode)),
-        ];
-
-        // Sort by popularity (descending)
-        results.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-      }
-
-      // Apply strict filtering if requested
-      if ((params.providerIds && params.providerIds.length > 0) || params.watchRegion) {
-        results = await filterResultsByProvider(
-          results,
-          { watchRegion: params.watchRegion, providerIds: params.providerIds },
-          (type, id) => (type === 'movie' ? getMovieWatchProviders(id) : getTvWatchProviders(id))
-        );
-      }
-
-      // Apply minRating filtering if requested
-      if (params.minRating !== undefined) {
-        results = results.filter((r) => r.rating !== undefined && r.rating >= params.minRating!);
-      }
-
-      const response: SearchResponse = {
-        page,
-        totalPages,
-        totalResults,
-        results,
-      };
+      const response = params.query ? await search(params) : await browse(params);
 
       return NextResponse.json(response, {
         headers: rateLimitHeaders(rateLimitResult, RATE_LIMIT_CONFIG.search.maxRequests),

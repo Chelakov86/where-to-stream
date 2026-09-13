@@ -18,6 +18,9 @@ import {
 import { getCache, setCache } from './cache';
 import { CACHE_TTL_SECONDS } from './config';
 
+/** Sub-resources appended to movie/TV detail requests (cast and trailers). */
+const DETAIL_EXTRAS = 'credits,videos';
+
 /**
  * Generates a stable cache key from an object by sorting keys before stringifying.
  * This ensures that objects with the same properties in different orders produce the same key.
@@ -84,6 +87,11 @@ export interface DiscoverMoviesParams {
   withGenres?: string;
   withWatchProviders?: string;
   watchRegion?: string;
+  sortBy?: string;
+  voteAverageGte?: number;
+  voteCountGte?: number;
+  releaseDateGte?: string;
+  releaseDateLte?: string;
 }
 
 /**
@@ -96,6 +104,11 @@ export interface DiscoverTvParams {
   withGenres?: string;
   withWatchProviders?: string;
   watchRegion?: string;
+  sortBy?: string;
+  voteAverageGte?: number;
+  voteCountGte?: number;
+  firstAirDateGte?: string;
+  firstAirDateLte?: string;
 }
 
 /**
@@ -186,7 +199,9 @@ export async function getMovieDetails(id: number): Promise<TmdbMovieDetails> {
     return cached;
   }
 
-  const data = await tmdbGet<TmdbMovieDetails>(`/movie/${id}`);
+  const data = await tmdbGet<TmdbMovieDetails>(`/movie/${id}`, {
+    append_to_response: DETAIL_EXTRAS,
+  });
   setCache(cacheKey, data, CACHE_TTL_SECONDS);
   return data;
 }
@@ -210,7 +225,9 @@ export async function getTvDetails(id: number): Promise<TmdbTvDetails> {
     return cached;
   }
 
-  const data = await tmdbGet<TmdbTvDetails>(`/tv/${id}`);
+  const data = await tmdbGet<TmdbTvDetails>(`/tv/${id}`, {
+    append_to_response: DETAIL_EXTRAS,
+  });
   setCache(cacheKey, data, CACHE_TTL_SECONDS);
   return data;
 }
@@ -336,10 +353,16 @@ export async function discoverMovies(params: DiscoverMoviesParams): Promise<Tmdb
   const data = await tmdbGet<TmdbDiscoverResponse>('/discover/movie', {
     page: params.page,
     year: params.year,
-    language: params.language,
+    with_original_language: params.language,
     with_genres: params.withGenres,
     with_watch_providers: params.withWatchProviders,
     watch_region: params.watchRegion,
+    sort_by: params.sortBy,
+    'vote_average.gte': params.voteAverageGte,
+    'vote_count.gte': params.voteCountGte,
+    'primary_release_date.gte': params.releaseDateGte,
+    'primary_release_date.lte': params.releaseDateLte,
+    include_adult: 'false',
   });
 
   setCache(cacheKey, data, CACHE_TTL_SECONDS);
@@ -371,10 +394,16 @@ export async function discoverTv(params: DiscoverTvParams): Promise<TmdbDiscover
   const data = await tmdbGet<TmdbDiscoverResponse>('/discover/tv', {
     page: params.page,
     first_air_date_year: params.firstAirDateYear,
-    language: params.language,
+    with_original_language: params.language,
     with_genres: params.withGenres,
     with_watch_providers: params.withWatchProviders,
     watch_region: params.watchRegion,
+    sort_by: params.sortBy,
+    'vote_average.gte': params.voteAverageGte,
+    'vote_count.gte': params.voteCountGte,
+    'first_air_date.gte': params.firstAirDateGte,
+    'first_air_date.lte': params.firstAirDateLte,
+    include_adult: 'false',
   });
 
   setCache(cacheKey, data, CACHE_TTL_SECONDS);

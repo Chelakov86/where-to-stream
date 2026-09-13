@@ -50,7 +50,29 @@ export interface TmdbSpokenLanguage {
   name: string;
 }
 
-export interface TmdbMovieDetails {
+export interface TmdbCastMember {
+  name: string;
+  character?: string;
+  profile_path: string | null;
+  order?: number;
+}
+
+export interface TmdbVideo {
+  key: string;
+  site: string;
+  type: string;
+  official?: boolean;
+}
+
+/**
+ * Sub-resources requested via `append_to_response=credits,videos` on detail calls.
+ */
+export interface TmdbDetailExtras {
+  credits?: { cast: TmdbCastMember[] };
+  videos?: { results: TmdbVideo[] };
+}
+
+export interface TmdbMovieDetails extends TmdbDetailExtras {
   id: number;
   title: string;
   original_title: string;
@@ -73,7 +95,7 @@ export interface TmdbMovieDetails {
   spoken_languages?: TmdbSpokenLanguage[];
 }
 
-export interface TmdbTvDetails {
+export interface TmdbTvDetails extends TmdbDetailExtras {
   id: number;
   name: string;
   original_name: string;
