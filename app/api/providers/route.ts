@@ -6,10 +6,19 @@
  */
 
 import { getMovieWatchProvidersList, getTvWatchProvidersList } from '@/app/tmdbApi';
+import { TmdbWatchProviderInfo } from '@/app/tmdbTypes';
 import { WatchProvider } from '@/app/types';
+import { buildTmdbImageUrl } from '@/app/utils/tmdb';
 import { withRouteGuard } from '@/app/api/routeGuard';
 import { getClientIdentifier } from '@/app/utils/rateLimiter';
 import { RATE_LIMIT_CONFIG } from '@/app/config';
+
+const toWatchProvider = (provider: TmdbWatchProviderInfo): WatchProvider => ({
+  id: provider.provider_id,
+  name: provider.provider_name,
+  logoUrl: buildTmdbImageUrl(provider.logo_path, 'w92'),
+  priority: provider.display_priority,
+});
 
 /**
  * GET /api/providers
@@ -35,25 +44,23 @@ export async function GET(request: Request) {
         getTvWatchProvidersList(watchRegion),
       ]);
 
-      // Combine and deduplicate by provider_id
+      // Combine and deduplicate by provider id
       const providerMap = new Map<number, WatchProvider>();
 
       // Add movie providers
       for (const provider of movieProviders.results) {
-        providerMap.set(provider.provider_id, provider);
+        providerMap.set(provider.provider_id, toWatchProvider(provider));
       }
 
-      // Add TV providers (will overwrite if already exists, which is fine)
+      // Add TV providers (skip if already present from movies)
       for (const provider of tvProviders.results) {
         if (!providerMap.has(provider.provider_id)) {
-          providerMap.set(provider.provider_id, provider);
+          providerMap.set(provider.provider_id, toWatchProvider(provider));
         }
       }
 
-      // Convert to array and sort by display_priority (lower is better)
-      const providers = Array.from(providerMap.values()).sort(
-        (a, b) => a.display_priority - b.display_priority
-      );
+      // Convert to array and sort by priority (lower is better)
+      const providers = Array.from(providerMap.values()).sort((a, b) => a.priority - b.priority);
 
       return new Response(JSON.stringify({ providers }), {
         status: 200,

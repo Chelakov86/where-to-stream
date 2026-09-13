@@ -1,143 +1,76 @@
 import { test, expect } from '../fixtures/test-fixtures';
-import { mockSearchError, mockTitleDetailsError } from '../helpers/api-mock';
+import {
+  mockProviders,
+  mockSearch,
+  mockSearchError,
+  mockTitleDetails,
+  mockTitleDetailsError,
+} from '../helpers/api-mock';
 
 test.describe('Error Handling', () => {
-  test('should display error banner on API error', async ({ homePage, page }) => {
+  test('shows an alert when the catalogue fails and recovers on retry', async ({
+    homePage,
+    page,
+  }) => {
     await mockSearchError(page, 500);
-
-    await homePage.search('test');
-    await homePage.waitForError();
-
-    await expect(homePage.errorBanner).toBeVisible();
-    const errorMessage = await homePage.getErrorMessage();
-    expect(errorMessage).toBeTruthy();
-  });
-
-  test('should dismiss error banner', async ({ homePage, page }) => {
-    await mockSearchError(page, 500);
-
-    await homePage.search('test');
-    await homePage.waitForError();
-
-    await homePage.dismissError();
-    await homePage.waitForErrorHidden();
-
-    await expect(homePage.errorBanner).not.toBeVisible();
-  });
-
-  test('should handle title details API error', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          page: 1,
-          totalPages: 1,
-          totalResults: 1,
-          results: [{ id: 550, type: 'movie', title: 'Test' }],
-        }),
-      });
-    });
-
-    await mockTitleDetailsError(page, 500);
-
-    await homePage.search('test');
-    await homePage.waitForResults();
-    await homePage.clickResultItem(0);
-
-    // Should show error in details section
-    await page.waitForTimeout(1000);
-
-    const errorMessage = page.locator('div.text-red-400', {
-      hasText: "We're having trouble fetching data right now",
-    });
-    await expect(errorMessage).toBeVisible();
-  });
-
-  test('should handle 404 error for non-existent title', async ({ homePage, page }) => {
-    await page.route('**/api/search**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          page: 1,
-          totalPages: 1,
-          totalResults: 1,
-          results: [{ id: 99999, type: 'movie', title: 'Test' }],
-        }),
-      });
-    });
-
-    await page.route('**/api/title/**', async (route) => {
-      await route.fulfill({
-        status: 404,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Not found' }),
-      });
-    });
-
-    await homePage.search('test');
-    await homePage.waitForResults();
-    await homePage.clickResultItem(0);
-
-    // Should show error
-    await page.waitForTimeout(1000);
-    const hasError = await homePage.errorBanner.isVisible().catch(() => false);
-    expect(hasError).toBeTruthy();
-  });
-
-  test('should recover from error and allow retry', async ({ homePage, page }) => {
-    // First request fails
-    await mockSearchError(page, 500);
-    await homePage.search('test');
-    await homePage.waitForError();
-
-    // Dismiss error
-    await homePage.dismissError();
-
-    // Mock successful response
-    await page.unroute('**/api/search**');
-    await page.route('**/api/search**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          page: 1,
-          totalPages: 1,
-          totalResults: 1,
-          results: [{ id: 550, type: 'movie', title: 'Test' }],
-        }),
-      });
-    });
-
-    // Retry search
-    await homePage.search('test');
-    await homePage.waitForResults();
-
-    await expect(homePage.resultsList).toBeVisible();
-  });
-
-  test('should handle genres API error gracefully', async ({ homePage, page }) => {
-    await page.route('**/api/genres', async (route) => {
-      await route.fulfill({
-        status: 502,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Failed to fetch genres' }),
-      });
-    });
-
     await homePage.goto();
-    await homePage.toggleFilters();
 
-    // Should show error or handle gracefully
-    await page.waitForTimeout(1000);
+    await expect(homePage.errorAlert).toContainText("We couldn't reach the catalogue.");
 
-    const hasError = await homePage.errorBanner.isVisible().catch(() => false);
-    const hasNoGenres = await homePage.page
-      .locator('text=No genres available')
-      .isVisible()
-      .catch(() => false);
+    await page.unroute('**/api/search*');
+    await mockSearch(page);
+    await homePage.errorAlert.getByRole('button', { name: 'Try again' }).click();
+    await homePage.waitForResults();
+  });
 
-    expect(hasError || hasNoGenres).toBeTruthy();
+  test('shows an error when a title fails to load and recovers on retry', async ({
+    titlePage,
+    page,
+  }) => {
+    await mockTitleDetailsError(page, 502);
+    await titlePage.gotoTitle('movie', 550);
+
+    await expect(titlePage.errorHeading).toBeVisible();
+
+    await page.unroute('**/api/title/**');
+    await mockTitleDetails(page);
+    await titlePage.retryButton.click();
+    await expect(titlePage.heading).toHaveText('Fight Club');
+  });
+
+  test('shows an error when country availability fails', async ({ countriesPage, page }) => {
+    await mockTitleDetailsError(page, 500);
+    await countriesPage.goto('/title/movie/550/countries');
+
+    await expect(page.getByRole('main').getByRole('alert')).toContainText(
+      "Couldn't load availability."
+    );
+  });
+
+  test('returns a 404 page for invalid title routes', async ({ page }) => {
+    const response = await page.goto('/title/person/1');
+    expect(response?.status()).toBe(404);
+    await expect(page.getByText('This page could not be found.')).toBeVisible();
+  });
+
+  test('keeps filters usable when genres fail to load', async ({ homePage, page }) => {
+    await page.route('**/api/genres', (route) =>
+      route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"down"}' })
+    );
+    await homePage.goto();
+    await homePage.openFilters();
+
+    await expect(homePage.filtersPopover.getByRole('button', { name: 'Action' })).toHaveCount(0);
+    await homePage.filtersPopover.getByRole('button', { name: '7+' }).click();
+    await expect(page).toHaveURL(/rating=7/);
+  });
+
+  test('explains when streaming providers fail to load', async ({ homePage, page }) => {
+    await mockProviders(page, 500);
+    await homePage.openServices();
+
+    await expect(homePage.servicesDialog.getByRole('alert')).toContainText(
+      "Couldn't load providers."
+    );
   });
 });

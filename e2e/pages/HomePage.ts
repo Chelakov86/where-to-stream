@@ -1,417 +1,140 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, Request, expect } from '@playwright/test';
 import { BasePage } from './BasePage';
-import { ResultDetailsPage } from './ResultDetailsPage';
 
 /**
- * HomePage Page Object Model
- * Handles interactions with the main search page
+ * Page Object Model for the search page and the app header.
  */
 export class HomePage extends BasePage {
-  // Search form elements
+  // Header
+  readonly header: Locator;
+  readonly savedLink: Locator;
+  readonly servicesButton: Locator;
+  readonly servicesDialog: Locator;
+  readonly countryButton: Locator;
+
+  // Hero and search box
+  readonly heroHeading: Locator;
   readonly searchInput: Locator;
-  readonly searchButton: Locator;
-  readonly filterToggleButton: Locator;
-  readonly filterSection: Locator;
+  readonly clearSearchButton: Locator;
+  readonly suggestionList: Locator;
+  readonly suggestions: Locator;
 
-  // Filter elements
-  readonly typeSelect: Locator;
-  readonly yearFromInput: Locator;
-  readonly yearToInput: Locator;
-  readonly languageSelect: Locator;
-  readonly minRatingSlider: Locator;
-  readonly minRatingValue: Locator;
+  // Results
+  readonly resultsSection: Locator;
+  readonly resultsHeading: Locator;
+  readonly titleCards: Locator;
+  readonly emptyState: Locator;
+  readonly errorAlert: Locator;
+  readonly pagination: Locator;
+  readonly nextPageButton: Locator;
+  readonly previousPageButton: Locator;
 
-  // Autocomplete elements
-  readonly autocompleteList: Locator;
-  readonly autocompleteItems: Locator;
-
-  // Results elements
-  readonly resultsList: Locator;
-  readonly resultItems: Locator;
-  readonly noResultsMessage: Locator;
-  readonly initialPrompt: Locator;
-  readonly paginationPrevious: Locator;
-  readonly paginationNext: Locator;
-  readonly paginationInfo: Locator;
-  readonly searchingIndicator: Locator;
-
-  // Search history elements
-  readonly searchHistorySection: Locator;
-  readonly searchHistoryToggle: Locator;
-  readonly searchHistoryItems: Locator;
-  readonly clearHistoryButton: Locator;
-
-  // Error banner
-  readonly errorBanner: Locator;
-  readonly errorMessage: Locator;
-  readonly dismissErrorButton: Locator;
-
-  // Page title and description
-  readonly pageTitle: Locator;
-  readonly pageDescription: Locator;
+  // Filters
+  readonly typeGroup: Locator;
+  readonly filtersButton: Locator;
+  readonly filtersPopover: Locator;
+  readonly onlyMineSwitch: Locator;
+  readonly sortSelect: Locator;
 
   constructor(page: Page) {
     super(page);
-    // Search form
-    this.searchInput = page.locator('input#query');
-    this.searchButton = page.locator('button[type="submit"]');
-    this.filterToggleButton = page.locator('button[aria-controls="filter-section"]');
-    this.filterSection = page.locator('#filter-section');
 
-    // Filters
-    this.typeSelect = page.locator('select#type');
-    this.yearFromInput = page.locator('input#yearFrom');
-    this.yearToInput = page.locator('input#yearTo');
-    this.languageSelect = page.locator('select#language');
-    this.minRatingSlider = page.locator('input#minRating');
-    this.minRatingValue = page.locator('label[for="minRating"] span');
+    this.header = page.getByRole('banner');
+    this.savedLink = this.header.getByRole('link', { name: 'Saved titles' });
+    this.servicesButton = this.header.getByRole('button', { name: /^My services/ });
+    this.servicesDialog = page.getByRole('dialog', { name: 'Your streaming services' });
+    this.countryButton = this.header.getByRole('combobox', { name: /^Country:/ });
 
-    // Autocomplete
-    this.autocompleteList = page.locator('#search-autocomplete-list');
-    this.autocompleteItems = page.locator('#search-autocomplete-list li[role="option"]');
+    this.heroHeading = page.getByRole('heading', { level: 1 });
+    this.searchInput = page.getByRole('combobox', { name: 'Search movies and TV shows' });
+    this.clearSearchButton = page.getByRole('button', { name: 'Clear search' });
+    this.suggestionList = page.locator('#search-suggestions');
+    this.suggestions = this.suggestionList.getByRole('option');
 
-    // Results
-    this.resultsList = page.locator('ul[role="list"]');
-    this.resultItems = page.locator('ul[role="list"] li');
-    this.noResultsMessage = page.locator('text=No titles found');
-    this.initialPrompt = page.locator(
-      "text=Search for a movie or series to see where it's streaming"
+    this.resultsSection = page.locator('section[aria-labelledby="results-heading"]');
+    this.resultsHeading = page.locator('#results-heading');
+    this.titleCards = this.resultsSection.locator('ul > li > a');
+    this.emptyState = this.resultsSection.getByText(
+      /^(Nothing matched those filters|No titles found)$/
     );
-    this.paginationPrevious = page.locator('button:has-text("Previous")');
-    this.paginationNext = page.locator('button:has-text("Next")');
-    this.paginationInfo = page.locator('text=/Page \\d+ of \\d+/');
-    this.searchingIndicator = page.locator('text=Searching...');
+    this.errorAlert = this.resultsSection.getByRole('alert');
+    this.pagination = page.getByRole('navigation', { name: 'Pagination' });
+    this.nextPageButton = this.pagination.getByRole('button', { name: 'Next' });
+    this.previousPageButton = this.pagination.getByRole('button', { name: 'Previous' });
 
-    // Search history
-    this.searchHistorySection = page.locator('aside:has-text("Search History")');
-    this.searchHistoryToggle = page.locator('button[aria-controls="search-history-list"]');
-    this.searchHistoryItems = page.locator('#search-history-list button[aria-label^="View"]');
-    this.clearHistoryButton = page.locator('button[aria-label="Clear all search history"]');
-
-    // Error banner
-    this.errorBanner = page.locator('div[role="alert"]:not(#__next-route-announcer__)');
-    this.errorMessage = this.errorBanner.locator('p');
-    this.dismissErrorButton = page.locator('button[aria-label="Dismiss error"]');
-
-    // Page elements
-    this.pageTitle = page.locator('h1:has-text("WhereToStream")');
-    this.pageDescription = page.locator(
-      'text=Find where your favorite movies and TV shows are streaming'
-    );
+    this.typeGroup = page.getByRole('group', { name: 'Media type' });
+    this.filtersButton = page.getByRole('button', { name: /^Filters/ });
+    this.filtersPopover = page.getByRole('dialog').filter({ hasText: 'Minimum rating' });
+    this.onlyMineSwitch = page.getByRole('switch', { name: 'Only my services' });
+    this.sortSelect = page.getByRole('combobox', { name: 'Sort results' });
   }
 
   /**
-   * Navigate to home page
+   * Open the search page, optionally with URL state (e.g. "q=dune&type=movie").
    */
-  async goto(): Promise<void> {
-    await super.goto('/');
-    await this.waitForLoad();
+  async goto(query: string = ''): Promise<void> {
+    await super.goto(query ? `/?${query}` : '/');
+    await expect(this.heroHeading).toBeVisible();
   }
 
   /**
-   * Enter search query
-   */
-  async enterSearchQuery(query: string): Promise<void> {
-    await this.searchInput.fill(query);
-  }
-
-  /**
-   * Type search query (simulates typing)
-   */
-  async typeSearchQuery(query: string, delay?: number): Promise<void> {
-    await this.searchInput.type(query, { delay });
-  }
-
-  /**
-   * Submit search form
-   */
-  async submitSearch(): Promise<void> {
-    await this.searchButton.click();
-  }
-
-  /**
-   * Perform a search with query
+   * Type a query and wait until it is committed to the URL.
    */
   async search(query: string): Promise<void> {
-    await this.enterSearchQuery(query);
-    await this.submitSearch();
+    await this.searchInput.fill(query);
+    await this.page.waitForURL((url) => url.searchParams.get('q') === query.trim());
   }
 
   /**
-   * Search for a query, open the first result and wait for its details to load.
-   * @returns The details page in its loaded state
+   * Type into the search box key by key (triggers suggestions).
    */
-  async viewDetails(query: string): Promise<ResultDetailsPage> {
-    await this.search(query);
-    await this.waitForResults();
-    await this.clickResultItem(0);
-    const resultDetailsPage = new ResultDetailsPage(this.page);
-    await resultDetailsPage.waitForDetails();
-    return resultDetailsPage;
+  async typeSearchQuery(query: string, delay = 30): Promise<void> {
+    await this.searchInput.pressSequentially(query, { delay });
+  }
+
+  async waitForResults(): Promise<void> {
+    await expect(this.titleCards.first()).toBeVisible();
+  }
+
+  async openTitleCard(name: string | RegExp): Promise<void> {
+    await this.titleCards.filter({ hasText: name }).first().click();
+  }
+
+  async selectType(label: 'All' | 'Movies' | 'Series'): Promise<void> {
+    await this.typeGroup.getByRole('button', { name: label }).click();
+  }
+
+  async openFilters(): Promise<void> {
+    await this.filtersButton.click();
+    await expect(this.filtersPopover).toBeVisible();
+  }
+
+  async chooseCountry(name: string): Promise<void> {
+    await this.countryButton.click();
+    await this.page.getByPlaceholder('Search countries…').fill(name);
+    await this.page.getByRole('option', { name, exact: true }).click();
+  }
+
+  async openServices(): Promise<void> {
+    await this.servicesButton.click();
+    await expect(this.servicesDialog).toBeVisible();
+  }
+
+  async toggleService(name: string): Promise<void> {
+    await this.servicesDialog.getByRole('button', { name, exact: true }).click();
+  }
+
+  async closeDialog(): Promise<void> {
+    await this.page.keyboard.press('Escape');
   }
 
   /**
-   * Toggle filters panel
+   * Resolves with the next full-mode /api/search request.
    */
-  async toggleFilters(): Promise<void> {
-    await this.filterToggleButton.click();
-  }
-
-  /**
-   * Select content type filter
-   */
-  async selectType(type: 'all' | 'movie' | 'tv'): Promise<void> {
-    await this.typeSelect.selectOption(type);
-  }
-
-  /**
-   * Set year range filters
-   */
-  async setYearRange(from?: number, to?: number): Promise<void> {
-    if (from !== undefined) {
-      await this.yearFromInput.fill(from.toString());
-    }
-    if (to !== undefined) {
-      await this.yearToInput.fill(to.toString());
-    }
-  }
-
-  /**
-   * Select language filter
-   */
-  async selectLanguage(language: string): Promise<void> {
-    await this.languageSelect.selectOption(language);
-  }
-
-  /**
-   * Set minimum rating
-   */
-  async setMinRating(rating: number): Promise<void> {
-    await this.minRatingSlider.fill(rating.toString());
-  }
-
-  /**
-   * Select genre by checkbox
-   */
-  async selectGenre(genreId: number): Promise<void> {
-    await this.page.locator(`input[name="genre"][value="${genreId}"]`).check();
-  }
-
-  /**
-   * Unselect genre by checkbox
-   */
-  async unselectGenre(genreId: number): Promise<void> {
-    await this.page.locator(`input[name="genre"][value="${genreId}"]`).uncheck();
-  }
-
-  /**
-   * Select multiple genres
-   */
-  async selectGenres(genreIds: number[]): Promise<void> {
-    for (const id of genreIds) {
-      await this.selectGenre(id);
-    }
-  }
-
-  /**
-   * Wait for autocomplete to appear
-   */
-  async waitForAutocomplete(timeout?: number): Promise<void> {
-    await this.autocompleteList.waitFor({ state: 'visible', timeout });
-  }
-
-  /**
-   * Wait for autocomplete to disappear
-   */
-  async waitForAutocompleteHidden(timeout?: number): Promise<void> {
-    await this.autocompleteList.waitFor({ state: 'hidden', timeout });
-  }
-
-  /**
-   * Get autocomplete suggestions count
-   */
-  async getAutocompleteCount(): Promise<number> {
-    return await this.autocompleteItems.count();
-  }
-
-  /**
-   * Select autocomplete item by index
-   */
-  async selectAutocompleteItem(index: number): Promise<void> {
-    await this.autocompleteItems.nth(index).click();
-  }
-
-  /**
-   * Select autocomplete item by text
-   */
-  async selectAutocompleteItemByText(text: string): Promise<void> {
-    await this.autocompleteItems.filter({ hasText: text }).first().click();
-  }
-
-  /**
-   * Navigate autocomplete with arrow keys
-   */
-  async navigateAutocomplete(direction: 'up' | 'down'): Promise<void> {
-    const key = direction === 'down' ? 'ArrowDown' : 'ArrowUp';
-    await this.searchInput.press(key);
-  }
-
-  /**
-   * Press Enter on autocomplete
-   */
-  async pressEnterOnAutocomplete(): Promise<void> {
-    await this.searchInput.press('Enter');
-  }
-
-  /**
-   * Press Escape to close autocomplete
-   */
-  async pressEscapeOnAutocomplete(): Promise<void> {
-    await this.searchInput.press('Escape');
-  }
-
-  /**
-   * Wait for search results
-   */
-  async waitForResults(timeout?: number): Promise<void> {
-    await this.resultsList.waitFor({ state: 'visible', timeout });
-  }
-
-  /**
-   * Get results count
-   */
-  async getResultsCount(): Promise<number> {
-    return await this.resultItems.count();
-  }
-
-  /**
-   * Click on a result item by index
-   */
-  async clickResultItem(index: number): Promise<void> {
-    await this.resultItems.nth(index).click();
-  }
-
-  /**
-   * Click on a result item by text
-   */
-  async clickResultItemByText(text: string): Promise<void> {
-    await this.resultItems.filter({ hasText: text }).first().click();
-  }
-
-  /**
-   * Navigate to next page
-   */
-  async goToNextPage(): Promise<void> {
-    await this.paginationNext.click();
-  }
-
-  /**
-   * Navigate to previous page
-   */
-  async goToPreviousPage(): Promise<void> {
-    await this.paginationPrevious.click();
-  }
-
-  /**
-   * Get pagination info text
-   */
-  async getPaginationInfo(): Promise<string> {
-    return (await this.paginationInfo.textContent()) || '';
-  }
-
-  /**
-   * Wait for searching indicator to disappear
-   */
-  async waitForSearchComplete(timeout?: number): Promise<void> {
-    await this.searchingIndicator.waitFor({ state: 'hidden', timeout });
-  }
-
-  /**
-   * Toggle search history
-   */
-  async toggleSearchHistory(): Promise<void> {
-    await this.searchHistoryToggle.click();
-  }
-
-  /**
-   * Get search history items count
-   */
-  async getSearchHistoryCount(): Promise<number> {
-    return await this.searchHistoryItems.count();
-  }
-
-  /**
-   * Click on a search history item by index
-   */
-  async clickSearchHistoryItem(index: number): Promise<void> {
-    await this.searchHistoryItems.nth(index).click();
-  }
-
-  /**
-   * Remove search history item by index
-   */
-  async removeSearchHistoryItem(index: number): Promise<void> {
-    const item = this.searchHistoryItems.nth(index);
-    await item.hover();
-    await this.page.locator(`button[aria-label*="Remove"]`).nth(index).click();
-  }
-
-  /**
-   * Clear all search history
-   */
-  async clearSearchHistory(): Promise<void> {
-    // Handle confirmation dialog
-    this.page.once('dialog', (dialog) => dialog.accept());
-    await this.clearHistoryButton.click();
-  }
-
-  /**
-   * Get error message text
-   */
-  async getErrorMessage(): Promise<string> {
-    return (await this.errorMessage.textContent()) || '';
-  }
-
-  /**
-   * Dismiss error banner
-   */
-  async dismissError(): Promise<void> {
-    await this.dismissErrorButton.click();
-  }
-
-  /**
-   * Wait for error banner to appear
-   */
-  async waitForError(timeout?: number): Promise<void> {
-    await this.errorBanner.waitFor({ state: 'visible', timeout });
-  }
-
-  /**
-   * Wait for error banner to disappear
-   */
-  async waitForErrorHidden(timeout?: number): Promise<void> {
-    await this.errorBanner.waitFor({ state: 'hidden', timeout });
-  }
-
-  /**
-   * Check if filters are visible
-   */
-  async areFiltersVisible(): Promise<boolean> {
-    return await this.filterSection.isVisible();
-  }
-
-  /**
-   * Check if autocomplete is visible
-   */
-  async isAutocompleteVisible(): Promise<boolean> {
-    return await this.autocompleteList.isVisible();
-  }
-
-  /**
-   * Check if search history is expanded
-   */
-  async isSearchHistoryExpanded(): Promise<boolean> {
-    const expanded = await this.searchHistoryToggle.getAttribute('aria-expanded');
-    return expanded === 'true';
+  nextSearchRequest(): Promise<Request> {
+    return this.page.waitForRequest((request) => {
+      if (!request.url().includes('/api/search')) return false;
+      return new URL(request.url()).searchParams.get('mode') !== 'autocomplete';
+    });
   }
 }

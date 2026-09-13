@@ -1,5 +1,10 @@
-import { normalizeTmdbMedia } from '@/app/titleNormalizer';
-import { TmdbSearchResult, TmdbMovieDetails, TmdbTvDetails } from '@/app/tmdbTypes';
+import { normalizeTmdbMedia, mapCast, findTrailerUrl } from '@/app/titleNormalizer';
+import {
+  TmdbSearchResult,
+  TmdbMovieDetails,
+  TmdbTvDetails,
+  TmdbDetailExtras,
+} from '@/app/tmdbTypes';
 
 const movieSearchResult: TmdbSearchResult = {
   id: 550,
@@ -123,5 +128,74 @@ describe('normalizeTmdbMedia', () => {
     const result = normalizeTmdbMedia({ ...tvSearchResult, first_air_date: '2021-01-01' }, 'tv');
 
     expect(result.year).toBe(2021);
+  });
+});
+
+describe('mapCast', () => {
+  it('maps credits into the app cast shape, capped at 12 members', () => {
+    const extras: TmdbDetailExtras = {
+      credits: {
+        cast: Array.from({ length: 15 }, (_, i) => ({
+          name: `Actor ${i}`,
+          character: `Character ${i}`,
+          profile_path: i === 0 ? '/actor0.jpg' : null,
+        })),
+      },
+    };
+
+    const cast = mapCast(extras);
+
+    expect(cast).toHaveLength(12);
+    expect(cast[0]).toEqual({
+      name: 'Actor 0',
+      character: 'Character 0',
+      profileUrl: 'https://image.tmdb.org/t/p/w185/actor0.jpg',
+    });
+    expect(cast[1]).toEqual({ name: 'Actor 1', character: 'Character 1' });
+  });
+
+  it('defaults missing character names to an empty string', () => {
+    const extras: TmdbDetailExtras = {
+      credits: { cast: [{ name: 'Actor', profile_path: null }] },
+    };
+
+    expect(mapCast(extras)[0].character).toBe('');
+  });
+
+  it('returns an empty array when there are no credits', () => {
+    expect(mapCast({})).toEqual([]);
+  });
+});
+
+describe('findTrailerUrl', () => {
+  it('prefers the official trailer', () => {
+    const extras: TmdbDetailExtras = {
+      videos: {
+        results: [
+          { key: 'fan', site: 'YouTube', type: 'Trailer', official: false },
+          { key: 'official', site: 'YouTube', type: 'Trailer', official: true },
+        ],
+      },
+    };
+
+    expect(findTrailerUrl(extras)).toBe('https://www.youtube.com/watch?v=official');
+  });
+
+  it('falls back to any trailer, then a teaser', () => {
+    const teaserOnly: TmdbDetailExtras = {
+      videos: { results: [{ key: 'teaser', site: 'YouTube', type: 'Teaser' }] },
+    };
+    expect(findTrailerUrl(teaserOnly)).toBe('https://www.youtube.com/watch?v=teaser');
+  });
+
+  it('ignores videos from other sites', () => {
+    const extras: TmdbDetailExtras = {
+      videos: { results: [{ key: 'x', site: 'Vimeo', type: 'Trailer' }] },
+    };
+    expect(findTrailerUrl(extras)).toBeUndefined();
+  });
+
+  it('returns undefined when there are no videos', () => {
+    expect(findTrailerUrl({})).toBeUndefined();
   });
 });

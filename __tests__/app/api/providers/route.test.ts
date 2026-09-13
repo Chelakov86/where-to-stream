@@ -50,29 +50,34 @@ describe('GET /api/providers', () => {
     expect(response.status).toBe(200);
     expect(data.providers).toHaveLength(4); // 8, 9, 337, 350 (8 is deduplicated)
     expect(data.providers).toEqual([
-      { provider_id: 8, provider_name: 'Netflix', logo_path: '/netflix.jpg', display_priority: 1 },
       {
-        provider_id: 9,
-        provider_name: 'Amazon Prime Video',
-        logo_path: '/prime.jpg',
-        display_priority: 2,
+        id: 8,
+        name: 'Netflix',
+        logoUrl: expect.stringContaining('/netflix.jpg'),
+        priority: 1,
       },
       {
-        provider_id: 337,
-        provider_name: 'Disney Plus',
-        logo_path: '/disney.jpg',
-        display_priority: 3,
+        id: 9,
+        name: 'Amazon Prime Video',
+        logoUrl: expect.stringContaining('/prime.jpg'),
+        priority: 2,
       },
       {
-        provider_id: 350,
-        provider_name: 'Apple TV Plus',
-        logo_path: '/apple.jpg',
-        display_priority: 4,
+        id: 337,
+        name: 'Disney Plus',
+        logoUrl: expect.stringContaining('/disney.jpg'),
+        priority: 3,
+      },
+      {
+        id: 350,
+        name: 'Apple TV Plus',
+        logoUrl: expect.stringContaining('/apple.jpg'),
+        priority: 4,
       },
     ]);
   });
 
-  it('returns providers sorted by display_priority', async () => {
+  it('returns providers sorted by priority', async () => {
     const unsortedMovieProviders = {
       results: [
         {
@@ -103,9 +108,9 @@ describe('GET /api/providers', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.providers[0].provider_id).toBe(8); // Netflix with priority 1
-    expect(data.providers[1].provider_id).toBe(9); // Prime with priority 5
-    expect(data.providers[2].provider_id).toBe(337); // Disney with priority 10
+    expect(data.providers[0].id).toBe(8); // Netflix with priority 1
+    expect(data.providers[1].id).toBe(9); // Prime with priority 5
+    expect(data.providers[2].id).toBe(337); // Disney with priority 10
   });
 
   it('handles TMDB API errors gracefully', async () => {

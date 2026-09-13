@@ -1,72 +1,41 @@
 import { test, expect } from '../fixtures/test-fixtures';
-import { mockSearch } from '../helpers/api-mock';
-import { sampleTvShow } from '../helpers/test-data';
+import { sampleTitleDetails } from '../helpers/test-data';
 
-test.describe('Search History', () => {
-  test('should display and toggle search history visibility', async ({ homePage }) => {
-    await expect(homePage.searchHistorySection).toBeVisible();
-    await expect(homePage.isSearchHistoryExpanded()).resolves.toBeFalsy();
-
-    await homePage.toggleSearchHistory();
-    await expect(homePage.isSearchHistoryExpanded()).resolves.toBeTruthy();
-
-    await homePage.toggleSearchHistory();
-    await expect(homePage.isSearchHistoryExpanded()).resolves.toBeFalsy();
+test.describe('Recently viewed titles', () => {
+  test('offers nothing before any title was viewed', async ({ homePage }) => {
+    await homePage.searchInput.click();
+    await expect(homePage.suggestions).toHaveCount(0);
+    await expect(homePage.searchInput).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('should show empty state when no history', async ({ homePage }) => {
-    await homePage.toggleSearchHistory();
+  test('offers viewed titles, most recent first', async ({ homePage, titlePage, page }) => {
+    await page.route('**/api/title/tv/1396', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...sampleTitleDetails,
+          id: 1396,
+          type: 'tv',
+          title: 'Breaking Bad',
+          year: 2008,
+        }),
+      })
+    );
 
-    const emptyMessage = homePage.page.locator('text=No viewed titles yet');
-    await expect(emptyMessage).toBeVisible();
-  });
+    await titlePage.gotoTitle('movie', 550);
+    await expect(titlePage.heading).toHaveText('Fight Club');
+    await titlePage.gotoTitle('tv', 1396);
+    await expect(titlePage.heading).toHaveText('Breaking Bad');
 
-  test('should add item to history when viewing result details', async ({ homePage }) => {
-    await homePage.viewDetails('test');
+    await homePage.goto();
+    await homePage.searchInput.click();
+    await expect(page.getByRole('listbox', { name: 'Recently viewed titles' })).toBeVisible();
+    await expect(homePage.suggestions).toHaveCount(2);
+    await expect(homePage.suggestions.nth(0)).toContainText('Breaking Bad');
+    await expect(homePage.suggestions.nth(1)).toContainText('Fight Club');
 
-    // Check history
-    await homePage.toggleSearchHistory();
-    const historyCount = await homePage.getSearchHistoryCount();
-    expect(historyCount).toBeGreaterThan(0);
-  });
-
-  test('should select history item and show details', async ({ homePage }) => {
-    const resultDetailsPage = await homePage.viewDetails('test');
-
-    // Now select from history
-    await homePage.toggleSearchHistory();
-    await homePage.clickSearchHistoryItem(0);
-
-    // Details should be displayed again
-    await resultDetailsPage.waitForDetails();
-    await expect(resultDetailsPage.detailsSection).toBeVisible();
-  });
-
-  test('should remove items and clear all history', async ({ homePage, page }) => {
-    await homePage.viewDetails('test');
-    // History dedupes by title, so the second search must return a different first result
-    await mockSearch(page, [sampleTvShow]);
-    await homePage.viewDetails('test2');
-
-    // Remove a single item
-    await homePage.toggleSearchHistory();
-    const initialCount = await homePage.getSearchHistoryCount();
-
-    await homePage.removeSearchHistoryItem(0);
-
-    // Wait for removal
-    await page.waitForTimeout(300);
-
-    const newCount = await homePage.getSearchHistoryCount();
-    expect(newCount).toBeLessThan(initialCount);
-
-    // Clear all history
-    await homePage.clearSearchHistory();
-
-    // Wait for confirmation and clearing
-    await page.waitForTimeout(500);
-
-    const emptyMessage = homePage.page.locator('text=No viewed titles yet');
-    await expect(emptyMessage).toBeVisible();
+    await homePage.suggestions.nth(1).click();
+    await page.waitForURL('**/title/movie/550?country=US');
   });
 });

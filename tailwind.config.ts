@@ -1,5 +1,7 @@
 import type { Config } from 'tailwindcss';
 
+const withAlpha = (variable: string) => `oklch(var(${variable}) / <alpha-value>)`;
+
 const config: Config = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -9,21 +11,65 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: {
-          DEFAULT: '#090b10',
-          secondary: '#121821',
+        background: withAlpha('--background'),
+        foreground: withAlpha('--foreground'),
+        card: {
+          DEFAULT: withAlpha('--card'),
+          foreground: withAlpha('--card-foreground'),
         },
-        text: {
-          DEFAULT: '#f4efe6',
-          secondary: '#a9b0ad',
+        popover: {
+          DEFAULT: withAlpha('--popover'),
+          foreground: withAlpha('--popover-foreground'),
+        },
+        primary: {
+          DEFAULT: withAlpha('--primary'),
+          foreground: withAlpha('--primary-foreground'),
+        },
+        secondary: {
+          DEFAULT: withAlpha('--secondary'),
+          foreground: withAlpha('--secondary-foreground'),
+        },
+        muted: {
+          DEFAULT: withAlpha('--muted'),
+          foreground: withAlpha('--muted-foreground'),
         },
         accent: {
-          primary: '#f6b94b',
-          secondary: '#53d2c6',
+          DEFAULT: withAlpha('--accent'),
+          foreground: withAlpha('--accent-foreground'),
         },
+        destructive: {
+          DEFAULT: withAlpha('--destructive'),
+          foreground: withAlpha('--destructive-foreground'),
+        },
+        success: {
+          DEFAULT: withAlpha('--success'),
+          foreground: withAlpha('--success-foreground'),
+        },
+        warning: {
+          DEFAULT: withAlpha('--warning'),
+          foreground: withAlpha('--warning-foreground'),
+        },
+        border: 'var(--border)',
+        input: 'var(--input)',
+        ring: withAlpha('--ring'),
+      },
+      borderRadius: {
+        sm: 'calc(var(--radius) - 4px)',
+        DEFAULT: 'calc(var(--radius) - 2px)',
+        md: 'calc(var(--radius) - 2px)',
+        lg: 'var(--radius)',
+        xl: 'calc(var(--radius) + 4px)',
+        '2xl': 'calc(var(--radius) + 8px)',
+        '3xl': 'calc(var(--radius) + 12px)',
+        '4xl': 'calc(var(--radius) + 16px)',
+      },
+      fontFamily: {
+        display: ['var(--font-display)'],
+        body: ['var(--font-body)'],
+        sans: ['var(--font-body)'],
       },
     },
   },
-  plugins: [],
+  plugins: [require('tailwindcss-animate')],
 };
 export default config;

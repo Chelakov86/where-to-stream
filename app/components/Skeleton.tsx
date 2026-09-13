@@ -1,128 +1,32 @@
-/**
- * Loading skeleton components for better perceived performance.
- * Provides placeholder UI while content is loading.
- */
-
 import React from 'react';
+import { cn } from '@/app/utils/cn';
 
 interface SkeletonProps {
   className?: string;
-  variant?: 'text' | 'circular' | 'rectangular';
-  width?: string | number;
-  height?: string | number;
-  animation?: 'pulse' | 'wave' | 'none';
 }
 
 /**
- * Base skeleton component for creating loading placeholders
- * @param className - Additional Tailwind classes
- * @param variant - Shape variant (text, circular, rectangular)
- * @param width - Width in pixels or CSS string
- * @param height - Height in pixels or CSS string
- * @param animation - Animation type (pulse, wave, none)
+ * Pulsing placeholder block shown while content loads. Size it with classes.
  */
-export const Skeleton: React.FC<SkeletonProps> = ({
-  className = '',
-  variant = 'text',
-  width,
-  height,
-  animation = 'pulse',
-}) => {
-  const baseClasses = 'bg-white/10';
-  const animationClasses = {
-    pulse: 'animate-pulse',
-    wave: 'animate-wave',
-    none: '',
-  };
-
-  const variantClasses = {
-    text: 'rounded',
-    circular: 'rounded-full',
-    rectangular: 'rounded-lg',
-  };
-
-  const style: React.CSSProperties = {
-    width: typeof width === 'number' ? `${width}px` : width,
-    height: typeof height === 'number' ? `${height}px` : height,
-  };
-
-  return (
-    <div
-      className={`${baseClasses} ${variantClasses[variant]} ${animationClasses[animation]} ${className}`}
-      style={style}
-      aria-hidden="true"
-    />
-  );
-};
-
-/**
- * Skeleton placeholder for a search result item
- * Matches the layout of ResultItem component
- */
-export const ResultItemSkeleton: React.FC = () => (
-  <article
-    className="flex gap-4 rounded-xl border border-white/10 bg-[#141a22]/[0.88] p-4"
-    role="status"
-    aria-label="Loading search result"
-  >
-    <Skeleton variant="rectangular" width={100} height={150} />
-    <div className="flex-1 space-y-3">
-      <Skeleton variant="text" width="60%" height={24} />
-      <Skeleton variant="text" width="40%" height={16} />
-      <Skeleton variant="text" width="100%" height={40} />
-      <Skeleton variant="text" width="30%" height={16} />
-    </div>
-  </article>
+export const Skeleton: React.FC<SkeletonProps> = ({ className }) => (
+  <div className={cn('animate-pulse rounded-md bg-muted', className)} aria-hidden="true" />
 );
 
 /**
- * Skeleton placeholder for detailed result view
- * Matches the layout of ResultDetails component
+ * Placeholder grid matching the poster grid of title cards.
  */
-export const ResultDetailsSkeleton: React.FC = () => (
-  <section
-    className="mx-auto max-w-5xl rounded-2xl border border-white/10 bg-[#141a22]/[0.88] p-4 text-text shadow-[0_28px_80px_rgba(0,0,0,0.3)] sm:p-5 md:p-6"
+export const TitleGridSkeleton: React.FC<{ count?: number }> = ({ count = 10 }) => (
+  <div
+    className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
     role="status"
-    aria-label="Loading title details"
+    aria-label="Loading titles"
   >
-    <div className="flex flex-col md:flex-row gap-6">
-      {/* Poster skeleton */}
-      <div className="md:w-1/3">
-        <Skeleton variant="rectangular" width="100%" height={450} className="max-w-xs" />
+    {Array.from({ length: count }).map((_, index) => (
+      <div key={index} className="space-y-2">
+        <Skeleton className="aspect-[2/3] w-full rounded-lg" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-1/2" />
       </div>
-
-      {/* Details skeleton */}
-      <div className="flex-1 space-y-4">
-        <Skeleton variant="text" width="70%" height={32} />
-        <Skeleton variant="text" width="50%" height={20} />
-        <div className="space-y-2">
-          <Skeleton variant="text" width="100%" height={16} />
-          <Skeleton variant="text" width="100%" height={16} />
-          <Skeleton variant="text" width="100%" height={16} />
-          <Skeleton variant="text" width="80%" height={16} />
-        </div>
-        <Skeleton variant="text" width="40%" height={20} />
-      </div>
-    </div>
-
-    {/* Availability skeleton */}
-    <div className="mt-6 space-y-4">
-      <Skeleton variant="text" width={200} height={24} />
-      <Skeleton variant="rectangular" width="100%" height={200} />
-    </div>
-  </section>
-);
-
-/**
- * Skeleton placeholder for genre list loading
- */
-export const GenresSkeleton: React.FC = () => (
-  <div className="space-y-2">
-    <Skeleton variant="text" width="30%" height={16} />
-    <div className="flex flex-wrap gap-2">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} variant="rectangular" width={80} height={32} className="rounded-full" />
-      ))}
-    </div>
+    ))}
   </div>
 );
