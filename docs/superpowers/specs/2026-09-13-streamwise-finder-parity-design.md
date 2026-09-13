@@ -94,12 +94,12 @@ mapping-layer change only.
 Replace the single `app/page.tsx` client-state orchestrator with four routes, each owning
 its own URL-encoded state:
 
-| Route | Purpose | URL state |
-|---|---|---|
-| `/` | Search + results | `q, type, genre, yearFrom, yearTo, minRating, sort, page, mine, country` |
-| `/title/[type]/[id]` | Detail + availability | `country` |
-| `/title/[type]/[id]/countries` | Full country coverage | `country` |
-| `/saved` | Watchlist | `country` (for card links) |
+| Route                          | Purpose               | URL state                                                                |
+| ------------------------------ | --------------------- | ------------------------------------------------------------------------ |
+| `/`                            | Search + results      | `q, type, genre, yearFrom, yearTo, minRating, sort, page, mine, country` |
+| `/title/[type]/[id]`           | Detail + availability | `country`                                                                |
+| `/title/[type]/[id]/countries` | Full country coverage | `country`                                                                |
+| `/saved`                       | Watchlist             | `country` (for card links)                                               |
 
 Existing API routes (`/api/search`, `/api/genres`, `/api/title/:type/:id`) are unchanged;
 only the client-side consumption moves from ad hoc `useState` in `page.tsx` to
@@ -107,7 +107,7 @@ only the client-side consumption moves from ad hoc `useState` in `page.tsx` to
 `useProviders`, `useAutocomplete`), so search/filter/sort/country state is shareable via
 URL the way it already partially is for `/api/*`.
 
-Country and preference state that should *not* live in the URL (the user's default
+Country and preference state that should _not_ live in the URL (the user's default
 country, preferred-country shortlist, my-services selection, saved titles, recent
 searches) stays in `localStorage`, following the existing `searchHistory.ts` pattern —
 read after hydration to avoid SSR mismatch, exactly as that file already does.
@@ -120,7 +120,7 @@ so this is a refinement, not a reversal):
 
 - Charcoal background, raised card surface, ember/amber primary accent, warm foreground
 - Semantic tokens: `background, foreground, card, popover, primary, secondary, muted,
-  accent, destructive, success, warning, border, input, ring` — no page-level hardcoded
+accent, destructive, success, warning, border, input, ring` — no page-level hardcoded
   colors, matching this repo's existing accessibility-first convention
 - Sora for headings/display text, Manrope for body/interface text, loaded via
   `next/font/google`
@@ -130,17 +130,17 @@ so this is a refinement, not a reversal):
 
 New/rebuilt components, each replacing or extending an existing one:
 
-| New/rebuilt | Replaces/extends | Notes |
-|---|---|---|
-| `Header` (extended) | `Header.tsx` | adds Saved link, My-Services trigger, country picker |
-| `SearchBox` | `SearchForm.tsx` + `AutocompleteList.tsx` | one combobox: recent searches + suggestions + keyboard nav |
-| `FiltersBar` | current filter UI | type segmented control, genre/year/rating popover, "only mine" switch, sort select — same underlying `/api/search` params |
-| `TitleCard` | `ResultItem.tsx` | poster grid card |
-| `AvailabilityPanel` | availability section of `ResultDetails.tsx` | verdict badge + grouped stream/free/rent/buy rows, link to comparison page |
-| `CountryPicker` | (new) | combobox, preferred countries pinned to top |
-| `ServicesDialog` | (new) | pick subscribed providers |
-| `CountryComparisonPage` | (new) | `/title/[type]/[id]/countries`: full list, pin/filter/"on my services" |
-| `SavedPage` | (new) | `/saved`: watchlist grid, remove action, empty state |
+| New/rebuilt             | Replaces/extends                            | Notes                                                                                                                     |
+| ----------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `Header` (extended)     | `Header.tsx`                                | adds Saved link, My-Services trigger, country picker                                                                      |
+| `SearchBox`             | `SearchForm.tsx` + `AutocompleteList.tsx`   | one combobox: recent searches + suggestions + keyboard nav                                                                |
+| `FiltersBar`            | current filter UI                           | type segmented control, genre/year/rating popover, "only mine" switch, sort select — same underlying `/api/search` params |
+| `TitleCard`             | `ResultItem.tsx`                            | poster grid card                                                                                                          |
+| `AvailabilityPanel`     | availability section of `ResultDetails.tsx` | verdict badge + grouped stream/free/rent/buy rows, link to comparison page                                                |
+| `CountryPicker`         | (new)                                       | combobox, preferred countries pinned to top                                                                               |
+| `ServicesDialog`        | (new)                                       | pick subscribed providers                                                                                                 |
+| `CountryComparisonPage` | (new)                                       | `/title/[type]/[id]/countries`: full list, pin/filter/"on my services"                                                    |
+| `SavedPage`             | (new)                                       | `/saved`: watchlist grid, remove action, empty state                                                                      |
 
 `ErrorBanner.tsx`, `ErrorBoundary.tsx`, `Footer.tsx` are restyled in place, not rebuilt.
 shadcn-ui primitives (Button, Input, Label, Dialog, Popover, Command, Switch) back the
