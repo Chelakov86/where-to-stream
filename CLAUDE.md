@@ -101,10 +101,15 @@ where-to-stream/
 │   │   └── SavedView.tsx         # /saved
 │   ├── utils/                    # Utility functions
 │   │   ├── availability.ts       # Verdict + country ranking (client-safe)
+│   │   ├── cn.ts                 # Tailwind class merge helper (clsx + tailwind-merge)
 │   │   ├── countries.ts          # Country data/utilities
+│   │   ├── countryDetection.ts   # Country from hosting-platform geo headers
+│   │   ├── debounce.ts           # Debounce helper (autocomplete input)
+│   │   ├── errorMessages.ts      # Technical errors → user-facing messages
 │   │   ├── format.ts             # Runtime, language and plural labels
 │   │   ├── logger.ts             # Logging utilities
 │   │   ├── preferences.ts        # localStorage preferences
+│   │   ├── rateLimiter.ts        # In-memory rate limiting for API routes
 │   │   ├── searchHistory.ts      # Recently viewed titles storage
 │   │   ├── searchPageState.ts    # Search page URL state ↔ API params
 │   │   ├── titleRoute.ts         # Title route param validation
@@ -879,7 +884,7 @@ When working on this project:
 
 ---
 
-**Last Updated:** 2026-01-18
+**Last Updated:** 2026-09-17
 
 **Document Version:** 1.0.0
 
