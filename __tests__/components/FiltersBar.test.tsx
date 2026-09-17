@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import FiltersBar from '@/app/components/FiltersBar';
 import { DEFAULT_SEARCH_PAGE_STATE, SearchPageState } from '@/app/utils/searchPageState';
-import { mockGenres } from '../../test/mocks';
+import { mockGenres } from '../mocks';
 
 const renderBar = (overrides: Partial<SearchPageState> = {}, hasServices = false) => {
   const onChange = jest.fn();

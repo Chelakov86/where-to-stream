@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AvailabilityPanel from '@/app/components/AvailabilityPanel';
-import { mockMovie } from '../../test/mocks';
+import { mockMovie } from '../mocks';
 
 describe('AvailabilityPanel', () => {
   it('shows the verdict and offer groups for the country', () => {

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import SearchView from '@/app/views/SearchView';
 import { clearApiResourceCache } from '@/app/hooks/useApiResource';
-import { mockGenres } from '../../test/mocks';
+import { mockGenres } from '../mocks';
 
 const replace = jest.fn();
 const push = jest.fn();
