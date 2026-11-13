@@ -45,7 +45,7 @@ docs/           Agent workflow docs and design specs/plans
 
 ## Tech Stack
 
-Next.js 16 (App Router) · React 18 · TypeScript 5.9 (strict) · TailwindCSS 3 + shadcn/ui ·
+Next.js 16 (App Router) · React 19 · TypeScript 5.9 (strict) · TailwindCSS 3 + shadcn/ui ·
 Jest 30 + React Testing Library 16 · Playwright
 
 ## Further Reading
