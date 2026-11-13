@@ -101,10 +101,15 @@ where-to-stream/
 │   │   └── SavedView.tsx         # /saved
 │   ├── utils/                    # Utility functions
 │   │   ├── availability.ts       # Verdict + country ranking (client-safe)
+│   │   ├── cn.ts                 # Tailwind class merge helper (clsx + tailwind-merge)
 │   │   ├── countries.ts          # Country data/utilities
+│   │   ├── countryDetection.ts   # Country from hosting-platform geo headers
+│   │   ├── debounce.ts           # Debounce helper (autocomplete input)
+│   │   ├── errorMessages.ts      # Technical errors → user-facing messages
 │   │   ├── format.ts             # Runtime, language and plural labels
 │   │   ├── logger.ts             # Logging utilities
 │   │   ├── preferences.ts        # localStorage preferences
+│   │   ├── rateLimiter.ts        # In-memory rate limiting for API routes
 │   │   ├── searchHistory.ts      # Recently viewed titles storage
 │   │   ├── searchPageState.ts    # Search page URL state ↔ API params
 │   │   ├── titleRoute.ts         # Title route param validation
@@ -117,6 +122,8 @@ where-to-stream/
 │   ├── globals.css               # Global styles + Tailwind (Cinema Ember tokens)
 │   ├── layout.tsx                # Root layout
 │   ├── page.tsx                  # Search page route
+│   ├── searchContract.ts         # Search wire format: params, serialize/parse, response
+│   ├── titleNormalizer.ts        # Raw TMDB movie/TV object → app title shape
 │   ├── tmdbApi.ts                # High-level TMDB API methods
 │   ├── tmdbClient.ts             # Low-level TMDB HTTP client
 │   ├── tmdbTypes.ts              # TMDB API type definitions
@@ -125,7 +132,10 @@ where-to-stream/
 │   ├── app/api/                  # API route tests
 │   ├── components/               # Component tests
 │   ├── hooks/                    # Hook tests
-│   └── utils/                    # Utility tests
+│   ├── utils/                    # Utility tests
+│   ├── views/                    # Page view tests
+│   └── mocks.ts                  # Shared title/genre mock data
+├── docs/                         # Agent workflow docs + design specs/plans
 ├── e2e/                          # End-to-end tests
 │   ├── fixtures/                 # Playwright fixtures
 │   ├── helpers/                  # Test helpers & mocks
@@ -710,25 +720,32 @@ export function useSearch() {
 
 ### Styling (TailwindCSS)
 
-**Use Tailwind utility classes directly in components.**
+**Use Tailwind utility classes with the semantic theme tokens — never raw palette colors
+(`bg-gray-800`, `text-white`) or hex values.**
 
 ```typescript
-<div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-  <h2 className="text-xl font-bold text-white">Title</h2>
-  <button className="px-4 py-2 bg-primary hover:bg-primary-dark rounded">
-    Action
-  </button>
+<div className="flex items-center justify-between rounded-lg bg-card p-4">
+  <h2 className="font-display text-xl font-semibold text-foreground">Title</h2>
+  <Button>Action</Button>
 </div>
 ```
 
-**Theme Colors:**
+**Theme ("Cinema Ember"):** a single warm, dark theme. Tokens are OKLCH channel values defined as
+CSS variables in `app/globals.css` and exposed as Tailwind colors in `tailwind.config.ts`, so
+opacity modifiers work (`bg-primary/15`, `border-primary/50`).
 
-- Background: `bg-gray-900` (near-black)
-- Text: `text-gray-200`
-- Primary Accent: `text-primary` (cyan/neon blue)
-- Secondary Accent: `text-secondary` (warm orange)
+- Surfaces: `background` (warm near-black), `card`, `popover`, `muted`, `secondary`, `accent`
+- Text: `foreground`, `muted-foreground` (secondary copy); each surface has a matching
+  `*-foreground`
+- Brand: `primary` (amber/ember) — also the focus `ring`
+- Status: `success`, `warning`, `destructive`
+- Lines: `border`, `input`; radius scale derives from `--radius`
 
-**Custom configuration is in `tailwind.config.ts`.**
+**Typography:** `font-display` (Sora — applied to `h1`–`h3` automatically) and `font-body`
+(Manrope, the default), loaded via `next/font` in `app/layout.tsx`.
+
+**Primitives:** use the shadcn components in `app/components/ui/` (button, dialog, popover,
+command, input, label, switch) and merge classes with `cn()` from `app/utils/cn.ts`.
 
 ---
 
@@ -867,7 +884,7 @@ When working on this project:
 
 ---
 
-**Last Updated:** 2026-01-18
+**Last Updated:** 2026-09-17
 
 **Document Version:** 1.0.0
 

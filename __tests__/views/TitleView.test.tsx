@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import TitleView from '@/app/views/TitleView';
 import { clearApiResourceCache } from '@/app/hooks/useApiResource';
-import { mockMovie, mockTv } from '../../test/mocks';
+import { mockMovie, mockTv } from '../mocks';
 
 jest.mock('next/navigation', () => ({
   useSearchParams: () => null,

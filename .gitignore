@@ -42,3 +42,7 @@ playwright/.cache/
 
 # superpowers scratch workspace
 .superpowers/
+
+# local tool caches
+.swc/
+.impeccable/
