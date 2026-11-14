@@ -47,8 +47,8 @@ export function getTmdbApiKey(): string {
   return apiKey;
 }
 
-/** Budget for building a year-filtered title search snapshot, per media type. */
-export const YEAR_SEARCH_MAX_PAGES = 50;
-export const YEAR_SEARCH_CONCURRENCY = 4;
-export const YEAR_SEARCH_PAGE_SIZE = 20;
-export const YEAR_SEARCH_CACHE_TTL_SECONDS = 5 * 60;
+/** Budget for building a filtered title search snapshot, per media type. */
+export const FILTERED_SEARCH_MAX_PAGES = 50;
+export const FILTERED_SEARCH_CONCURRENCY = 4;
+export const FILTERED_SEARCH_PAGE_SIZE = 20;
+export const FILTERED_SEARCH_CACHE_TTL_SECONDS = 5 * 60;

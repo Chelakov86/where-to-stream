@@ -126,3 +126,74 @@ test.describe('Year-filtered pagination', () => {
     await expect(page.getByText('No titles found', { exact: true })).toHaveCount(0);
   });
 });
+
+test.describe('Filtered search pagination', () => {
+  for (const { name, url, expected } of [
+    { name: 'rating', url: 'rating=8', expected: { minRating: '8' } },
+    { name: 'genre', url: 'genre=28', expected: { genreIds: '28' } },
+    { name: 'services', url: 'mine=1', expected: { providerIds: '8' } },
+  ]) {
+    test(`preserves ${name} filters across pages without a year filter`, async ({
+      homePage,
+      page,
+    }) => {
+      await page.addInitScript(() => localStorage.setItem('wts.services', JSON.stringify([8])));
+      await page.route('**/api/search?**', async (route) => {
+        const params = new URL(route.request().url()).searchParams;
+        const currentPage = Number(params.get('page') || '1');
+        await route.fulfill({
+          json: {
+            page: currentPage,
+            totalPages: 2,
+            totalResults: 21,
+            results: [{ id: currentPage, type: 'movie', title: `Filtered match ${currentPage}` }],
+          },
+        });
+      });
+      await homePage.goto(`q=batman&type=movie&${url}`);
+      await expect(homePage.pagination).toContainText('Page 1 of 2');
+      const nextRequest = homePage.nextSearchRequest();
+      await homePage.nextPageButton.click();
+      const params = new URL((await nextRequest).url()).searchParams;
+      for (const [key, value] of Object.entries(expected)) expect(params.get(key)).toBe(value);
+      expect(params.has('yearFrom')).toBe(false);
+      expect(params.has('yearTo')).toBe(false);
+      await expect(homePage.pagination).toContainText('Page 2 of 2');
+      await expect(homePage.titleCards.first()).toContainText('Filtered match 2');
+      await homePage.previousPageButton.click();
+      await expect(homePage.pagination).toContainText('Page 1 of 2');
+    });
+  }
+
+  test('keeps Previous and Next usable on an empty intermediate upstream page', async ({
+    homePage,
+    page,
+  }) => {
+    await page.route('**/api/search?**', async (route) => {
+      const currentPage = Number(new URL(route.request().url()).searchParams.get('page') || '1');
+      await route.fulfill({
+        json: {
+          page: currentPage,
+          totalPages: 3,
+          totalResults: 60,
+          paginationScope: 'upstream',
+          results:
+            currentPage === 2
+              ? []
+              : [{ id: currentPage, type: 'movie', title: `Match ${currentPage}` }],
+        },
+      });
+    });
+    await homePage.goto('q=batman&type=movie&rating=8&page=2');
+    await expect(page.getByText('No matches on this page')).toBeVisible();
+    await expect(page.getByText('No titles found', { exact: true })).toHaveCount(0);
+    await expect(homePage.previousPageButton).toBeEnabled();
+    await expect(homePage.nextPageButton).toBeEnabled();
+    await homePage.previousPageButton.click();
+    await expect(homePage.pagination).toContainText('Page 1 of 3');
+    await homePage.nextPageButton.click();
+    await expect(page.getByText('No matches on this page')).toBeVisible();
+    await homePage.nextPageButton.click();
+    await expect(homePage.titleCards.first()).toContainText('Match 3');
+  });
+});
