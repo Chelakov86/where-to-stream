@@ -26,6 +26,7 @@ test.describe('Autocomplete Functionality', () => {
 
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
+    await expect(homePage.suggestions.nth(1)).toHaveAttribute('aria-selected', 'true');
     await page.keyboard.press('Enter');
 
     await page.waitForURL('**/title/tv/1396?country=US');
