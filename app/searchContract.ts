@@ -56,6 +56,10 @@ export interface SearchResponse {
   page: number;
   totalPages: number;
   totalResults: number;
+  /** When upstream, totals count TMDB matches before this page's local filters. */
+  paginationScope?: 'upstream';
+  /** Counts and results cover only the inspected subset when the search budget is reached. */
+  resultsTruncated?: boolean;
   results: NormalizedSearchResult[];
 }
 

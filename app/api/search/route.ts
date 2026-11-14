@@ -21,7 +21,15 @@ import {
 } from '@/app/searchContract';
 import { withRouteGuard, rateLimitHeaders } from '@/app/api/routeGuard';
 import { getClientIdentifier } from '@/app/utils/rateLimiter';
-import { RATE_LIMIT_CONFIG, DEFAULT_COUNTRY } from '@/app/config';
+import {
+  RATE_LIMIT_CONFIG,
+  DEFAULT_COUNTRY,
+  YEAR_SEARCH_MAX_PAGES,
+  YEAR_SEARCH_CONCURRENCY,
+  YEAR_SEARCH_PAGE_SIZE,
+  YEAR_SEARCH_CACHE_TTL_SECONDS,
+} from '@/app/config';
+import { getCache, setCache } from '@/app/cache';
 
 /**
  * API route handler for searching and browsing movies and TV shows.
@@ -110,7 +118,7 @@ const SORTERS: Record<
 
 /**
  * Maps search parameters to TMDB API parameters for movies.
- * Handles year range mapping (yearFrom/yearTo → year for movies).
+ * Only exact ranges can use TMDB’s single-year parameter.
  */
 const mapSearchParamsToMovieParams = (params: SearchRequest): SearchMoviesParams => {
   const movieParams: SearchMoviesParams = {
@@ -118,12 +126,8 @@ const mapSearchParamsToMovieParams = (params: SearchRequest): SearchMoviesParams
     page: params.page,
   };
 
-  // For movies, use yearFrom as the year filter (TMDB uses single year, not range)
-  // If both yearFrom and yearTo are provided, prefer yearFrom
-  if (params.yearFrom) {
+  if (params.yearFrom !== undefined && params.yearFrom === params.yearTo) {
     movieParams.year = params.yearFrom;
-  } else if (params.yearTo) {
-    movieParams.year = params.yearTo;
   }
 
   if (params.language) {
@@ -139,7 +143,7 @@ const mapSearchParamsToMovieParams = (params: SearchRequest): SearchMoviesParams
 
 /**
  * Maps search parameters to TMDB API parameters for TV shows.
- * Handles year range mapping (yearFrom/yearTo → firstAirDateYear for TV).
+ * Only exact ranges can use TMDB’s single-year parameter.
  */
 const mapSearchParamsToTvParams = (params: SearchRequest): SearchTvParams => {
   const tvParams: SearchTvParams = {
@@ -147,12 +151,8 @@ const mapSearchParamsToTvParams = (params: SearchRequest): SearchTvParams => {
     page: params.page,
   };
 
-  // For TV shows, use yearFrom as the firstAirDateYear filter
-  // If both yearFrom and yearTo are provided, prefer yearFrom
-  if (params.yearFrom) {
+  if (params.yearFrom !== undefined && params.yearFrom === params.yearTo) {
     tvParams.firstAirDateYear = params.yearFrom;
-  } else if (params.yearTo) {
-    tvParams.firstAirDateYear = params.yearTo;
   }
 
   if (params.language) {
@@ -245,31 +245,47 @@ async function browse(params: SearchRequest): Promise<SearchResponse> {
 /**
  * Searches titles by query, then applies the filters TMDB search can't.
  */
-async function search(params: SearchRequest): Promise<SearchResponse> {
+async function searchResults(params: SearchRequest, collectAll = false): Promise<SearchResponse> {
+  const fetchPage = async (type: 'movie' | 'tv', page: number) => ({
+    type,
+    response:
+      type === 'movie'
+        ? await searchMovies(mapSearchParamsToMovieParams({ ...params, page }))
+        : await searchTv(mapSearchParamsToTvParams({ ...params, page })),
+  });
   const responses = await Promise.all(
-    typesFor(params).map(async (type) => ({
-      type,
-      response:
-        type === 'movie'
-          ? await searchMovies(mapSearchParamsToMovieParams(params))
-          : await searchTv(mapSearchParamsToTvParams(params)),
-    }))
+    typesFor(params).map((type) => fetchPage(type, collectAll ? 1 : params.page))
   );
+  let truncated = false;
+  if (collectAll) {
+    const pending: { type: 'movie' | 'tv'; page: number }[] = [];
+    for (const { type, response } of responses) {
+      const limit = Math.min(response.total_pages, MAX_PAGES, YEAR_SEARCH_MAX_PAGES);
+      truncated ||= response.total_pages > limit;
+      for (let page = 2; page <= limit; page++) pending.push({ type, page });
+    }
+    // Fetch a bounded number at once, retaining upstream order regardless of
+    // response timing. A failed page rejects the snapshot rather than omitting it.
+    for (let offset = 0; offset < pending.length; offset += YEAR_SEARCH_CONCURRENCY) {
+      const batch = pending.slice(offset, offset + YEAR_SEARCH_CONCURRENCY);
+      responses.push(...(await Promise.all(batch.map(({ type, page }) => fetchPage(type, page)))));
+    }
+  }
 
   const collected = collectResults(responses, params.mode);
   let results = collected.results;
+  if (collectAll) {
+    const seen = new Set<string>();
+    results = results.filter((r) => {
+      const key = `${r.type}:${r.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
 
   if (params.type === 'all') {
     results.sort(SORTERS.popularity);
-  }
-
-  // Apply strict filtering if requested
-  if ((params.providerIds && params.providerIds.length > 0) || params.watchRegion) {
-    results = await filterResultsByProvider(
-      results,
-      { watchRegion: params.watchRegion, providerIds: params.providerIds },
-      getWatchProviders
-    );
   }
 
   if (params.genreIds && params.genreIds.length > 0 && params.mode === 'full') {
@@ -290,11 +306,82 @@ async function search(params: SearchRequest): Promise<SearchResponse> {
     results = results.filter((r) => r.rating !== undefined && r.rating >= params.minRating!);
   }
 
+  // Apply inexpensive filters first and bound provider lookups for snapshots.
+  if (params.providerIds?.length) {
+    const matches: NormalizedSearchResult[] = [];
+    for (let offset = 0; offset < results.length; offset += YEAR_SEARCH_CONCURRENCY) {
+      matches.push(
+        ...(await filterResultsByProvider(
+          results.slice(offset, offset + YEAR_SEARCH_CONCURRENCY),
+          { watchRegion: params.watchRegion, providerIds: params.providerIds },
+          getWatchProviders
+        ))
+      );
+    }
+    results = matches;
+  }
+
   if (params.sort && params.sort !== 'relevance') {
     results = [...results].sort(SORTERS[params.sort]);
   }
 
-  return { ...collected, results };
+  if (collectAll) {
+    return {
+      page: 1,
+      totalPages: Math.max(1, Math.ceil(results.length / YEAR_SEARCH_PAGE_SIZE)),
+      totalResults: results.length,
+      results,
+      ...(truncated ? { resultsTruncated: true } : {}),
+    };
+  }
+
+  // TMDB search cannot filter ranges, ratings, genres or availability before
+  // paging. Keep its page boundaries and identify counts as upstream totals.
+  const filtersPage =
+    params.yearFrom !== undefined ||
+    params.yearTo !== undefined ||
+    params.minRating !== undefined ||
+    Boolean(params.genreIds?.length || params.providerIds?.length);
+
+  return {
+    ...collected,
+    results,
+    ...(filtersPage ? { paginationScope: 'upstream' as const } : {}),
+  };
+}
+
+// Share one filtered snapshot across page requests and concurrent consumers.
+const pendingYearSearches = new Map<string, Promise<SearchResponse>>();
+
+async function search(params: SearchRequest): Promise<SearchResponse> {
+  const hasYearFilter = params.yearFrom !== undefined || params.yearTo !== undefined;
+  if (params.mode !== 'full' || !hasYearFilter) return searchResults(params);
+
+  const { page, ...snapshotParams } = params;
+  const key = `year-search:${JSON.stringify(
+    Object.entries(snapshotParams).sort(([a], [b]) => a.localeCompare(b))
+  )}`;
+  let snapshot = getCache<SearchResponse>(key);
+  if (!snapshot) {
+    let pending = pendingYearSearches.get(key);
+    if (!pending) {
+      pending = searchResults({ ...params, page: 1 }, true);
+      pendingYearSearches.set(key, pending);
+    }
+    try {
+      snapshot = await pending;
+      setCache(key, snapshot, YEAR_SEARCH_CACHE_TTL_SECONDS);
+    } finally {
+      if (pendingYearSearches.get(key) === pending) pendingYearSearches.delete(key);
+    }
+  }
+  const visiblePage = Math.min(Math.max(1, page), snapshot.totalPages);
+  const offset = (visiblePage - 1) * YEAR_SEARCH_PAGE_SIZE;
+  return {
+    ...snapshot,
+    page: visiblePage,
+    results: snapshot.results.slice(offset, offset + YEAR_SEARCH_PAGE_SIZE),
+  };
 }
 
 export async function GET(req: NextRequest) {

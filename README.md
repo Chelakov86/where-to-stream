@@ -12,6 +12,12 @@ shown first. Data comes from [TMDB](https://www.themoviedb.org/).
 - Country comparison for a single title
 - Saved titles and recently viewed history (stored locally)
 
+Year-filtered title searches collect up to 50 TMDB pages per media type, apply filters and sorting,
+then paginate the matches in pages of 20. Snapshots are reused for five minutes. Searches that exceed
+this budget are explicitly marked incomplete; their counts cover only the inspected titles.
+Exact-year queries are sent upstream only when both bounds are equal. Searches without a year filter
+still filter each upstream page; browsing without a query uses TMDB's native range filters.
+
 ## Getting Started
 
 **Prerequisites:** Node.js and a TMDB API key ([get one here](https://www.themoviedb.org/settings/api)).

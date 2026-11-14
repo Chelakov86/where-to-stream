@@ -128,6 +128,64 @@ describe('SearchView', () => {
     expect(replace).toHaveBeenCalledWith('/', { scroll: false });
   });
 
+  it.each([1, 2])('retains navigation on empty filtered page %s', async (page) => {
+    mockSearch = `q=batman&type=movie&from=2000&to=2020&page=${page}`;
+    mockFetch({
+      ok: true,
+      body: {
+        page,
+        totalPages: 3,
+        totalResults: 50,
+        results: [],
+        paginationScope: 'upstream',
+      },
+    });
+    render(<SearchView />);
+
+    expect(await screen.findByText('No matches on this page')).toBeInTheDocument();
+    expect(screen.queryByText('No titles found')).not.toBeInTheDocument();
+    expect(screen.getByText(/Page counts include titles excluded/)).toBeInTheDocument();
+    const previous = screen.getByRole('button', { name: 'Previous' });
+    const next = screen.getByRole('button', { name: 'Next' });
+    expect(next).toBeEnabled();
+    if (page === 1) {
+      expect(previous).toBeDisabled();
+    } else {
+      expect(previous).toBeEnabled();
+      await userEvent.click(previous);
+      expect(push).toHaveBeenCalledWith('/?q=batman&type=movie&from=2000&to=2020');
+    }
+    await userEvent.click(next);
+    expect(push).toHaveBeenCalledWith(`/?q=batman&type=movie&from=2000&to=2020&page=${page + 1}`);
+  });
+
+  it('explains incomplete search counts even when the inspected subset has no matches', async () => {
+    mockSearch = 'q=batman&from=2000';
+    mockFetch({
+      ok: true,
+      body: {
+        page: 1,
+        totalPages: 1,
+        totalResults: 0,
+        results: [],
+        resultsTruncated: true,
+      },
+    });
+    render(<SearchView />);
+    expect(await screen.findByText('No matches in the inspected results')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('This search is incomplete');
+    expect(screen.queryByText('No titles found')).not.toBeInTheDocument();
+  });
+
+  it('uses the clamped response page for navigation after a shared URL exceeds filtered totals', async () => {
+    mockSearch = 'q=batman&from=2000&page=99';
+    mockFetch({ ok: true, body: { page: 2, totalPages: 3, totalResults: 41, results } });
+    render(<SearchView />);
+    expect(await screen.findByText('Page 2 of 3')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(push).toHaveBeenCalledWith('/?q=batman&from=2000&page=3');
+  });
+
   it('shows an error with a retry', async () => {
     const fetchMock = mockFetch({ ok: false, status: 503, body: { error: 'down' } });
     render(<SearchView />);

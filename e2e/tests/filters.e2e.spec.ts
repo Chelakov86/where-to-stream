@@ -75,3 +75,54 @@ test.describe('Filter Functionality', () => {
     await expect(homePage.onlyMineSwitch).toBeDisabled();
   });
 });
+
+// API behavior is covered by route contract tests; these exercise the browser's
+// filtered page navigation and incomplete-result feedback.
+test.describe('Year-filtered pagination', () => {
+  test('preserves the range when paging through filtered matches', async ({ homePage, page }) => {
+    await page.route('**/api/search?**', async (route) => {
+      const params = new URL(route.request().url()).searchParams;
+      const currentPage = Number(params.get('page') || '1');
+      await route.fulfill({
+        json: {
+          page: currentPage,
+          totalPages: 2,
+          totalResults: 21,
+          results: [{ id: currentPage, type: 'movie', title: `Match ${currentPage}`, year: 2005 }],
+        },
+      });
+    });
+    await homePage.goto('q=batman&type=movie&from=2000&to=2020');
+    await expect(homePage.titleCards).toHaveCount(1);
+    await expect(homePage.pagination).toContainText('Page 1 of 2');
+    const nextRequest = homePage.nextSearchRequest();
+    await homePage.nextPageButton.click();
+    const params = new URL((await nextRequest).url()).searchParams;
+    expect(params.get('yearFrom')).toBe('2000');
+    expect(params.get('yearTo')).toBe('2020');
+    expect(params.get('page')).toBe('2');
+    await expect(homePage.pagination).toContainText('Page 2 of 2');
+    await expect(homePage.titleCards.first()).toContainText('Match 2');
+    await expect(homePage.nextPageButton).toBeDisabled();
+    await homePage.previousPageButton.click();
+    await expect(homePage.pagination).toContainText('Page 1 of 2');
+  });
+
+  test('explains when the inspected subset has no matches', async ({ homePage, page }) => {
+    await page.route('**/api/search?**', (route) =>
+      route.fulfill({
+        json: {
+          page: 1,
+          totalPages: 1,
+          totalResults: 0,
+          results: [],
+          resultsTruncated: true,
+        },
+      })
+    );
+    await homePage.goto('q=batman&from=2000');
+    await expect(page.getByText('No matches in the inspected results')).toBeVisible();
+    await expect(page.getByRole('status')).toContainText('This search is incomplete');
+    await expect(page.getByText('No titles found', { exact: true })).toHaveCount(0);
+  });
+});
