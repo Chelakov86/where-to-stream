@@ -51,7 +51,18 @@ const SearchView: React.FC = () => {
     (patch: Partial<SearchPageState>) => navigate({ ...state, ...patch, page: 1 }),
     [navigate, state]
   );
-  const setQuery = useCallback((query: string) => update({ query }), [update]);
+  const setQuery = useCallback(
+    (query: string) => {
+      const next = serializeSearchPageState(
+        { ...state, query, page: 1 },
+        searchParams?.get('country')
+      );
+      // Next.js syncs native history updates with useSearchParams. Updating
+      // synchronously avoids racing a pending search navigation against a title selection.
+      window.history.replaceState(null, '', next ? `/?${next}` : '/');
+    },
+    [state, searchParams]
+  );
 
   const apiUrl =
     countryReady && servicesReady
