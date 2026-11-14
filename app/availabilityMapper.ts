@@ -54,7 +54,8 @@ export function isKnownCountryCode(code: string | null): code is string {
 /**
  * Filters search results down to titles available on at least one selected
  * provider in the watch region, applying the streaming category rule.
- * Items whose provider lookup fails are excluded (treated as unavailable).
+ * Failed lookups are excluded by default; failOnError rejects instead so a
+ * complete filtered snapshot cannot silently cache missing titles.
  *
  * @param results - Normalized search results
  * @param options - Watch region and selected provider IDs
@@ -63,7 +64,7 @@ export function isKnownCountryCode(code: string | null): code is string {
  */
 export async function filterResultsByProvider(
   results: NormalizedSearchResult[],
-  options: { watchRegion?: string; providerIds?: number[] },
+  options: { watchRegion?: string; providerIds?: number[]; failOnError?: boolean },
   fetchWatchProviders: (type: 'movie' | 'tv', id: number) => Promise<TmdbWatchProvidersResponse>
 ): Promise<NormalizedSearchResult[]> {
   if (
@@ -90,6 +91,7 @@ export async function filterResultsByProvider(
         }
         return isStreamingProvider(regionData, options.providerIds!);
       } catch (error) {
+        if (options.failOnError) throw error;
         logger.error(`Failed to fetch providers for ${item.type} ${item.id}`, { error });
         return false;
       }

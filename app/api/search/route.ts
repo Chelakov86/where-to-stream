@@ -24,10 +24,10 @@ import { getClientIdentifier } from '@/app/utils/rateLimiter';
 import {
   RATE_LIMIT_CONFIG,
   DEFAULT_COUNTRY,
-  YEAR_SEARCH_MAX_PAGES,
-  YEAR_SEARCH_CONCURRENCY,
-  YEAR_SEARCH_PAGE_SIZE,
-  YEAR_SEARCH_CACHE_TTL_SECONDS,
+  FILTERED_SEARCH_MAX_PAGES,
+  FILTERED_SEARCH_CONCURRENCY,
+  FILTERED_SEARCH_PAGE_SIZE,
+  FILTERED_SEARCH_CACHE_TTL_SECONDS,
 } from '@/app/config';
 import { getCache, setCache } from '@/app/cache';
 
@@ -242,6 +242,12 @@ async function browse(params: SearchRequest): Promise<SearchResponse> {
   return collected;
 }
 
+const hasLocalFilters = (params: SearchRequest): boolean =>
+  params.yearFrom !== undefined ||
+  params.yearTo !== undefined ||
+  params.minRating !== undefined ||
+  Boolean(params.genreIds?.length || params.providerIds?.length);
+
 /**
  * Searches titles by query, then applies the filters TMDB search can't.
  */
@@ -260,14 +266,14 @@ async function searchResults(params: SearchRequest, collectAll = false): Promise
   if (collectAll) {
     const pending: { type: 'movie' | 'tv'; page: number }[] = [];
     for (const { type, response } of responses) {
-      const limit = Math.min(response.total_pages, MAX_PAGES, YEAR_SEARCH_MAX_PAGES);
+      const limit = Math.min(response.total_pages, MAX_PAGES, FILTERED_SEARCH_MAX_PAGES);
       truncated ||= response.total_pages > limit;
       for (let page = 2; page <= limit; page++) pending.push({ type, page });
     }
     // Fetch a bounded number at once, retaining upstream order regardless of
     // response timing. A failed page rejects the snapshot rather than omitting it.
-    for (let offset = 0; offset < pending.length; offset += YEAR_SEARCH_CONCURRENCY) {
-      const batch = pending.slice(offset, offset + YEAR_SEARCH_CONCURRENCY);
+    for (let offset = 0; offset < pending.length; offset += FILTERED_SEARCH_CONCURRENCY) {
+      const batch = pending.slice(offset, offset + FILTERED_SEARCH_CONCURRENCY);
       responses.push(...(await Promise.all(batch.map(({ type, page }) => fetchPage(type, page)))));
     }
   }
@@ -309,11 +315,15 @@ async function searchResults(params: SearchRequest, collectAll = false): Promise
   // Apply inexpensive filters first and bound provider lookups for snapshots.
   if (params.providerIds?.length) {
     const matches: NormalizedSearchResult[] = [];
-    for (let offset = 0; offset < results.length; offset += YEAR_SEARCH_CONCURRENCY) {
+    for (let offset = 0; offset < results.length; offset += FILTERED_SEARCH_CONCURRENCY) {
       matches.push(
         ...(await filterResultsByProvider(
-          results.slice(offset, offset + YEAR_SEARCH_CONCURRENCY),
-          { watchRegion: params.watchRegion, providerIds: params.providerIds },
+          results.slice(offset, offset + FILTERED_SEARCH_CONCURRENCY),
+          {
+            watchRegion: params.watchRegion,
+            providerIds: params.providerIds,
+            failOnError: collectAll,
+          },
           getWatchProviders
         ))
       );
@@ -328,59 +338,52 @@ async function searchResults(params: SearchRequest, collectAll = false): Promise
   if (collectAll) {
     return {
       page: 1,
-      totalPages: Math.max(1, Math.ceil(results.length / YEAR_SEARCH_PAGE_SIZE)),
+      totalPages: Math.max(1, Math.ceil(results.length / FILTERED_SEARCH_PAGE_SIZE)),
       totalResults: results.length,
       results,
       ...(truncated ? { resultsTruncated: true } : {}),
     };
   }
 
-  // TMDB search cannot filter ranges, ratings, genres or availability before
-  // paging. Keep its page boundaries and identify counts as upstream totals.
-  const filtersPage =
-    params.yearFrom !== undefined ||
-    params.yearTo !== undefined ||
-    params.minRating !== undefined ||
-    Boolean(params.genreIds?.length || params.providerIds?.length);
-
+  // Autocomplete retains upstream page boundaries, identifying totals that
+  // precede any local filters. Full filtered searches use the snapshot above.
   return {
     ...collected,
     results,
-    ...(filtersPage ? { paginationScope: 'upstream' as const } : {}),
+    ...(hasLocalFilters(params) ? { paginationScope: 'upstream' as const } : {}),
   };
 }
 
 // Share one filtered snapshot across page requests and concurrent consumers.
-const pendingYearSearches = new Map<string, Promise<SearchResponse>>();
+const pendingFilteredSearches = new Map<string, Promise<SearchResponse>>();
 
 async function search(params: SearchRequest): Promise<SearchResponse> {
-  const hasYearFilter = params.yearFrom !== undefined || params.yearTo !== undefined;
-  if (params.mode !== 'full' || !hasYearFilter) return searchResults(params);
+  if (params.mode !== 'full' || !hasLocalFilters(params)) return searchResults(params);
 
   const { page, ...snapshotParams } = params;
-  const key = `year-search:${JSON.stringify(
+  const key = `filtered-search:${JSON.stringify(
     Object.entries(snapshotParams).sort(([a], [b]) => a.localeCompare(b))
   )}`;
   let snapshot = getCache<SearchResponse>(key);
   if (!snapshot) {
-    let pending = pendingYearSearches.get(key);
+    let pending = pendingFilteredSearches.get(key);
     if (!pending) {
       pending = searchResults({ ...params, page: 1 }, true);
-      pendingYearSearches.set(key, pending);
+      pendingFilteredSearches.set(key, pending);
     }
     try {
       snapshot = await pending;
-      setCache(key, snapshot, YEAR_SEARCH_CACHE_TTL_SECONDS);
+      setCache(key, snapshot, FILTERED_SEARCH_CACHE_TTL_SECONDS);
     } finally {
-      if (pendingYearSearches.get(key) === pending) pendingYearSearches.delete(key);
+      if (pendingFilteredSearches.get(key) === pending) pendingFilteredSearches.delete(key);
     }
   }
   const visiblePage = Math.min(Math.max(1, page), snapshot.totalPages);
-  const offset = (visiblePage - 1) * YEAR_SEARCH_PAGE_SIZE;
+  const offset = (visiblePage - 1) * FILTERED_SEARCH_PAGE_SIZE;
   return {
     ...snapshot,
     page: visiblePage,
-    results: snapshot.results.slice(offset, offset + YEAR_SEARCH_PAGE_SIZE),
+    results: snapshot.results.slice(offset, offset + FILTERED_SEARCH_PAGE_SIZE),
   };
 }
 

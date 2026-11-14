@@ -1,13 +1,14 @@
 import { clearCache, stopCacheCleanup } from '@/app/cache';
+import { clearRateLimits } from '@/app/utils/rateLimiter';
 import {
-  YEAR_SEARCH_MAX_PAGES,
-  YEAR_SEARCH_CONCURRENCY,
-  YEAR_SEARCH_CACHE_TTL_SECONDS,
+  FILTERED_SEARCH_MAX_PAGES,
+  FILTERED_SEARCH_CONCURRENCY,
+  FILTERED_SEARCH_CACHE_TTL_SECONDS,
 } from '@/app/config';
 import { GET } from '@/app/api/search/route';
 import * as tmdbApi from '@/app/tmdbApi';
 import { TmdbError } from '@/app/tmdbClient';
-import { TmdbSearchResponse, TmdbSearchResult } from '@/app/tmdbTypes';
+import { TmdbSearchResponse, TmdbSearchResult, TmdbWatchProvidersResponse } from '@/app/tmdbTypes';
 
 // Mock Next.js server components
 jest.mock('next/server', () => {
@@ -46,7 +47,10 @@ const createRequest = (searchParams: Record<string, string>) => {
 };
 
 describe('GET /api/search', () => {
-  beforeEach(() => clearCache());
+  beforeEach(() => {
+    clearCache();
+    clearRateLimits();
+  });
   afterAll(() => stopCacheCleanup());
   describe('Parameter Validation', () => {
     it('should return 400 if query is missing in autocomplete mode', async () => {
@@ -250,6 +254,225 @@ describe('GET /api/search', () => {
     });
   });
 
+  describe.each(['movie', 'tv', 'all'] as const)('%s filtered pagination contract', (type) => {
+    const filters: [string, Record<string, string>][] = [
+      ['rating', { minRating: '8' }],
+      ['genre', { genreIds: '28' }],
+      ['services', { providerIds: '8', watchRegion: 'DE' }],
+      ['combined', { minRating: '8', genreIds: '28', providerIds: '8', watchRegion: 'DE' }],
+    ];
+    const item = (id: number, matches: boolean): TmdbSearchResult => ({
+      id,
+      title: `Title ${id}`,
+      name: `Title ${id}`,
+      release_date: '2005-01-01',
+      first_air_date: '2005-01-01',
+      poster_path: null,
+      vote_average: matches ? 9 : 5,
+      genre_ids: matches ? [28] : [18],
+      popularity: 1,
+    });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      const upstream = (page: number): TmdbSearchResponse => ({
+        page,
+        total_pages: 4,
+        total_results: 80,
+        // Page 1 has no matches, page 3 is empty, and page 4 has one last match.
+        results:
+          page === 3
+            ? []
+            : Array.from({ length: page === 4 ? 1 : 20 }, (_, i) =>
+                item((page - 1) * 20 + i + 1, page !== 1)
+              ),
+      });
+      mockedTmdbApi.searchMovies.mockImplementation(async (p) => upstream(p.page ?? 1));
+      mockedTmdbApi.searchTv.mockImplementation(async (p) => upstream(p.page ?? 1));
+      mockedTmdbApi.getWatchProviders.mockImplementation(
+        async (_type, id): Promise<TmdbWatchProvidersResponse> => ({
+          id,
+          results:
+            id > 20
+              ? {
+                  DE: {
+                    flatrate: [
+                      {
+                        provider_id: 8,
+                        provider_name: 'Netflix',
+                        logo_path: '',
+                        display_priority: 1,
+                      },
+                    ],
+                  },
+                }
+              : {},
+        })
+      );
+    });
+
+    it.each(filters)(
+      'paginates %s matches across upstream gaps and reuses the snapshot',
+      async (_name, filter) => {
+        const request = (page: number) =>
+          createRequest({ query: 'Batman', type, ...filter, page: String(page) });
+        const first = await (await GET(request(1))).json();
+        const second = await (await GET(request(2))).json();
+        const expectedTotal = type === 'all' ? 42 : 21;
+        const totalPages = Math.ceil(expectedTotal / 20);
+        expect(first).toMatchObject({ page: 1, totalResults: expectedTotal, totalPages });
+        expect(first).not.toHaveProperty('paginationScope');
+        expect(first).not.toHaveProperty('resultsTruncated');
+        expect(first.results).toHaveLength(20);
+        expect(first.results.every((r: { id: number }) => r.id > 20)).toBe(true);
+        expect(second.page).toBe(2);
+        expect(second.results).toHaveLength(type === 'all' ? 20 : 1);
+        const last = await (await GET(request(99))).json();
+        expect(last.page).toBe(totalPages);
+        expect(last.results).toHaveLength(type === 'all' ? 2 : 1);
+        expect(last.results.some((r: { id: number }) => r.id === 61)).toBe(true);
+        const keys = [...first.results, ...second.results].map(
+          (r: { type: string; id: number }) => `${r.type}:${r.id}`
+        );
+        expect(new Set(keys).size).toBe(keys.length);
+        expect(mockedTmdbApi.searchMovies).toHaveBeenCalledTimes(type === 'tv' ? 0 : 4);
+        expect(mockedTmdbApi.searchTv).toHaveBeenCalledTimes(type === 'movie' ? 0 : 4);
+      }
+    );
+
+    it.each(filters)(
+      'marks bounded %s searches incomplete even with no matches',
+      async (_name, filter) => {
+        const upstream: TmdbSearchResponse = {
+          page: 1,
+          total_pages: 600,
+          total_results: 12000,
+          results: [item(1, false)],
+        };
+        mockedTmdbApi.searchMovies.mockResolvedValue(upstream);
+        mockedTmdbApi.searchTv.mockResolvedValue(upstream);
+        const data = await (await GET(createRequest({ query: 'Batman', type, ...filter }))).json();
+        expect(data).toMatchObject({
+          page: 1,
+          totalPages: 1,
+          totalResults: 0,
+          results: [],
+          resultsTruncated: true,
+        });
+        expect(data).not.toHaveProperty('paginationScope');
+        expect(mockedTmdbApi.searchMovies).toHaveBeenCalledTimes(
+          type === 'tv' ? 0 : FILTERED_SEARCH_MAX_PAGES
+        );
+        expect(mockedTmdbApi.searchTv).toHaveBeenCalledTimes(
+          type === 'movie' ? 0 : FILTERED_SEARCH_MAX_PAGES
+        );
+      }
+    );
+  });
+
+  it('isolates filtered snapshots by provider, country and filter values', async () => {
+    mockedTmdbApi.searchMovies.mockResolvedValue({
+      page: 1,
+      total_pages: 1,
+      total_results: 1,
+      results: [
+        {
+          id: 1,
+          title: 'Match',
+          vote_average: 9,
+          genre_ids: [28],
+          poster_path: null,
+          popularity: 1,
+        },
+      ],
+    });
+    mockedTmdbApi.getWatchProviders.mockResolvedValue({
+      id: 1,
+      results: {
+        DE: {
+          flatrate: [
+            { provider_id: 8, provider_name: 'Netflix', logo_path: '', display_priority: 1 },
+          ],
+        },
+      },
+    });
+    const request = (filter: Record<string, string>) =>
+      createRequest({
+        query: 'cache-isolation',
+        type: 'movie',
+        providerIds: '8',
+        watchRegion: 'DE',
+        ...filter,
+      });
+    expect(await (await GET(request({}))).json()).toMatchObject({ totalResults: 1 });
+    expect(await (await GET(request({ watchRegion: 'US' }))).json()).toMatchObject({
+      totalResults: 0,
+    });
+    expect(await (await GET(request({ providerIds: '9' }))).json()).toMatchObject({
+      totalResults: 0,
+    });
+    expect(await (await GET(request({ minRating: '10' }))).json()).toMatchObject({
+      totalResults: 0,
+    });
+    expect(await (await GET(request({ genreIds: '18' }))).json()).toMatchObject({
+      totalResults: 0,
+    });
+    expect(await (await GET(request({}))).json()).toMatchObject({ totalResults: 1 });
+  });
+
+  it('rejects provider lookup failures without caching an incomplete filtered snapshot', async () => {
+    mockedTmdbApi.searchMovies.mockResolvedValue({
+      page: 1,
+      total_pages: 1,
+      total_results: 1,
+      results: [
+        { id: 1, title: 'Match', poster_path: null, popularity: 1, vote_average: 9, genre_ids: [] },
+      ],
+    });
+    mockedTmdbApi.getWatchProviders.mockRejectedValueOnce(new TmdbError(503, 'Unavailable'));
+    const request = () =>
+      createRequest({
+        query: 'provider-retry',
+        type: 'movie',
+        providerIds: '8',
+        watchRegion: 'DE',
+      });
+    expect((await GET(request())).status).toBe(503);
+    mockedTmdbApi.getWatchProviders.mockResolvedValue({
+      id: 1,
+      results: {
+        DE: {
+          flatrate: [
+            { provider_id: 8, provider_name: 'Netflix', logo_path: '', display_priority: 1 },
+          ],
+        },
+      },
+    });
+    expect(await (await GET(request())).json()).toMatchObject({ totalResults: 1 });
+  });
+
+  it('keeps unfiltered title searches and autocomplete on their requested upstream page', async () => {
+    jest.clearAllMocks();
+    mockedTmdbApi.searchMovies.mockResolvedValue({
+      page: 3,
+      total_pages: 10,
+      total_results: 200,
+      results: [],
+    });
+    await GET(createRequest({ query: 'Batman', type: 'movie', page: '3', watchRegion: 'DE' }));
+    await GET(
+      createRequest({
+        query: 'Batman',
+        type: 'movie',
+        page: '3',
+        mode: 'autocomplete',
+        minRating: '8',
+      })
+    );
+    expect(mockedTmdbApi.searchMovies).toHaveBeenCalledTimes(2);
+    expect(mockedTmdbApi.searchMovies.mock.calls.every(([p]) => p.page === 3)).toBe(true);
+  });
+
   describe.each(['movie', 'tv'] as const)('%s year-range contract', (type) => {
     const catalogue = [1999, 2000, 2005, 2020, 2021, undefined].map((year, index) => ({
       id: index + 1,
@@ -391,10 +614,13 @@ describe('GET /api/search', () => {
       const data = await (
         await GET(createRequest({ query: 'Batman', type, yearFrom: '2000' }))
       ).json();
-      expect(data).toMatchObject({ resultsTruncated: true, totalResults: YEAR_SEARCH_MAX_PAGES });
+      expect(data).toMatchObject({
+        resultsTruncated: true,
+        totalResults: FILTERED_SEARCH_MAX_PAGES,
+      });
       const mock = type === 'movie' ? mockedTmdbApi.searchMovies : mockedTmdbApi.searchTv;
-      expect(mock).toHaveBeenCalledTimes(YEAR_SEARCH_MAX_PAGES);
-      expect(peak).toBeLessThanOrEqual(YEAR_SEARCH_CONCURRENCY);
+      expect(mock).toHaveBeenCalledTimes(FILTERED_SEARCH_MAX_PAGES);
+      expect(peak).toBeLessThanOrEqual(FILTERED_SEARCH_CONCURRENCY);
       expect(mock.mock.calls.every(([p]) => p.page! <= 500)).toBe(true);
     });
 
@@ -444,7 +670,7 @@ describe('GET /api/search', () => {
       const responses = await Promise.all([GET(request()), GET(request())]);
       expect(responses.every((r) => r.status === 200)).toBe(true);
       expect(mockedTmdbApi.searchMovies).toHaveBeenCalledTimes(2);
-      clock.mockReturnValue(startedAt + YEAR_SEARCH_CACHE_TTL_SECONDS * 1000 + 1);
+      clock.mockReturnValue(startedAt + FILTERED_SEARCH_CACHE_TTL_SECONDS * 1000 + 1);
       expect((await GET(request())).status).toBe(200);
       expect(mockedTmdbApi.searchMovies).toHaveBeenCalledTimes(4);
     } finally {

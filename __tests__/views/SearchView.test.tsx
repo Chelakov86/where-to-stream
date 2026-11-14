@@ -129,7 +129,7 @@ describe('SearchView', () => {
   });
 
   it.each([1, 2])('retains navigation on empty filtered page %s', async (page) => {
-    mockSearch = `q=batman&type=movie&from=2000&to=2020&page=${page}`;
+    mockSearch = `q=batman&type=movie&rating=8&page=${page}`;
     mockFetch({
       ok: true,
       body: {
@@ -153,14 +153,14 @@ describe('SearchView', () => {
     } else {
       expect(previous).toBeEnabled();
       await userEvent.click(previous);
-      expect(push).toHaveBeenCalledWith('/?q=batman&type=movie&from=2000&to=2020');
+      expect(push).toHaveBeenCalledWith('/?q=batman&type=movie&rating=8');
     }
     await userEvent.click(next);
-    expect(push).toHaveBeenCalledWith(`/?q=batman&type=movie&from=2000&to=2020&page=${page + 1}`);
+    expect(push).toHaveBeenCalledWith(`/?q=batman&type=movie&rating=8&page=${page + 1}`);
   });
 
   it('explains incomplete search counts even when the inspected subset has no matches', async () => {
-    mockSearch = 'q=batman&from=2000';
+    mockSearch = 'q=batman&genre=28';
     mockFetch({
       ok: true,
       body: {
