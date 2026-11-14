@@ -61,6 +61,7 @@ const SearchView: React.FC = () => {
       : null;
   const { data, error, isLoading, reload } = useApiResource<SearchResponse>(apiUrl);
 
+  const currentPage = data?.page ?? state.page;
   const browsing = state.query === '';
   const countryName = getCountryName(country);
   const onlyMine = state.mine && services.length > 0;
@@ -121,8 +122,22 @@ const SearchView: React.FC = () => {
             ) : data.results.length === 0 ? (
               <EmptyState
                 icon={SearchX}
-                title={browsing ? 'Nothing matched those filters' : 'No titles found'}
-                description="Try a different spelling, or loosen the year, rating and genre filters."
+                title={
+                  data.resultsTruncated
+                    ? 'No matches in the inspected results'
+                    : data.paginationScope === 'upstream' && data.totalPages > 1
+                      ? 'No matches on this page'
+                      : browsing
+                        ? 'Nothing matched those filters'
+                        : 'No titles found'
+                }
+                description={
+                  data.resultsTruncated
+                    ? 'This search is incomplete. Use a more specific title query to inspect more relevant matches.'
+                    : data.paginationScope === 'upstream' && data.totalPages > 1
+                      ? 'Try another page, or loosen the year, rating and genre filters.'
+                      : 'Try a different spelling, or loosen the year, rating and genre filters.'
+                }
                 action={
                   <Button
                     variant="outline"
@@ -143,39 +158,46 @@ const SearchView: React.FC = () => {
                 }
               />
             ) : (
-              <>
-                <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                  {data.results.map((title) => (
-                    <li key={`${title.type}-${title.id}`}>
-                      <TitleCard title={title} country={country} />
-                    </li>
-                  ))}
-                </ul>
-                {data.totalPages > 1 && (
-                  <nav
-                    aria-label="Pagination"
-                    className="mt-8 flex items-center justify-center gap-3"
-                  >
-                    <Button
-                      variant="outline"
-                      disabled={state.page <= 1}
-                      onClick={() => navigate({ ...state, page: state.page - 1 }, 'push')}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                      Page {state.page} of {data.totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      disabled={state.page >= data.totalPages}
-                      onClick={() => navigate({ ...state, page: state.page + 1 }, 'push')}
-                    >
-                      Next
-                    </Button>
-                  </nav>
-                )}
-              </>
+              <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                {data.results.map((title) => (
+                  <li key={`${title.type}-${title.id}`}>
+                    <TitleCard title={title} country={country} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!error && data?.resultsTruncated && (
+              <p role="status" className="mt-6 text-center text-sm text-muted-foreground">
+                This search is incomplete. Results and page counts cover only the titles inspected.
+                Use a more specific title query to narrow the search.
+              </p>
+            )}
+            {!error && data?.paginationScope === 'upstream' && data.totalPages > 1 && (
+              <p className="mt-6 text-center text-sm text-muted-foreground">
+                Filters apply to each TMDB results page. Page counts include titles excluded by your
+                filters; other pages may contain more matches.
+              </p>
+            )}
+            {!error && data && data.totalPages > 1 && (
+              <nav aria-label="Pagination" className="mt-8 flex items-center justify-center gap-3">
+                <Button
+                  variant="outline"
+                  disabled={currentPage <= 1}
+                  onClick={() => navigate({ ...state, page: currentPage - 1 }, 'push')}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {data.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  disabled={currentPage >= data.totalPages}
+                  onClick={() => navigate({ ...state, page: currentPage + 1 }, 'push')}
+                >
+                  Next
+                </Button>
+              </nav>
             )}
           </div>
         </section>
