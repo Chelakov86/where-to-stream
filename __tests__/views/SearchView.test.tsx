@@ -96,6 +96,33 @@ describe('SearchView', () => {
     expect(push).toHaveBeenCalledWith('/?q=dune&type=movie&genre=28&page=3');
   });
 
+  it('updates the query synchronously while preserving filters and country', async () => {
+    mockSearch = 'q=dune&type=movie&genre=28&page=3&country=GB';
+    mockFetch({ ok: true, body: { page: 3, totalPages: 4, totalResults: 80, results } });
+    const replaceState = jest.spyOn(window.history, 'replaceState');
+    try {
+      render(<SearchView />);
+      await screen.findByRole('link', { name: /Reacher/ });
+      await userEvent.clear(screen.getByRole('combobox', { name: 'Search movies and TV shows' }));
+      await userEvent.type(
+        screen.getByRole('combobox', { name: 'Search movies and TV shows' }),
+        'matrix'
+      );
+      await waitFor(() =>
+        expect(replaceState).toHaveBeenLastCalledWith(
+          null,
+          '',
+          '/?q=matrix&type=movie&genre=28&country=GB'
+        )
+      );
+      expect(replace).not.toHaveBeenCalled();
+      expect(push).not.toHaveBeenCalled();
+    } finally {
+      replaceState.mockRestore();
+      window.history.replaceState(null, '', '/');
+    }
+  });
+
   it('writes filter changes to the URL and resets the page', async () => {
     mockSearch = 'page=4';
     mockFetch({ ok: true, body: { page: 4, totalPages: 9, totalResults: 180, results } });
