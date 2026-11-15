@@ -32,7 +32,12 @@ test.describe('Search Functionality', () => {
     await homePage.waitForResults();
     await homePage.openTitleCard('Fight Club');
 
-    await page.waitForURL('**/title/movie/550?country=US');
+    await page.waitForURL(
+      (url) =>
+        url.pathname === '/title/movie/550' &&
+        url.searchParams.get('country') === 'US' &&
+        url.searchParams.has('returnTo')
+    );
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Fight Club');
   });
 

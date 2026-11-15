@@ -81,11 +81,23 @@ describe('SearchBox', () => {
     }
   );
 
-  it('opens a suggestion on click', async () => {
-    render(<SearchBox value="" onChange={jest.fn()} country="US" />);
+  it('opens a suggestion on click with its search context', async () => {
+    const onOpen = jest.fn();
+    render(
+      <SearchBox
+        value=""
+        onChange={jest.fn()}
+        country="US"
+        returnTo="/?q=matrix&page=2&country=US"
+        onOpen={onOpen}
+      />
+    );
     await userEvent.type(screen.getByRole('combobox'), 'matr');
     await userEvent.click(await screen.findByRole('option', { name: /^The Matrix Film/ }));
-    expect(push).toHaveBeenCalledWith('/title/movie/603?country=US');
+    expect(push).toHaveBeenCalledWith(
+      '/title/movie/603?country=US&returnTo=%2F%3Fq%3Dmatrix%26page%3D2%26country%3DUS'
+    );
+    expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
   it('offers recently viewed titles when empty', async () => {

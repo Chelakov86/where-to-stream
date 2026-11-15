@@ -17,17 +17,20 @@ interface TitleCardProps {
   };
   country: string;
   className?: string;
+  returnTo?: string;
+  onOpen?: () => void;
 }
 
 /**
  * Poster card linking to a title's detail page.
  */
-const TitleCard: React.FC<TitleCardProps> = ({ title, country, className }) => {
+const TitleCard: React.FC<TitleCardProps> = ({ title, country, className, returnTo, onOpen }) => {
   const typeLabel = title.type === 'tv' ? 'Series' : 'Film';
 
   return (
     <Link
-      href={titleHref(title.type, title.id, country)}
+      href={titleHref(title.type, title.id, country, returnTo)}
+      onClick={onOpen}
       className={cn(
         'group flex flex-col rounded-lg transition-transform duration-200 hover:-translate-y-0.5',
         className

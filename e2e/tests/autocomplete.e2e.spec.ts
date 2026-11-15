@@ -29,14 +29,24 @@ test.describe('Autocomplete Functionality', () => {
     await expect(homePage.suggestions.nth(1)).toHaveAttribute('aria-selected', 'true');
     await page.keyboard.press('Enter');
 
-    await page.waitForURL('**/title/tv/1396?country=US');
+    await page.waitForURL(
+      (url) =>
+        url.pathname === '/title/tv/1396' &&
+        url.searchParams.get('country') === 'US' &&
+        url.searchParams.has('returnTo')
+    );
   });
 
   test('opens a title on click', async ({ homePage, page }) => {
     await homePage.typeSearchQuery('Shaw');
     await homePage.suggestions.filter({ hasText: 'The Shawshank Redemption' }).click();
 
-    await page.waitForURL('**/title/movie/278?country=US');
+    await page.waitForURL(
+      (url) =>
+        url.pathname === '/title/movie/278' &&
+        url.searchParams.get('country') === 'US' &&
+        url.searchParams.has('returnTo')
+    );
   });
 
   test('closes suggestions with Escape', async ({ homePage, page }) => {

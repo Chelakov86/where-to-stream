@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Compass, SearchX, Sparkles } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
@@ -14,6 +14,7 @@ import { useApiResource } from '@/app/hooks/useApiResource';
 import { useGenres } from '@/app/hooks/useGenres';
 import { useActiveCountry, useMyServices } from '@/app/hooks/usePreferences';
 import { SearchResponse, serializeSearchRequest } from '@/app/searchContract';
+import { saveSearchPosition, restoreSearchPosition } from '@/app/utils/searchPosition';
 import { getCountryName } from '@/app/utils/countries';
 import {
   SearchPageState,
@@ -72,6 +73,14 @@ const SearchView: React.FC = () => {
       : null;
   const { data, error, isLoading, reload } = useApiResource<SearchResponse>(apiUrl);
 
+  const returnTo = `/?${serializeSearchPageState(state, country)}`;
+  const rememberPosition = () => saveSearchPosition(returnTo);
+  useEffect(() => {
+    if (!data) return;
+    const frame = requestAnimationFrame(() => restoreSearchPosition(returnTo));
+    return () => cancelAnimationFrame(frame);
+  }, [data, returnTo]);
+
   const currentPage = data?.page ?? state.page;
   const browsing = state.query === '';
   const countryName = getCountryName(country);
@@ -94,7 +103,13 @@ const SearchView: React.FC = () => {
             rent or buy — country by country.
           </p>
           <div className="mt-7">
-            <SearchBox value={state.query} onChange={setQuery} country={country} />
+            <SearchBox
+              value={state.query}
+              onChange={setQuery}
+              country={country}
+              returnTo={returnTo}
+              onOpen={rememberPosition}
+            />
           </div>
         </PageContainer>
       </section>
@@ -172,7 +187,12 @@ const SearchView: React.FC = () => {
               <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 {data.results.map((title) => (
                   <li key={`${title.type}-${title.id}`}>
-                    <TitleCard title={title} country={country} />
+                    <TitleCard
+                      title={title}
+                      country={country}
+                      returnTo={returnTo}
+                      onOpen={rememberPosition}
+                    />
                   </li>
                 ))}
               </ul>

@@ -5,6 +5,7 @@ import {
   parseSearchPageState,
   serializeSearchPageState,
   titleHref,
+  safeSearchReturn,
   toSearchRequestParams,
 } from '@/app/utils/searchPageState';
 
@@ -106,5 +107,27 @@ describe('toSearchRequestParams', () => {
 describe('titleHref', () => {
   it('links to the title page with the country', () => {
     expect(titleHref('tv', 1399, 'DE')).toBe('/title/tv/1399?country=DE');
+  });
+});
+
+describe('search return locations', () => {
+  it.each([
+    'https://evil.test',
+    '//evil.test',
+    '/saved',
+    '/\\evil.test',
+    '/?q=%zz',
+    '/#evil',
+    '/?q=x\n',
+  ])('rejects %s', (value) => {
+    expect(safeSearchReturn(value)).toBe('/');
+  });
+
+  it('preserves encoded search state through title links', () => {
+    const target = '/?q=hello%20%26%20world&type=movie&genre=18&sort=rating&page=3&country=DE';
+    const href = titleHref('movie', 550, 'DE', target);
+    expect(new URL(href, 'https://app.test').searchParams.get('returnTo')).toBe(target);
+    expect(safeSearchReturn(target)).toBe(target);
+    expect(safeSearchReturn(null)).toBe('/');
   });
 });

@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Check, Pin } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
@@ -34,6 +35,7 @@ const OFFER_ROWS: [string, OfferKind][] = [
  * country and pinned countries first, filterable by name and by "my services".
  */
 const CountriesView: React.FC<CountriesViewProps> = ({ type, id }) => {
+  const params = useSearchParams();
   const { country } = useActiveCountry();
   const { services } = useMyServices();
   const { pinned, togglePinned } = usePinnedCountries();
@@ -59,7 +61,7 @@ const CountriesView: React.FC<CountriesViewProps> = ({ type, id }) => {
     <main>
       <PageContainer className="max-w-4xl pb-20 pt-6">
         <Link
-          href={titleHref(type, id, country)}
+          href={titleHref(type, id, country, params?.get('returnTo') ?? undefined)}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" aria-hidden="true" /> Back to title

@@ -13,6 +13,7 @@ import { cn } from '@/app/utils/cn';
 interface AvailabilityPanelProps {
   title: TitleDetails;
   country: string;
+  returnTo?: string;
   services: number[];
 }
 
@@ -92,11 +93,17 @@ const ProviderList: React.FC<{
  * "Where to watch" section of a title page: a verdict for the user's country and
  * services, the offers grouped by kind, and a link to compare every country.
  */
-const AvailabilityPanel: React.FC<AvailabilityPanelProps> = ({ title, country, services }) => {
+const AvailabilityPanel: React.FC<AvailabilityPanelProps> = ({
+  title,
+  country,
+  services,
+  returnTo,
+}) => {
   const verdict = verdictFor(title.availability, country, services);
   const entry = verdict.entry;
   const countryCount = Object.keys(title.availability).length;
-  const compareHref = `/title/${title.type}/${title.id}/countries?country=${country}`;
+  const returnQuery = returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : '';
+  const compareHref = `/title/${title.type}/${title.id}/countries?country=${country}${returnQuery}`;
 
   return (
     <section
