@@ -40,7 +40,15 @@ export class TitlePage extends BasePage {
     await expect(this.availability).toBeVisible();
   }
 
-  providerLink(name: string): Locator {
-    return this.availability.getByRole('link', { name: `Watch on ${name} (opens in a new tab)` });
+  get watchOptionsLink(): Locator {
+    return this.availability.getByRole('link', {
+      name: 'View watch options on TMDB (opens in a new tab)',
+    });
+  }
+
+  provider(name: string): Locator {
+    return this.availability
+      .getByRole('listitem')
+      .filter({ has: this.page.getByText(name, { exact: true }) });
   }
 }

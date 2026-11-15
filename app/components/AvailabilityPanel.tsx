@@ -36,14 +36,13 @@ export const VERDICT_CLASS: Record<VerdictStatus, string> = {
 const ProviderList: React.FC<{
   providers: ProviderRef[];
   services: number[];
-  link?: string;
-}> = ({ providers, services, link }) => (
+}> = ({ providers, services }) => (
   <ul className="flex flex-wrap gap-2">
     {providers.map((provider) => {
       const mine = services.includes(provider.id);
       const className = cn(
-        'flex min-h-11 items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors',
-        mine ? 'border-success/40 bg-success/10' : 'border-border bg-card hover:border-primary/40'
+        'flex min-h-11 items-center gap-2 rounded-lg border px-2.5 py-1.5',
+        mine ? 'border-success/40 bg-success/10' : 'border-border bg-card'
       );
       const content = (
         <>
@@ -65,24 +64,11 @@ const ProviderList: React.FC<{
               <span className="sr-only">(one of your services)</span>
             </>
           )}
-          {link && <ArrowUpRight className="size-3.5 opacity-60" aria-hidden="true" />}
         </>
       );
       return (
         <li key={provider.id}>
-          {link ? (
-            <a
-              href={link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={className}
-              aria-label={`Watch on ${provider.name} (opens in a new tab)`}
-            >
-              {content}
-            </a>
-          ) : (
-            <span className={className}>{content}</span>
-          )}
+          <span className={className}>{content}</span>
         </li>
       );
     })}
@@ -148,13 +134,22 @@ const AvailabilityPanel: React.FC<AvailabilityPanelProps> = ({
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {group.label} · {group.note}
                 </h3>
-                <ProviderList
-                  providers={entry[group.key]}
-                  services={services}
-                  link={entry.watchLink}
-                />
+                <ProviderList providers={entry[group.key]} services={services} />
               </div>
             ) : null
+          )}
+          {entry.watchLink && (
+            <Button asChild variant="outline">
+              <a
+                href={entry.watchLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-auto flex-wrap whitespace-normal"
+              >
+                View watch options on TMDB <ArrowUpRight className="size-4" aria-hidden="true" />
+                <span>(opens in a new tab)</span>
+              </a>
+            </Button>
           )}
           <p className="text-xs text-muted-foreground">
             Availability data from TMDB / JustWatch. Prices and line-ups can change without notice.

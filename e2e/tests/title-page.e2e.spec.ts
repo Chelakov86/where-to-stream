@@ -23,9 +23,10 @@ test.describe('Title page', () => {
     await expect(titlePage.availabilityHeading).toHaveText('Where to watch in United States');
     await expect(titlePage.verdict).toContainText('Free to watch');
     await expect(titlePage.availability).toContainText('Stream with a subscription');
-    const netflix = titlePage.providerLink('Netflix');
-    await expect(netflix).toHaveAttribute('href', WATCH_LINK);
-    await expect(netflix).toHaveAttribute('target', '_blank');
+    await expect(titlePage.provider('Netflix')).toBeVisible();
+    await expect(titlePage.provider('Netflix').getByRole('link')).toHaveCount(0);
+    await expect(titlePage.watchOptionsLink).toHaveAttribute('href', WATCH_LINK);
+    await expect(titlePage.watchOptionsLink).toHaveAttribute('target', '_blank');
   });
 
   test('uses the country from the URL', async ({ titlePage }) => {

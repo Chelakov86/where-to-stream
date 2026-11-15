@@ -35,7 +35,7 @@ test.describe('My services', () => {
 
     await titlePage.gotoTitle('movie', 550);
     await expect(titlePage.verdict).toContainText('Included in your services');
-    await expect(titlePage.providerLink('Netflix')).toContainText('(one of your services)');
+    await expect(titlePage.provider('Netflix')).toContainText('(one of your services)');
   });
 });
 
