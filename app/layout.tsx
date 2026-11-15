@@ -1,13 +1,25 @@
 import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
-import { Sora, Manrope } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import AppHeader from './components/AppHeader';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
 
-const sora = Sora({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
-const manrope = Manrope({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
+const sora = localFont({
+  src: './fonts/sora-latin-wght-normal.woff2',
+  variable: '--font-display',
+  display: 'swap',
+  weight: '100 800',
+  style: 'normal',
+});
+const manrope = localFont({
+  src: './fonts/manrope-latin-wght-normal.woff2',
+  variable: '--font-body',
+  display: 'swap',
+  weight: '200 800',
+  style: 'normal',
+});
 
 export const metadata: Metadata = {
   title: 'WhereToStream — Find where to stream any movie or series',
