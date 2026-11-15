@@ -10,6 +10,7 @@ export interface NormalizedSearchResult {
   genres?: number[];
   overview?: string;
   popularity?: number;
+  originalLanguage?: string;
 }
 
 export type TMDBResult = NormalizedSearchResult;
