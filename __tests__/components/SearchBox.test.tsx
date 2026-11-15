@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import SearchBox from '@/app/components/SearchBox';
@@ -51,6 +51,35 @@ describe('SearchBox', () => {
     await userEvent.keyboard('{Enter}');
     expect(push).toHaveBeenCalledWith('/title/movie/604?country=DE');
   });
+
+  it.each(['keyboard', 'click'])(
+    'cancels the pending query commit on %s selection',
+    async (method) => {
+      jest.useFakeTimers();
+      try {
+        const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+        const onChange = jest.fn();
+        render(<SearchBox value="" onChange={onChange} country="US" />);
+        await user.type(screen.getByRole('combobox'), 'matr');
+        await act(async () => {
+          jest.advanceTimersByTime(300);
+        });
+
+        if (method === 'keyboard') {
+          await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+        } else {
+          await user.click(screen.getByRole('option', { name: /The Matrix Reloaded/ }));
+        }
+        expect(push).toHaveBeenCalledWith('/title/movie/604?country=US');
+        await act(async () => {
+          jest.advanceTimersByTime(400);
+        });
+        expect(onChange).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    }
+  );
 
   it('opens a suggestion on click', async () => {
     render(<SearchBox value="" onChange={jest.fn()} country="US" />);

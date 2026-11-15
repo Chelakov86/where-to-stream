@@ -40,6 +40,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, country }) => {
   const [text, setText] = useState(value);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const { autocompleteSuggestions, isLoading, handleAutocompleteRequest, clearAutocomplete } =
     useAutocomplete();
@@ -52,8 +53,10 @@ const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, country }) => {
 
   useEffect(() => {
     if (text.trim() === value) return;
-    const timer = setTimeout(() => onChange(text.trim()), COMMIT_DELAY_MS);
-    return () => clearTimeout(timer);
+    commitTimer.current = setTimeout(() => onChange(text.trim()), COMMIT_DELAY_MS);
+    return () => {
+      if (commitTimer.current !== null) clearTimeout(commitTimer.current);
+    };
   }, [text, value, onChange]);
 
   useEffect(() => {
@@ -75,6 +78,8 @@ const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, country }) => {
   const expanded = open && options.length > 0;
 
   const openTitle = (option: Option) => {
+    // A delayed search navigation must not replace the selected title route.
+    if (commitTimer.current !== null) clearTimeout(commitTimer.current);
     setOpen(false);
     router.push(titleHref(option.type, option.id, country));
   };
