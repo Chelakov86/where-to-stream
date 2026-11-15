@@ -72,3 +72,37 @@ test.describe('Country', () => {
     await expect(homePage.resultsHeading).toHaveText('Popular in Canada');
   });
 });
+
+test.describe('Unavailable browser storage', () => {
+  test('keeps service choices across client navigation and warns inside the picker', async ({
+    homePage,
+    page,
+  }) => {
+    await page.evaluate(() => {
+      Storage.prototype.setItem = () => {
+        throw new DOMException('Storage unavailable', 'QuotaExceededError');
+      };
+    });
+    await homePage.openServices();
+    await homePage.toggleService('Netflix');
+    await expect(homePage.servicesDialog.getByRole('status')).toContainText(
+      'only for this session'
+    );
+    await expect(
+      homePage.servicesDialog.getByRole('button', { name: 'Netflix', exact: true })
+    ).toHaveAttribute('aria-pressed', 'true');
+    await homePage.closeDialog();
+    await expect(homePage.servicesButton).toHaveAccessibleName('My services (1 selected)');
+    await page.getByRole('link', { name: 'Saved titles', exact: true }).click();
+    await expect(page).toHaveURL(/\/saved/);
+    await expect(homePage.servicesButton).toHaveAccessibleName('My services (1 selected)');
+    await homePage.openServices();
+    await expect(
+      homePage.servicesDialog.getByRole('button', { name: 'Netflix', exact: true })
+    ).toHaveAttribute('aria-pressed', 'true');
+    await homePage.closeDialog();
+    await page.reload();
+    await expect(homePage.servicesButton).toHaveAccessibleName('My services (0 selected)');
+    await expect(page.getByText(/only for this session/)).toHaveCount(0);
+  });
+});
