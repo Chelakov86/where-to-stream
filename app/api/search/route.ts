@@ -279,7 +279,22 @@ async function searchResults(params: SearchRequest, collectAll = false): Promise
   }
 
   const collected = collectResults(responses, params.mode);
-  let results = collected.results;
+  // TMDB has no comparable relevance score across media types. Interleave
+  // equal upstream ranks (movie first on ties), retaining each type's order.
+  let results =
+    params.type === 'all'
+      ? responses
+          .flatMap(({ type, response }) =>
+            response.results.map((result, index) => ({
+              result: normalizeTmdbResult(result, type, params.mode),
+              page: response.page,
+              index,
+              type,
+            }))
+          )
+          .sort((a, b) => a.page - b.page || a.index - b.index || a.type.localeCompare(b.type))
+          .map(({ result }) => result)
+      : collected.results;
   if (collectAll) {
     const seen = new Set<string>();
     results = results.filter((r) => {
@@ -288,10 +303,6 @@ async function searchResults(params: SearchRequest, collectAll = false): Promise
       seen.add(key);
       return true;
     });
-  }
-
-  if (params.type === 'all') {
-    results.sort(SORTERS.popularity);
   }
 
   if (params.genreIds && params.genreIds.length > 0 && params.mode === 'full') {
@@ -358,7 +369,9 @@ async function searchResults(params: SearchRequest, collectAll = false): Promise
 const pendingFilteredSearches = new Map<string, Promise<SearchResponse>>();
 
 async function search(params: SearchRequest): Promise<SearchResponse> {
-  if (params.mode !== 'full' || !hasLocalFilters(params)) return searchResults(params);
+  const needsSnapshot =
+    hasLocalFilters(params) || Boolean(params.sort && params.sort !== 'relevance');
+  if (params.mode !== 'full' || !needsSnapshot) return searchResults(params);
 
   const { page, ...snapshotParams } = params;
   const key = `filtered-search:${JSON.stringify(
