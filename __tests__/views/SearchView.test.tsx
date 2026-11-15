@@ -65,7 +65,7 @@ describe('SearchView', () => {
     expect(within(grid).getAllByRole('link')).toHaveLength(2);
     expect(screen.getByRole('link', { name: /Reacher/ })).toHaveAttribute(
       'href',
-      '/title/tv/2?country=DE'
+      '/title/tv/2?country=DE&returnTo=%2F%3Fcountry%3DDE'
     );
 
     const params = searchUrl(fetchMock);

@@ -5,8 +5,9 @@ import TitleView from '@/app/views/TitleView';
 import { clearApiResourceCache } from '@/app/hooks/useApiResource';
 import { mockMovie, mockTv } from '../mocks';
 
+let mockParams: URLSearchParams | null = null;
 jest.mock('next/navigation', () => ({
-  useSearchParams: () => null,
+  useSearchParams: () => mockParams,
 }));
 
 const mockFetch = (reply: { ok: boolean; status?: number; body?: unknown }) => {
@@ -19,6 +20,7 @@ const mockFetch = (reply: { ok: boolean; status?: number; body?: unknown }) => {
 
 describe('TitleView', () => {
   beforeEach(() => {
+    mockParams = null;
     clearApiResourceCache();
     localStorage.clear();
     localStorage.setItem('wts.country', '"US"');
@@ -79,5 +81,26 @@ describe('TitleView', () => {
       await screen.findByRole('heading', { name: "We couldn't load this title" })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+});
+
+describe('return navigation', () => {
+  beforeEach(() => {
+    clearApiResourceCache();
+    localStorage.clear();
+  });
+  it.each([true, false])('keeps context when title request success is %s', async (ok) => {
+    mockParams = new URLSearchParams({ returnTo: '/?q=dune&page=3&country=DE' });
+    mockFetch({ ok, status: ok ? 200 : 500, body: mockMovie });
+    render(<TitleView type="movie" id={550} />);
+    expect(
+      await screen.findByRole('heading', {
+        name: ok ? 'Fight Club' : "We couldn't load this title",
+      })
+    ).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Back to search' })).toHaveAttribute(
+      'href',
+      '/?q=dune&page=3&country=DE'
+    );
   });
 });

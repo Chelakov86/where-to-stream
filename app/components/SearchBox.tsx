@@ -15,6 +15,8 @@ interface SearchBoxProps {
   value: string;
   onChange: (query: string) => void;
   country: string;
+  returnTo?: string;
+  onOpen?: () => void;
 }
 
 interface Option {
@@ -35,7 +37,7 @@ const LISTBOX_ID = 'search-suggestions';
  * suggests matching titles; with an empty field it offers recently viewed titles.
  * Choosing a suggestion opens that title.
  */
-const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, country }) => {
+const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, country, returnTo, onOpen }) => {
   const router = useRouter();
   const [text, setText] = useState(value);
   const [open, setOpen] = useState(false);
@@ -81,7 +83,8 @@ const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, country }) => {
     // A delayed search navigation must not replace the selected title route.
     if (commitTimer.current !== null) clearTimeout(commitTimer.current);
     setOpen(false);
-    router.push(titleHref(option.type, option.id, country));
+    onOpen?.();
+    router.push(titleHref(option.type, option.id, country, returnTo));
   };
 
   const handleInput = (next: string) => {

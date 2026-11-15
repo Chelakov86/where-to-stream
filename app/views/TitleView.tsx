@@ -3,6 +3,8 @@
 import React, { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { safeSearchReturn } from '@/app/utils/searchPageState';
 import { ArrowLeft, Bookmark, BookmarkCheck, Play, Star } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import AvailabilityPanel from '@/app/components/AvailabilityPanel';
@@ -19,9 +21,9 @@ interface TitleViewProps {
   id: number;
 }
 
-const BackToSearch: React.FC = () => (
+const BackToSearch: React.FC<{ href: string }> = ({ href }) => (
   <Link
-    href="/"
+    href={href}
     className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
   >
     <ArrowLeft className="size-4" aria-hidden="true" /> Back to search
@@ -33,6 +35,8 @@ const BackToSearch: React.FC = () => (
  * the user's country, and the cast.
  */
 const TitleView: React.FC<TitleViewProps> = ({ type, id }) => {
+  const params = useSearchParams();
+  const returnTo = safeSearchReturn(params?.get('returnTo'));
   const { country } = useActiveCountry();
   const { services } = useMyServices();
   const { isSaved, toggleSaved } = useSavedTitles();
@@ -56,7 +60,7 @@ const TitleView: React.FC<TitleViewProps> = ({ type, id }) => {
         <div className="mt-5 flex justify-center gap-2">
           <Button onClick={reload}>Try again</Button>
           <Button variant="outline" asChild>
-            <Link href="/">Back to search</Link>
+            <Link href={returnTo}>Back to search</Link>
           </Button>
         </div>
       </main>
@@ -97,7 +101,7 @@ const TitleView: React.FC<TitleViewProps> = ({ type, id }) => {
             </div>
           )}
           <PageContainer className="relative max-w-5xl pb-6 pt-6">
-            <BackToSearch />
+            <BackToSearch href={returnTo} />
 
             <div className="mt-5 flex flex-col gap-6 sm:flex-row">
               <div className="relative aspect-[2/3] w-36 shrink-0 overflow-hidden rounded-lg border border-border bg-muted shadow-lg sm:w-48">
@@ -199,7 +203,12 @@ const TitleView: React.FC<TitleViewProps> = ({ type, id }) => {
         </div>
 
         <PageContainer className="max-w-5xl space-y-8">
-          <AvailabilityPanel title={title} country={country} services={services} />
+          <AvailabilityPanel
+            title={title}
+            country={country}
+            services={services}
+            returnTo={params?.get('returnTo') ? returnTo : undefined}
+          />
 
           {title.cast.length > 0 && (
             <section aria-labelledby="cast-heading">

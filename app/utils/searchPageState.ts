@@ -143,6 +143,26 @@ export function toSearchRequestParams(
 /**
  * Link to a title's detail page, keeping the country so shared links stay local.
  */
-export function titleHref(type: 'movie' | 'tv', id: number, country: string): string {
-  return `/title/${type}/${id}?country=${country}`;
+export function titleHref(
+  type: 'movie' | 'tv',
+  id: number,
+  country: string,
+  returnTo?: string
+): string {
+  const params = new URLSearchParams({ country });
+  if (returnTo) params.set('returnTo', safeSearchReturn(returnTo));
+  return `/title/${type}/${id}?${params}`;
+}
+
+/** Only root-relative search locations may be used as return destinations. */
+export function safeSearchReturn(value: string | null | undefined): string {
+  if (!value || !/^\/(?:\?|$)/.test(value) || /[\\\u0000-\u0020]/.test(value)) return '/';
+  try {
+    decodeURIComponent(value); // Reject malformed percent encoding.
+    const url = new URL(value, 'https://search.internal');
+    if (url.origin !== 'https://search.internal' || url.pathname !== '/' || url.hash) return '/';
+    return `/${url.search}`;
+  } catch {
+    return '/';
+  }
 }
