@@ -20,6 +20,25 @@ export type PreferenceKey = (typeof PREFERENCE_KEYS)[keyof typeof PREFERENCE_KEY
 
 export const PREFERENCES_EVENT = 'wts:preferences';
 
+// Only failed writes need an override. Scope them to the browser window so no
+// preference values can be shared between server requests.
+const sessionPreferences = new WeakMap<Window, Map<PreferenceKey, string>>();
+
+function getSessionPreferences() {
+  if (typeof window === 'undefined') return undefined;
+  let values = sessionPreferences.get(window);
+  if (!values) {
+    values = new Map();
+    sessionPreferences.set(window, values);
+  }
+  return values;
+}
+
+/** Whether any preference changes have not been persisted. */
+export function hasUnsavedPreferences(): boolean {
+  return (getSessionPreferences()?.size ?? 0) > 0;
+}
+
 /**
  * Whether a value is a known ISO 3166-1 alpha-2 country code.
  */
@@ -43,7 +62,7 @@ export function readPreference<T>(
     return fallback;
   }
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = getSessionPreferences()?.get(key) ?? window.localStorage.getItem(key);
     if (raw === null) {
       return fallback;
     }
@@ -58,6 +77,7 @@ export function readPreference<T>(
  * Whether a preference has been stored at all.
  */
 export function hasPreference(key: PreferenceKey): boolean {
+  if (getSessionPreferences()?.has(key)) return true;
   try {
     return typeof window !== 'undefined' && window.localStorage.getItem(key) !== null;
   } catch {
@@ -69,10 +89,23 @@ export function hasPreference(key: PreferenceKey): boolean {
  * Writes a preference and notifies every listener of the change.
  */
 export function writePreference(key: PreferenceKey, value: unknown): void {
+  if (typeof window === 'undefined') return;
+  const validators = {
+    [PREFERENCE_KEYS.country]: isCountryCode,
+    [PREFERENCE_KEYS.pinnedCountries]: isCountryList,
+    [PREFERENCE_KEYS.services]: isIdList,
+    [PREFERENCE_KEYS.saved]: isSavedTitleList,
+  };
+  if (!validators[key](value)) return;
+
+  const raw = JSON.stringify(value);
+  const session = getSessionPreferences()!;
   try {
-    window.localStorage.setItem(key, JSON.stringify(value));
+    window.localStorage.setItem(key, raw);
+    session.delete(key);
   } catch {
-    // Storage unavailable (private mode, quota): keep the in-memory value only
+    // Subscribers and future mounts must read this value instead of stale storage.
+    session.set(key, raw);
   }
   window.dispatchEvent(new CustomEvent(PREFERENCES_EVENT, { detail: key }));
 }

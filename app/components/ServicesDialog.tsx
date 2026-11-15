@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/app/components/ui/dialog';
+import PreferenceWarning from '@/app/components/PreferenceWarning';
 import { Skeleton } from '@/app/components/Skeleton';
 import { useMyServices } from '@/app/hooks/usePreferences';
 import { useProviders } from '@/app/hooks/useProviders';
@@ -55,6 +56,8 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country }) => {
             now get highlighted, and you can filter results down to just those.
           </DialogDescription>
         </DialogHeader>
+
+        <PreferenceWarning />
 
         {error ? (
           <p className="py-8 text-center text-sm text-muted-foreground" role="alert">

@@ -10,6 +10,7 @@ import {
   PreferenceKey,
   detectBrowserCountry,
   hasPreference,
+  hasUnsavedPreferences,
   isCountryCode,
   isCountryList,
   isIdList,
@@ -47,9 +48,14 @@ function usePersistedPreference<T>(
   }, [key]);
 
   const update = useCallback(
-    (next: T) => {
-      setValue(next);
-      writePreference(key, next);
+    (next: T | ((current: T) => T)) => {
+      // Read at update time so consecutive actions from different consumers
+      // cannot overwrite each other with an older rendered value.
+      const updated =
+        typeof next === 'function'
+          ? (next as (current: T) => T)(readPreference(key, fallback, isValid))
+          : next;
+      writePreference(key, updated);
     },
     [key]
   );
@@ -110,8 +116,8 @@ export function usePinnedCountries() {
     isCountryList
   );
   const togglePinned = useCallback(
-    (code: string) => setValue(toggleInList(value, code)),
-    [value, setValue]
+    (code: string) => setValue((current) => toggleInList(current, code)),
+    [setValue]
   );
   return { pinned: value, togglePinned, ready } as const;
 }
@@ -126,8 +132,8 @@ export function useMyServices() {
     isIdList
   );
   const toggleService = useCallback(
-    (id: number) => setValue(toggleInList(value, id)),
-    [value, setValue]
+    (id: number) => setValue((current) => toggleInList(current, id)),
+    [setValue]
   );
   const clearServices = useCallback(() => setValue([]), [setValue]);
   return { services: value, toggleService, clearServices, ready } as const;
@@ -147,8 +153,20 @@ export function useSavedTitles() {
     [value]
   );
   const toggleSaved = useCallback(
-    (title: Omit<SavedTitle, 'addedAt'>) => setValue(toggleSavedTitle(value, title)),
-    [value, setValue]
+    (title: Omit<SavedTitle, 'addedAt'>) => setValue((current) => toggleSavedTitle(current, title)),
+    [setValue]
   );
   return { saved: value, isSaved, toggleSaved, ready } as const;
+}
+
+/** Hydration-safe status shared by the page and modal warning surfaces. */
+export function usePreferencePersistence() {
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  useEffect(() => {
+    const sync = () => setHasUnsavedChanges(hasUnsavedPreferences());
+    window.addEventListener(PREFERENCES_EVENT, sync);
+    sync();
+    return () => window.removeEventListener(PREFERENCES_EVENT, sync);
+  }, []);
+  return { hasUnsavedChanges } as const;
 }

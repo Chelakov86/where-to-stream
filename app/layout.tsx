@@ -4,6 +4,8 @@ import localFont from 'next/font/local';
 import './globals.css';
 import AppHeader from './components/AppHeader';
 import Footer from './components/Footer';
+import PreferenceWarning from './components/PreferenceWarning';
+import PageContainer from './components/PageContainer';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const sora = localFont({
@@ -42,6 +44,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Suspense fallback={<div className="h-16 border-b border-border" />}>
               <AppHeader />
             </Suspense>
+            <PageContainer>
+              <PreferenceWarning />
+            </PageContainer>
             <div className="flex-grow">{children}</div>
             <Footer />
           </div>
