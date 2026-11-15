@@ -255,6 +255,91 @@ describe('GET /api/search', () => {
     ]);
   });
 
+  describe.each(['movie', 'tv', 'all'] as const)('%s original-language filtering', (type) => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      const response = (page = 1): TmdbSearchResponse => ({
+        page,
+        total_pages: 3,
+        total_results: 60,
+        results: Array.from({ length: 20 }, (_, index) => ({
+          id: (page - 1) * 20 + index + 1,
+          title: `Movie ${page}-${index}`,
+          name: `Series ${page}-${index}`,
+          poster_path: null,
+          vote_average: 8,
+          genre_ids: [18],
+          popularity: index,
+          // First-page English titles and unknown-language titles must not match German.
+          original_language: page === 1 ? 'en' : index === 19 ? undefined : 'de',
+        })),
+      });
+      mockedTmdbApi.searchMovies.mockImplementation(async ({ page }) => response(page));
+      mockedTmdbApi.searchTv.mockImplementation(async ({ page }) => response(page));
+    });
+
+    it('filters all collected pages before counting and paginating without localizing text', async () => {
+      const params = { query: 'Batman', type, language: 'de' };
+      const count = type === 'all' ? 76 : 38;
+      const first = await (await GET(createRequest(params))).json();
+      expect(first.totalResults).toBe(count);
+      expect(first.totalPages).toBe(Math.ceil(count / 20));
+      expect(first.results).toHaveLength(20);
+      expect(
+        first.results.every((r: { originalLanguage: string }) => r.originalLanguage === 'de')
+      ).toBe(true);
+      expect(first).not.toHaveProperty('paginationScope');
+
+      const identities = first.results.map(
+        (r: { type: string; id: number }) => `${r.type}:${r.id}`
+      );
+      for (let page = 2; page <= first.totalPages; page++) {
+        const next = await (await GET(createRequest({ ...params, page: String(page) }))).json();
+        expect(next.totalResults).toBe(count);
+        identities.push(
+          ...next.results.map((r: { type: string; id: number }) => `${r.type}:${r.id}`)
+        );
+      }
+      expect(new Set(identities).size).toBe(count);
+      for (const mock of [mockedTmdbApi.searchMovies, mockedTmdbApi.searchTv]) {
+        for (const [upstream] of mock.mock.calls) expect(upstream).not.toHaveProperty('language');
+      }
+      expect(
+        mockedTmdbApi.searchMovies.mock.calls.length + mockedTmdbApi.searchTv.mock.calls.length
+      ).toBe(type === 'all' ? 6 : 3);
+
+      // A different language must not reuse the German snapshot.
+      const english = await (await GET(createRequest({ ...params, language: 'en' }))).json();
+      expect(english.totalResults).toBe(type === 'all' ? 40 : 20);
+      expect(
+        english.results.every((r: { originalLanguage: string }) => r.originalLanguage === 'en')
+      ).toBe(true);
+    });
+
+    it('preserves all languages when no original-language filter is selected', async () => {
+      const data = await (await GET(createRequest({ query: 'Batman', type, page: '2' }))).json();
+      expect(data.results.some((r: { originalLanguage?: string }) => !r.originalLanguage)).toBe(
+        true
+      );
+      expect(data.totalResults).toBe(type === 'all' ? 120 : 60);
+    });
+
+    it('filters autocomplete locally and marks its counts as upstream', async () => {
+      const data = await (
+        await GET(
+          createRequest({
+            query: 'Batman',
+            type,
+            language: 'de',
+            mode: 'autocomplete',
+          })
+        )
+      ).json();
+      expect(data.results).toEqual([]);
+      expect(data.paginationScope).toBe('upstream');
+    });
+  });
+
   describe('Search sorting and filtering', () => {
     beforeEach(() => {
       jest.clearAllMocks();

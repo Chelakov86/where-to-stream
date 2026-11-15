@@ -12,10 +12,12 @@ shown first. Data comes from [TMDB](https://www.themoviedb.org/).
 - Country comparison for a single title
 - Saved titles and recently viewed history (stored locally)
 
-Title searches with year, rating, genre or selected-service filters, or an explicit sort other than
+Title searches with year, rating, genre, original-language or selected-service filters, or an explicit sort other than
 Best match, collect up to 50 TMDB pages per
 media type, apply filters and sorting, then paginate the matches in pages of 20. Snapshots are reused for five minutes. Searches that exceed
 this budget are explicitly marked incomplete; their counts cover only the inspected titles.
+Original language filters match TMDB’s `original_language` for movies and TV without changing
+response localization. Titles with unknown original language are excluded when a language is selected.
 Exact-year queries are sent upstream only when both bounds are equal. Failed search-page or provider
 lookups reject the snapshot and allow a complete retry. Best match preserves TMDB relevance order for a single media type. For All, it interleaves
 movies and TV by upstream rank, with movies first on ties; it does not substitute popularity

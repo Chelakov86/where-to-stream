@@ -49,7 +49,7 @@ import { getCache, setCache } from '@/app/cache';
  *   - full: Returns complete data including rating, genres, overview
  * - page: Page number (default: 1)
  * - yearFrom, yearTo: Year range filters (optional)
- * - language: ISO 639-1 language code (optional)
+ * - language: Original production language, ISO 639-1 code (optional)
  * - genreIds: Comma-separated genre IDs (optional)
  * - providerIds: Comma-separated provider IDs (optional)
  * - watchRegion: ISO 3166-1 country code (optional, default for browsing: "US")
@@ -93,6 +93,7 @@ const normalizeTmdbResult = (
     year,
     posterUrl,
     popularity: result.popularity,
+    originalLanguage: result.original_language,
   };
 
   if (mode === 'full') {
@@ -130,10 +131,6 @@ const mapSearchParamsToMovieParams = (params: SearchRequest): SearchMoviesParams
     movieParams.year = params.yearFrom;
   }
 
-  if (params.language) {
-    movieParams.language = params.language;
-  }
-
   if (params.genreIds && params.genreIds.length > 0) {
     movieParams.withGenres = params.genreIds.join(',');
   }
@@ -153,10 +150,6 @@ const mapSearchParamsToTvParams = (params: SearchRequest): SearchTvParams => {
 
   if (params.yearFrom !== undefined && params.yearFrom === params.yearTo) {
     tvParams.firstAirDateYear = params.yearFrom;
-  }
-
-  if (params.language) {
-    tvParams.language = params.language;
   }
 
   if (params.genreIds && params.genreIds.length > 0) {
@@ -243,6 +236,7 @@ async function browse(params: SearchRequest): Promise<SearchResponse> {
 }
 
 const hasLocalFilters = (params: SearchRequest): boolean =>
+  Boolean(params.language) ||
   params.yearFrom !== undefined ||
   params.yearTo !== undefined ||
   params.minRating !== undefined ||
@@ -303,6 +297,11 @@ async function searchResults(params: SearchRequest, collectAll = false): Promise
       seen.add(key);
       return true;
     });
+  }
+
+  // TMDB search's language parameter localizes text; it cannot filter production language.
+  if (params.language) {
+    results = results.filter((r) => r.originalLanguage === params.language);
   }
 
   if (params.genreIds && params.genreIds.length > 0 && params.mode === 'full') {
