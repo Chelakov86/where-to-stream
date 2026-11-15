@@ -139,13 +139,12 @@ const AvailabilityPanel: React.FC<AvailabilityPanelProps> = ({
             ) : null
           )}
           {entry.watchLink && (
-            <Button asChild variant="outline">
-              <a
-                href={entry.watchLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="h-auto flex-wrap whitespace-normal"
-              >
+            <Button
+              asChild
+              variant="outline"
+              className="h-auto max-w-full flex-wrap whitespace-normal"
+            >
+              <a href={entry.watchLink} target="_blank" rel="noopener noreferrer">
                 View watch options on TMDB <ArrowUpRight className="size-4" aria-hidden="true" />
                 <span>(opens in a new tab)</span>
               </a>

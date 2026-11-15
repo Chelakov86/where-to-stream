@@ -29,6 +29,21 @@ test.describe('Title page', () => {
     await expect(titlePage.watchOptionsLink).toHaveAttribute('target', '_blank');
   });
 
+  test('keeps the TMDB action inside the panel on narrow screens', async ({ titlePage, page }) => {
+    await page.setViewportSize({ width: 320, height: 740 });
+    await titlePage.gotoTitle('movie', 550);
+    await expect(titlePage.watchOptionsLink).toBeVisible();
+    const action = await titlePage.watchOptionsLink.boundingBox();
+    const panel = await titlePage.availability.boundingBox();
+    expect(action).not.toBeNull();
+    expect(panel).not.toBeNull();
+    expect(action!.x).toBeGreaterThanOrEqual(panel!.x);
+    expect(action!.x + action!.width).toBeLessThanOrEqual(panel!.x + panel!.width);
+    expect(
+      await titlePage.watchOptionsLink.evaluate((element) => getComputedStyle(element).whiteSpace)
+    ).toBe('normal');
+  });
+
   test('uses the country from the URL', async ({ titlePage }) => {
     await titlePage.gotoTitle('movie', 550, 'DE');
 
