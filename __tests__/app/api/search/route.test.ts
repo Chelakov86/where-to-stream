@@ -176,6 +176,85 @@ describe('GET /api/search', () => {
     });
   });
 
+  describe.each(['movie', 'tv', 'all'])('Global search sorting: %s', (type) => {
+    it.each(['rating', 'popularity', 'newest', 'oldest', 'title'])(
+      'orders %s across page boundaries without requiring a filter',
+      async (sort) => {
+        const upstreamPage = (page: number): TmdbSearchResponse => ({
+          page,
+          total_pages: 2,
+          total_results: 24,
+          results: Array.from({ length: 12 }, (_, index) => {
+            const rank = (page - 1) * 12 + index + 1;
+            return {
+              id: rank,
+              poster_path: null,
+              genre_ids: [],
+              title: String(25 - rank).padStart(2, '0'),
+              name: String(25 - rank).padStart(2, '0'),
+              release_date: `${2000 + rank}-01-01`,
+              first_air_date: `${2000 + rank}-01-01`,
+              vote_average: rank / 3,
+              popularity: rank,
+            };
+          }),
+        });
+        mockedTmdbApi.searchMovies.mockImplementation(async (p) => upstreamPage(p.page ?? 1));
+        mockedTmdbApi.searchTv.mockImplementation(async (p) => upstreamPage(p.page ?? 1));
+        const results: { id: number; type: string }[] = [];
+        const pages = type === 'all' ? 3 : 2;
+        for (let page = 1; page <= pages; page++) {
+          const data = await (
+            await GET(createRequest({ query: 'sorted', type, sort, page: String(page) }))
+          ).json();
+          expect(data.totalResults).toBe(type === 'all' ? 48 : 24);
+          expect(data.totalPages).toBe(pages);
+          results.push(...data.results);
+        }
+        const ids = results.map((r) => r.id);
+        expect(ids[0]).toBe(sort === 'oldest' ? 1 : 24);
+        expect(ids[ids.length - 1]).toBe(sort === 'oldest' ? 24 : 1);
+        for (let i = 1; i < ids.length; i++) {
+          if (sort === 'oldest') expect(ids[i]).toBeGreaterThanOrEqual(ids[i - 1]);
+          else expect(ids[i]).toBeLessThanOrEqual(ids[i - 1]);
+        }
+        expect(new Set(results.map((r) => `${r.type}:${r.id}`)).size).toBe(results.length);
+      }
+    );
+  });
+
+  it('interleaves mixed Best match by upstream rank rather than popularity', async () => {
+    const page = (type: 'movie' | 'tv', number: number): TmdbSearchResponse => ({
+      page: number,
+      total_pages: 2,
+      total_results: 4,
+      results: [0, 1].map((index) => ({
+        id: number * 10 + index,
+        poster_path: null,
+        genre_ids: [],
+        title: `${type} ${number} ${index}`,
+        name: `${type} ${number} ${index}`,
+        popularity: number * 100 + index,
+        vote_average: 5,
+      })),
+    });
+    mockedTmdbApi.searchMovies.mockImplementation(async (p) => page('movie', p.page ?? 1));
+    mockedTmdbApi.searchTv.mockImplementation(async (p) => page('tv', p.page ?? 1));
+    const data = await (
+      await GET(createRequest({ query: 'rank', type: 'all', minRating: '1' }))
+    ).json();
+    expect(data.results.map((r: { title: string }) => r.title)).toEqual([
+      'movie 1 0',
+      'tv 1 0',
+      'movie 1 1',
+      'tv 1 1',
+      'movie 2 0',
+      'tv 2 0',
+      'movie 2 1',
+      'tv 2 1',
+    ]);
+  });
+
   describe('Search sorting and filtering', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -847,8 +926,8 @@ describe('GET /api/search', () => {
       expect(res.status).toBe(200);
       expect(data.results.length).toBe(2);
       expect(data.totalResults).toBe(2);
-      expect(data.results[0].title).toBe('Star Trek'); // Higher popularity
-      expect(data.results[1].title).toBe('Star Wars');
+      expect(data.results[0].title).toBe('Star Wars'); // Equal rank: movie first
+      expect(data.results[1].title).toBe('Star Trek');
     });
 
     it('should return minimal fields for autocomplete mode', async () => {
