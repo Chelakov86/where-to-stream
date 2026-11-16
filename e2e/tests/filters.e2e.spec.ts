@@ -197,3 +197,146 @@ test.describe('Filtered search pagination', () => {
     await expect(homePage.titleCards.first()).toContainText('Match 3');
   });
 });
+
+test.describe('Year draft validation', () => {
+  test('restores partial years on Tab and dismissal without changing URL or requests', async ({
+    homePage,
+    page,
+  }) => {
+    const requests: URLSearchParams[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/search?')) {
+        requests.push(new URL(request.url()).searchParams);
+      }
+    });
+    const initial = homePage.nextSearchRequest();
+    await homePage.goto('from=2010&to=2020');
+    await initial;
+    await homePage.openFilters();
+    const from = homePage.filtersPopover.getByLabel('Year from');
+    const to = homePage.filtersPopover.getByLabel('Year to');
+    await expect(from).toHaveValue('2010');
+    await expect(to).toHaveValue('2020');
+    const committedURL = page.url();
+    const requestCount = requests.length;
+
+    await from.press('End');
+    await from.press('Backspace');
+    await expect(from).toHaveValue('201');
+    await from.press('Tab');
+    await expect(from).toHaveValue('2010');
+
+    for (const dismiss of ['Escape', 'outside']) {
+      await from.fill('201');
+      if (dismiss === 'Escape') await from.press('Escape');
+      else await homePage.heroHeading.click();
+      await expect(homePage.filtersPopover).not.toBeVisible();
+      await homePage.openFilters();
+      await expect(from).toHaveValue('2010');
+      await expect(to).toHaveValue('2020');
+    }
+    await expect(page).toHaveURL(committedURL);
+    expect(requests).toHaveLength(requestCount);
+    expect(requests[requests.length - 1].get('yearFrom')).toBe('2010');
+    expect(requests[requests.length - 1].get('yearTo')).toBe('2020');
+
+    const next = homePage.nextSearchRequest();
+    await from.fill('201');
+    await from.pressSequentially('5');
+    const params = new URL((await next).url()).searchParams;
+    expect(params.get('yearFrom')).toBe('2015');
+    expect(params.get('yearTo')).toBe('2020');
+    await expect(page).toHaveURL(/from=2015/);
+    await expect(from).toHaveValue('2015');
+  });
+
+  test('blocks inverted bounds, corrects either year, and discards rejected edits on close', async ({
+    homePage,
+    page,
+  }) => {
+    const requests: URLSearchParams[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/search?')) {
+        requests.push(new URL(request.url()).searchParams);
+      }
+    });
+    await homePage.goto('from=2010&to=2020');
+    await homePage.openFilters();
+    const from = homePage.filtersPopover.getByLabel('Year from');
+    const to = homePage.filtersPopover.getByLabel('Year to');
+    const error = homePage.filtersPopover.getByRole('alert');
+    const committedURL = page.url();
+
+    await from.fill('2030');
+    await from.press('Tab');
+    await expect(error).toContainText('Change either year');
+    await expect(from).toHaveAttribute('aria-invalid', 'true');
+    await expect(to).toHaveAccessibleDescription(/Year from must be no later/);
+    await expect(page).toHaveURL(committedURL);
+    await to.press('Escape');
+    await homePage.openFilters();
+    await expect(from).toHaveValue('2010');
+    await expect(to).toHaveValue('2020');
+    await expect(error).toHaveCount(0);
+
+    await from.fill('2030');
+    const corrected = homePage.nextSearchRequest();
+    await to.fill('2040');
+    const params = new URL((await corrected).url()).searchParams;
+    expect(params.get('yearFrom')).toBe('2030');
+    expect(params.get('yearTo')).toBe('2040');
+    await expect(page).toHaveURL(/from=2030&to=2040/);
+    await expect(error).toHaveCount(0);
+    await expect(from).toHaveValue('2030');
+    await expect(to).toHaveValue('2040');
+
+    await to.fill('2000');
+    await expect(error).toBeVisible();
+    const correctedFrom = homePage.nextSearchRequest();
+    await from.fill('1990');
+    const correctedParams = new URL((await correctedFrom).url()).searchParams;
+    expect(correctedParams.get('yearFrom')).toBe('1990');
+    expect(correctedParams.get('yearTo')).toBe('2000');
+    await expect(page).toHaveURL(/from=1990&to=2000/);
+    await expect(error).toHaveCount(0);
+
+    await from.fill('2010');
+    await expect(error).toBeVisible();
+    const reset = homePage.nextSearchRequest();
+    await homePage.filtersPopover.getByRole('button', { name: 'Reset filters' }).click();
+    const resetParams = new URL((await reset).url()).searchParams;
+    expect(resetParams.has('yearFrom')).toBe(false);
+    expect(resetParams.has('yearTo')).toBe(false);
+    await expect(page).not.toHaveURL(/from=|to=/);
+    await expect(from).toHaveValue('');
+    await expect(to).toHaveValue('');
+    await expect(error).toHaveCount(0);
+    for (const params of requests) {
+      const lower = params.get('yearFrom');
+      const upper = params.get('yearTo');
+      if (lower !== null && upper !== null) {
+        expect(Number(lower)).toBeLessThanOrEqual(Number(upper));
+      }
+    }
+  });
+
+  for (const bound of ['from', 'to']) {
+    test(`clears the ${bound} bound immediately`, async ({ homePage, page }) => {
+      await homePage.goto('from=2010&to=2020');
+      await homePage.openFilters();
+      const field = homePage.filtersPopover.getByLabel(bound === 'from' ? 'Year from' : 'Year to');
+      const next = homePage.nextSearchRequest();
+      await field.clear();
+      const params = new URL((await next).url()).searchParams;
+      expect(params.has(bound === 'from' ? 'yearFrom' : 'yearTo')).toBe(false);
+      expect(params.get(bound === 'from' ? 'yearTo' : 'yearFrom')).toBe(
+        bound === 'from' ? '2020' : '2010'
+      );
+      await expect(page).not.toHaveURL(new RegExp(`${bound}=`));
+      await expect(field).toHaveValue('');
+      await field.press('Escape');
+      await homePage.openFilters();
+      await expect(field).toHaveValue('');
+    });
+  }
+});
