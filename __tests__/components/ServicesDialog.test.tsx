@@ -128,4 +128,75 @@ describe('ServicesDialog', () => {
     expect(screen.queryByText(/No streaming services are listed/)).not.toBeInTheDocument();
     expect(localStorage.getItem('wts.services')).toBe('[8]');
   });
+  it('searches all providers and keeps the 61st selected outside the search results', async () => {
+    const providers = Array.from({ length: 61 }, (_, index) => ({
+      id: index + 1000,
+      name: `Service ${index + 1}`,
+      priority: index,
+    }));
+    mockFetch(providers);
+    render(<ServicesDialog country="US" onCountryChange={jest.fn()} />);
+    await userEvent.click(screen.getByRole('button', { name: /My services/ }));
+    expect(await screen.findByRole('button', { name: 'Service 61' })).toBeInTheDocument();
+    const search = screen.getByRole('searchbox', { name: 'Search services' });
+    await userEvent.type(search, '  SERVICE 61 ');
+    expect(screen.getByRole('button', { name: 'Service 61' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Service 1' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Service 61' }));
+    await userEvent.clear(search);
+    expect(screen.getByRole('button', { name: 'Service 61' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await userEvent.type(search, 'no such service');
+    expect(
+      screen.getByText('No services match your search. Try another name.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/No streaming services are listed/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Service 61' }));
+    expect(localStorage.getItem('wts.services')).toBe('[]');
+    expect(search).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('retains selected names and logos in an empty country and after reopening', async () => {
+    localStorage.setItem('wts.services', '[8]');
+    mockFetch([netflix]);
+    const { rerender } = render(<ServicesDialog country="US" onCountryChange={jest.fn()} />);
+    await userEvent.click(screen.getByRole('button', { name: /My services/ }));
+    expect(await screen.findByRole('button', { name: 'Remove Netflix' })).toBeInTheDocument();
+    mockFetch([]);
+    rerender(<ServicesDialog country="DE" onCountryChange={jest.fn()} />);
+    expect(
+      await screen.findByText(/No streaming services are listed in Germany/)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Remove Netflix' }).querySelector('img')
+    ).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(screen.getByRole('button', { name: /My services/ }));
+    expect(
+      await screen.findByText(/No streaming services are listed in Germany/)
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Netflix' }));
+    expect(localStorage.getItem('wts.services')).toBe('[]');
+  });
+
+  it('allows ID-only selections to be removed or cleared even when providers fail', async () => {
+    localStorage.setItem('wts.services', '[9001,9002]');
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: false, status: 500 }) as unknown as typeof fetch;
+    render(<ServicesDialog country="US" onCountryChange={jest.fn()} />);
+    await userEvent.click(screen.getByRole('button', { name: /My services/ }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Remove Unavailable service (ID 9001)' })
+    );
+    expect(localStorage.getItem('wts.services')).toBe('[9002]');
+    await userEvent.click(screen.getByRole('button', { name: 'Clear all' }));
+    expect(localStorage.getItem('wts.services')).toBe('[]');
+    expect(screen.queryByRole('button', { name: /Remove Unavailable/ })).not.toBeInTheDocument();
+  });
 });

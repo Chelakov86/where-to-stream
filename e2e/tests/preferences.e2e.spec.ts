@@ -85,9 +85,9 @@ test.describe('Unavailable browser storage', () => {
     });
     await homePage.openServices();
     await homePage.toggleService('Netflix');
-    await expect(homePage.servicesDialog.getByRole('status')).toContainText(
-      'only for this session'
-    );
+    await expect(
+      homePage.servicesDialog.getByRole('status').filter({ hasText: 'only for this session' })
+    ).toContainText('only for this session');
     await expect(
       homePage.servicesDialog.getByRole('button', { name: 'Netflix', exact: true })
     ).toHaveAttribute('aria-pressed', 'true');
