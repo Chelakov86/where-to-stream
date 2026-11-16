@@ -11,9 +11,13 @@ import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
  */
 export function useProviders(watchRegion?: string) {
   const [providers, setProviders] = useState<WatchProvider[]>([]);
-  const { run, isLoading, error, clearError } = useFetchLifecycle();
+  const [settledRegion, setSettledRegion] = useState<string | null>(null);
+  const { run, cancel, isLoading, error, clearError } = useFetchLifecycle();
 
   useEffect(() => {
+    let active = true;
+    setSettledRegion(null);
+    clearError();
     // If no region is selected, clear providers and don't fetch
     if (!watchRegion) {
       setProviders([]);
@@ -38,16 +42,24 @@ export function useProviders(watchRegion?: string) {
       }
       setProviders(Array.isArray(data.providers) ? data.providers : []);
     }).then((status) => {
+      if (!active) return;
       if (status === 'error') {
         setProviders([]);
       }
+      setSettledRegion(watchRegion);
     });
-  }, [watchRegion, run]);
+
+    return () => {
+      active = false;
+      cancel();
+    };
+  }, [watchRegion, run, cancel, clearError]);
 
   return {
-    providers,
-    isLoading,
-    error,
+    providers: settledRegion === watchRegion ? providers : [],
+    // A new region is pending even before the fetching effect has started.
+    isLoading: !!watchRegion && (isLoading || settledRegion !== watchRegion),
+    error: settledRegion === watchRegion ? error : null,
     clearError,
   };
 }

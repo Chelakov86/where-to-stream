@@ -63,4 +63,28 @@ describe('AppHeader', () => {
 
     expect(replace).toHaveBeenCalledWith('/?country=US', { scroll: false });
   });
+
+  it('uses the same country update from the empty services dialog and retains URL context', async () => {
+    mockPathname = '/title/movie/550/countries';
+    const params = new URLSearchParams({
+      country: 'GB',
+      returnTo: '/?q=fight&page=2',
+      extra: 'keep',
+    });
+    mockSearch = params.toString();
+    localStorage.setItem('wts.services', '[8]');
+    render(<AppHeader />);
+
+    await userEvent.click(screen.getByRole('button', { name: /My services/ }));
+    expect(
+      await screen.findByText(/No streaming services are listed in United Kingdom/)
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('combobox', { name: /Change country/ }));
+    await userEvent.click(screen.getByRole('option', { name: 'Germany' }));
+
+    params.set('country', 'DE');
+    expect(replace).toHaveBeenCalledWith(`${mockPathname}?${params}`, { scroll: false });
+    expect(localStorage.getItem('wts.country')).toBe('"DE"');
+    expect(localStorage.getItem('wts.services')).toBe('[8]');
+  });
 });

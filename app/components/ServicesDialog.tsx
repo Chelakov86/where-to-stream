@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from '@/app/components/ui/dialog';
 import PreferenceWarning from '@/app/components/PreferenceWarning';
+import CountryPicker from '@/app/components/CountryPicker';
 import { Skeleton } from '@/app/components/Skeleton';
 import { useMyServices } from '@/app/hooks/usePreferences';
 import { useProviders } from '@/app/hooks/useProviders';
@@ -21,6 +22,7 @@ import { cn } from '@/app/utils/cn';
 
 interface ServicesDialogProps {
   country: string;
+  onCountryChange: (code: string) => void;
 }
 
 /** Providers beyond this display priority are rarely relevant; keep the grid scannable. */
@@ -30,7 +32,7 @@ const MAX_PROVIDERS = 60;
  * Dialog for picking the streaming services the user subscribes to.
  * Providers are only fetched once the dialog is opened.
  */
-const ServicesDialog: React.FC<ServicesDialogProps> = ({ country }) => {
+const ServicesDialog: React.FC<ServicesDialogProps> = ({ country, onCountryChange }) => {
   const [open, setOpen] = useState(false);
   const { services, toggleService, clearServices } = useMyServices();
   const { providers, isLoading, error } = useProviders(open ? country : undefined);
@@ -59,11 +61,12 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country }) => {
 
         <PreferenceWarning />
 
-        {error ? (
-          <p className="py-8 text-center text-sm text-muted-foreground" role="alert">
-            Couldn&apos;t load providers. Close the dialog and try again.
-          </p>
-        ) : isLoading || providers.length === 0 ? (
+        <div className="flex items-center justify-between gap-2 text-sm">
+          <span>Change country</span>
+          <CountryPicker country={country} onChange={onCountryChange} />
+        </div>
+
+        {isLoading ? (
           <div
             className="grid grid-cols-2 gap-2 sm:grid-cols-3"
             role="status"
@@ -73,6 +76,15 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country }) => {
               <Skeleton key={index} className="h-14 rounded-lg" />
             ))}
           </div>
+        ) : error ? (
+          <p className="py-8 text-center text-sm text-muted-foreground" role="alert">
+            Couldn&apos;t load providers. Close the dialog and try again.
+          </p>
+        ) : providers.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground" role="status">
+            No streaming services are listed in {getCountryName(country)}. Try changing the country
+            above. Your selected services are kept.
+          </p>
         ) : (
           <>
             <ul className="-mx-1 grid max-h-[45vh] grid-cols-2 gap-2 overflow-y-auto px-1 sm:grid-cols-3">
