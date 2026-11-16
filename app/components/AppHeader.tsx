@@ -61,7 +61,7 @@ const AppHeader: React.FC = () => {
             <Bookmark aria-hidden="true" />
           </Link>
         </Button>
-        <ServicesDialog country={country} />
+        <ServicesDialog country={country} onCountryChange={changeCountry} />
         <CountryPicker country={country} onChange={changeCountry} />
       </PageContainer>
     </header>

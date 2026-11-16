@@ -157,4 +157,53 @@ describe('useProviders', () => {
     expect(result.current.providers).toEqual([]);
     expect(result.current.error).toBeNull();
   });
+
+  it('cancels a closed picker request and ignores its late response', async () => {
+    let resolve!: (response: unknown) => void;
+    (global.fetch as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        })
+    );
+    const { result, rerender } = renderHook(({ region }) => useProviders(region), {
+      initialProps: { region: 'US' as string | undefined },
+    });
+    const signal = (global.fetch as jest.Mock).mock.calls[0][1].signal;
+    rerender({ region: undefined });
+    expect(signal.aborted).toBe(true);
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ providers: [] }),
+    });
+    rerender({ region: 'DE' });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () =>
+      resolve({ ok: true, json: async () => ({ providers: [{ id: 8, name: 'Netflix' }] }) })
+    );
+    expect(result.current.providers).toEqual([]);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('clears a previous error while loading providers for another country', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500 });
+    const { result, rerender } = renderHook(({ region }) => useProviders(region), {
+      initialProps: { region: 'US' },
+    });
+    await waitFor(() => expect(result.current.error).toBeTruthy());
+    let resolve!: (response: unknown) => void;
+    (global.fetch as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        })
+    );
+    rerender({ region: 'DE' });
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.error).toBeNull();
+    await act(async () => resolve({ ok: true, json: async () => ({ providers: [] }) }));
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 });

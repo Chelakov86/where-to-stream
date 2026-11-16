@@ -50,6 +50,16 @@ test.describe('Visual Regression', () => {
     await expect(homePage.servicesDialog).toHaveScreenshot('services-dialog.png');
   });
 
+  test('should match empty services dialog screenshot', async ({ homePage, page }) => {
+    await page.route('**/api/providers*', (route) => route.fulfill({ json: { providers: [] } }));
+    await homePage.openServices();
+    await expect(homePage.servicesDialog.getByRole('status')).toContainText(
+      'No streaming services are listed in United States'
+    );
+    await settle(page);
+    await expect(homePage.servicesDialog).toHaveScreenshot('services-empty.png');
+  });
+
   test('should match filters popover screenshot', async ({ homePage, page }) => {
     await homePage.openFilters();
     await expect(homePage.filtersPopover.getByRole('button', { name: 'Action' })).toBeVisible();
