@@ -64,46 +64,100 @@ const chipClass = (on: boolean) =>
 
 const labelClass = 'text-xs uppercase tracking-wide text-muted-foreground';
 
-interface YearInputProps {
-  id: string;
-  label: string;
-  placeholder: string;
-  value?: number;
-  onCommit: (year: number | undefined) => void;
-}
+type YearBounds = Pick<SearchPageState, 'yearFrom' | 'yearTo'>;
+type YearBound = keyof YearBounds;
 
-/**
- * Year field that only commits empty or complete four-digit years, so typing
- * "2019" doesn't trigger searches for 2, 20 and 201 along the way.
- */
-const YearInput: React.FC<YearInputProps> = ({ id, label, placeholder, value, onCommit }) => {
-  const [text, setText] = useState(value ? String(value) : '');
+const yearText = (value?: number) => (value === undefined ? '' : String(value));
+const completeYear = (text: string) => text === '' || text.length === 4;
 
-  useEffect(() => setText(value ? String(value) : ''), [value]);
+/** Keep year drafts separate from the active search until the range is valid. */
+const YearRange: React.FC<
+  YearBounds & { open: boolean; onChange: FiltersBarProps['onChange'] }
+> = ({ open, yearFrom, yearTo, onChange }) => {
+  const [draft, setDraft] = useState({
+    yearFrom: yearText(yearFrom),
+    yearTo: yearText(yearTo),
+  });
 
-  const handleChange = (next: string) => {
-    const digits = next.replace(/\D/g, '').slice(0, 4);
-    setText(digits);
-    if (digits === '') {
-      onCommit(undefined);
-    } else if (digits.length === 4) {
-      onCommit(parseInt(digits, 10));
-    }
+  // Reset on dismissal too: closing animations may keep this component mounted.
+  useEffect(() => {
+    setDraft({ yearFrom: yearText(yearFrom), yearTo: yearText(yearTo) });
+  }, [open, yearFrom, yearTo]);
+
+  const inverted =
+    draft.yearFrom.length === 4 &&
+    draft.yearTo.length === 4 &&
+    Number(draft.yearFrom) > Number(draft.yearTo);
+
+  const edit = (bound: YearBound, text: string) => {
+    const next = { ...draft, [bound]: text.replace(/\D/g, '').slice(0, 4) };
+    setDraft(next);
+    if (!completeYear(next[bound])) return;
+
+    // A partial counterpart still represents its committed value. Complete
+    // pending bounds are committed together when the range becomes valid.
+    const candidate = {
+      yearFrom: completeYear(next.yearFrom)
+        ? next.yearFrom === ''
+          ? undefined
+          : Number(next.yearFrom)
+        : yearFrom,
+      yearTo: completeYear(next.yearTo)
+        ? next.yearTo === ''
+          ? undefined
+          : Number(next.yearTo)
+        : yearTo,
+    };
+    if (
+      candidate.yearFrom !== undefined &&
+      candidate.yearTo !== undefined &&
+      candidate.yearFrom > candidate.yearTo
+    )
+      return;
+
+    const patch: Partial<YearBounds> = {};
+    if (candidate.yearFrom !== yearFrom) patch.yearFrom = candidate.yearFrom;
+    if (candidate.yearTo !== yearTo) patch.yearTo = candidate.yearTo;
+    if (Object.keys(patch).length > 0) onChange(patch);
   };
 
   return (
     <div>
-      <Label htmlFor={id} className={labelClass}>
-        {label}
-      </Label>
-      <Input
-        id={id}
-        inputMode="numeric"
-        placeholder={placeholder}
-        value={text}
-        onChange={(event) => handleChange(event.target.value)}
-        className="mt-1"
-      />
+      <div className="grid grid-cols-2 gap-3">
+        {(['yearFrom', 'yearTo'] as const).map((bound) => {
+          const id = bound === 'yearFrom' ? 'year-from' : 'year-to';
+          return (
+            <div key={bound}>
+              <Label htmlFor={id} className={labelClass}>
+                {bound === 'yearFrom' ? 'Year from' : 'Year to'}
+              </Label>
+              <Input
+                id={id}
+                inputMode="numeric"
+                placeholder={bound === 'yearFrom' ? '1900' : String(new Date().getFullYear())}
+                value={draft[bound]}
+                onChange={(event) => edit(bound, event.target.value)}
+                onBlur={() => {
+                  if (!completeYear(draft[bound])) {
+                    setDraft((current) => ({
+                      ...current,
+                      [bound]: yearText(bound === 'yearFrom' ? yearFrom : yearTo),
+                    }));
+                  }
+                }}
+                aria-invalid={inverted || undefined}
+                aria-describedby={inverted ? 'year-range-error' : undefined}
+                className="mt-1"
+              />
+            </div>
+          );
+        })}
+      </div>
+      {inverted && (
+        <p id="year-range-error" role="alert" className="mt-2 text-sm text-destructive">
+          Year from must be no later than Year to. Change either year to apply this range.
+        </p>
+      )}
     </div>
   );
 };
@@ -113,6 +167,7 @@ const YearInput: React.FC<YearInputProps> = ({ id, label, placeholder, value, on
  * popover, "only my services" switch, and sort order.
  */
 const FiltersBar: React.FC<FiltersBarProps> = ({ state, genres, hasServices, onChange }) => {
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const activeCount = activeFilterCount(state);
   const browsing = !state.query;
   const sortOptions = (Object.keys(SORT_LABELS) as SortOption[]).filter(
@@ -129,7 +184,7 @@ const FiltersBar: React.FC<FiltersBarProps> = ({ state, genres, hasServices, onC
         onChange={(type) => onChange({ type })}
       />
 
-      <Popover>
+      <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline">
             <SlidersHorizontal aria-hidden="true" />
@@ -171,22 +226,12 @@ const FiltersBar: React.FC<FiltersBarProps> = ({ state, genres, hasServices, onC
             </div>
           </fieldset>
 
-          <div className="grid grid-cols-2 gap-3">
-            <YearInput
-              id="year-from"
-              label="Year from"
-              placeholder="1900"
-              value={state.yearFrom}
-              onCommit={(yearFrom) => onChange({ yearFrom })}
-            />
-            <YearInput
-              id="year-to"
-              label="Year to"
-              placeholder={String(new Date().getFullYear())}
-              value={state.yearTo}
-              onCommit={(yearTo) => onChange({ yearTo })}
-            />
-          </div>
+          <YearRange
+            open={filtersOpen}
+            yearFrom={state.yearFrom}
+            yearTo={state.yearTo}
+            onChange={onChange}
+          />
 
           <fieldset>
             <legend className={labelClass}>Minimum rating</legend>
