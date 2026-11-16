@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Compass, SearchX, Sparkles } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
+import RequestError from '@/app/components/RequestError';
 import EmptyState from '@/app/components/EmptyState';
 import FiltersBar from '@/app/components/FiltersBar';
 import PageContainer from '@/app/components/PageContainer';
@@ -71,7 +72,7 @@ const SearchView: React.FC = () => {
           page: state.page,
         })}`
       : null;
-  const { data, error, isLoading, reload } = useApiResource<SearchResponse>(apiUrl);
+  const { data, error, failure, isLoading, reload } = useApiResource<SearchResponse>(apiUrl);
 
   const returnTo = `/?${serializeSearchPageState(state, country)}`;
   const rememberPosition = () => saveSearchPosition(returnTo);
@@ -133,15 +134,11 @@ const SearchView: React.FC = () => {
 
           <div className="mt-6" aria-live="polite" aria-busy={isLoading}>
             {error ? (
-              <EmptyState
-                tone="danger"
-                title="We couldn't reach the catalogue."
-                description={error}
-                action={
-                  <Button variant="outline" onClick={reload}>
-                    Try again
-                  </Button>
-                }
+              <RequestError
+                failure={failure}
+                message={error}
+                reload={reload}
+                fallbackTitle="We couldn't reach the catalogue."
               />
             ) : !data ? (
               <TitleGridSkeleton />

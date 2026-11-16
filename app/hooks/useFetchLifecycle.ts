@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ERROR_MESSAGES, shouldDisplayError } from '@/app/utils/errorMessages';
+import { ClientRequestError, classifyClientError, FAILURE_COPY } from '@/app/utils/clientErrors';
 
 export type FetchRunStatus = 'success' | 'error' | 'cancelled';
 
@@ -23,6 +23,7 @@ interface UseFetchLifecycleResult {
   isLoading: boolean;
   /** Internal error state, used only when no onError callback is provided. */
   error: string | null;
+  failure: ClientRequestError | null;
   /** Clears the error (internal state and onError callback). */
   clearError: () => void;
 }
@@ -39,6 +40,7 @@ export function useFetchLifecycle(
 ): UseFetchLifecycleResult {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<ClientRequestError | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
@@ -65,17 +67,24 @@ export function useFetchLifecycle(
         await task(controller.signal);
         // Superseded runs must not report their outcome, even if the task
         // resolved (e.g. an abort racing an already-completed fetch)
-        if (abortRef.current !== controller) {
+        if (abortRef.current !== controller || controller.signal.aborted) {
           return 'cancelled';
         }
+        setFailure(null);
         notifyError(null);
         return 'success';
       } catch (err) {
         // Superseded runs must not report their outcome
-        if (abortRef.current !== controller || !shouldDisplayError(err)) {
+        if (
+          abortRef.current !== controller ||
+          controller.signal.aborted ||
+          (err instanceof Error && err.name === 'AbortError')
+        ) {
           return 'cancelled';
         }
-        notifyError(ERROR_MESSAGES.GENERIC_ERROR);
+        const next = classifyClientError(err);
+        setFailure(next);
+        notifyError(FAILURE_COPY[next.kind].message);
         return 'error';
       } finally {
         if (abortRef.current === controller) {
@@ -92,16 +101,20 @@ export function useFetchLifecycle(
     }
   }, []);
 
-  const clearError = useCallback(() => notifyError(null), [notifyError]);
+  const clearError = useCallback(() => {
+    setFailure(null);
+    notifyError(null);
+  }, [notifyError]);
 
   // Abort any in-flight request on unmount
   useEffect(() => {
     return () => {
       if (abortRef.current) {
         abortRef.current.abort();
+        abortRef.current = null;
       }
     };
   }, []);
 
-  return { run, cancel, isLoading, error, clearError };
+  return { run, cancel, isLoading, error, failure, clearError };
 }

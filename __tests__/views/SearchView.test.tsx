@@ -218,7 +218,10 @@ describe('SearchView', () => {
     render(<SearchView />);
 
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent("We couldn't reach the catalogue.");
+    expect(
+      screen.getByRole('heading', { name: 'The service is temporarily unavailable' })
+    ).toBeInTheDocument();
+    expect(alert).toHaveTextContent('Please try again later.');
 
     const searchCalls = () =>
       fetchMock.mock.calls.filter(([url]) => String(url).startsWith('/api/search')).length;

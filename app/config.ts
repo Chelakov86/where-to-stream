@@ -52,3 +52,6 @@ export const FILTERED_SEARCH_MAX_PAGES = 50;
 export const FILTERED_SEARCH_CONCURRENCY = 4;
 export const FILTERED_SEARCH_PAGE_SIZE = 20;
 export const FILTERED_SEARCH_CACHE_TTL_SECONDS = 5 * 60;
+
+/** Deadline for client API headers and body, including stalled connections. */
+export const CLIENT_REQUEST_TIMEOUT_MS = 20_000;

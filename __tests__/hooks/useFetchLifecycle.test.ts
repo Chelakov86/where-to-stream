@@ -246,3 +246,25 @@ describe('useFetchLifecycle', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 });
+
+it('suppresses late non-AbortError failures after unmount', async () => {
+  const onError = jest.fn();
+  let reject!: (reason: Error) => void;
+  const { result, unmount } = renderHook(() => useFetchLifecycle(onError));
+  let pending!: Promise<unknown>;
+  act(() => {
+    pending = result.current.run(
+      () =>
+        new Promise((_, fail) => {
+          reject = fail;
+        })
+    );
+  });
+  unmount();
+  await act(async () => {
+    reject(new Error('late network failure'));
+    await pending;
+  });
+  expect(onError).not.toHaveBeenCalled();
+  await expect(pending).resolves.toBe('cancelled');
+});

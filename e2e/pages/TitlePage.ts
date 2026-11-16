@@ -28,7 +28,9 @@ export class TitlePage extends BasePage {
     this.verdict = this.availability.getByRole('status');
     this.compareLink = this.availability.getByRole('link', { name: /^Compare \d+ countr/ });
     this.castSection = page.locator('section[aria-labelledby="cast-heading"]');
-    this.errorHeading = page.getByRole('heading', { name: "We couldn't load this title" });
+    this.errorHeading = page.getByRole('heading', {
+      name: 'The service is temporarily unavailable',
+    });
     this.retryButton = page.getByRole('button', { name: 'Try again' });
   }
 

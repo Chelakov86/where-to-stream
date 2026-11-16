@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { safeSearchReturn } from '@/app/utils/searchPageState';
 import { ArrowLeft, Bookmark, BookmarkCheck, Play, Star } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
+import RequestError from '@/app/components/RequestError';
 import AvailabilityPanel from '@/app/components/AvailabilityPanel';
 import PageContainer from '@/app/components/PageContainer';
 import { Skeleton } from '@/app/components/Skeleton';
@@ -41,7 +42,12 @@ const TitleView: React.FC<TitleViewProps> = ({ type, id }) => {
   const { services } = useMyServices();
   const { isSaved, toggleSaved } = useSavedTitles();
   const { addToHistory } = useSearchHistory();
-  const { data: title, error, reload } = useApiResource<TitleDetails>(`/api/title/${type}/${id}`);
+  const {
+    data: title,
+    error,
+    failure,
+    reload,
+  } = useApiResource<TitleDetails>(`/api/title/${type}/${id}`);
 
   useEffect(() => {
     if (title) {
@@ -53,16 +59,14 @@ const TitleView: React.FC<TitleViewProps> = ({ type, id }) => {
   if (error) {
     return (
       <main className="mx-auto max-w-md px-4 py-24 text-center">
-        <h1 className="font-display text-xl font-semibold">We couldn&apos;t load this title</h1>
-        <p className="mt-2 text-sm text-muted-foreground" role="alert">
-          {error}
-        </p>
-        <div className="mt-5 flex justify-center gap-2">
-          <Button onClick={reload}>Try again</Button>
-          <Button variant="outline" asChild>
-            <Link href={returnTo}>Back to search</Link>
-          </Button>
-        </div>
+        <RequestError
+          failure={failure}
+          message={error}
+          reload={reload}
+          fallbackTitle="We couldn't load this title"
+          searchHref={returnTo}
+          heading
+        />
       </main>
     );
   }

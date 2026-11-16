@@ -24,6 +24,13 @@ movies and TV by upstream rank, with movies first on ties; it does not substitut
 for relevance. Other title-search sorts order the collected set before pagination. Unfiltered
 Best match searches retain TMDB's page boundaries; browsing without a query uses TMDB's native filters.
 
+Client catalogue and title requests distinguish missing resources, offline/network failures,
+rate limits, timeouts, and service failures without displaying server error details. Requests
+have a 20-second deadline covering headers and body. Retry actions honor `Retry-After`
+(seconds or HTTP-date); rate limits without a usable header use a 30-second wait. Retrying
+is explicit, and a missing title offers a return to search. The shared API error boundary
+preserves upstream not-found responses as HTTP 404.
+
 ## Getting Started
 
 **Prerequisites:** Node.js and a TMDB API key ([get one here](https://www.themoviedb.org/settings/api)).
