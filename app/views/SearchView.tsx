@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Compass, SearchX, Sparkles } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
@@ -58,11 +58,13 @@ const SearchView: React.FC = () => {
     (patch: Partial<SearchPageState>) => navigate({ ...state, ...patch, page: 1 }),
     [navigate, state]
   );
+  const previousServiceCount = useRef(services.length);
   useEffect(() => {
-    if (servicesReady && services.length === 0 && state.mine) {
+    if (previousServiceCount.current > 0 && services.length === 0 && state.mine) {
       navigate({ ...state, mine: false });
     }
-  }, [servicesReady, services.length, state, navigate]);
+    previousServiceCount.current = services.length;
+  }, [services.length, state, navigate]);
 
   const setQuery = useCallback(
     (query: string) => {

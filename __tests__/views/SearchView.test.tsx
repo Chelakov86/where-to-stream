@@ -50,6 +50,15 @@ describe('SearchView', () => {
     push.mockClear();
   });
 
+  it('preserves a shared service-filter URL when no services are stored', async () => {
+    mockSearch = 'q=fight&page=3&mine=1&country=DE';
+    mockFetch({ ok: true, body: { page: 3, totalPages: 4, totalResults: 80, results } });
+    render(<SearchView />);
+    await screen.findByRole('link', { name: /Dune: Part Two/ });
+    expect(screen.getByRole('switch', { name: 'Only my services' })).not.toBeChecked();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
   it('browses what is popular in the user country', async () => {
     const fetchMock = mockFetch({
       ok: true,

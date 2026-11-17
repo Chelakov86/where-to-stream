@@ -36,6 +36,6 @@ test.describe('Recently viewed titles', () => {
     await expect(homePage.suggestions.nth(1)).toContainText('Fight Club');
 
     await homePage.suggestions.nth(1).click();
-    await page.waitForURL('**/title/movie/550?country=US');
+    await expect(page).toHaveURL(/\/title\/movie\/550\?country=US(?:&|$)/);
   });
 });
