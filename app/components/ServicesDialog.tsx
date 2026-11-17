@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Check, Tv } from 'lucide-react';
+import { Check, Tv, X } from 'lucide-react';
+import { WatchProvider } from '@/app/types';
+import { Input } from '@/app/components/ui/input';
 import { Button } from '@/app/components/ui/button';
 import {
   Dialog,
@@ -25,9 +27,6 @@ interface ServicesDialogProps {
   onCountryChange: (code: string) => void;
 }
 
-/** Providers beyond this display priority are rarely relevant; keep the grid scannable. */
-const MAX_PROVIDERS = 60;
-
 /**
  * Dialog for picking the streaming services the user subscribes to.
  * Providers are only fetched once the dialog is opened.
@@ -37,8 +36,35 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country, onCountryChang
   const { services, toggleService, clearServices } = useMyServices();
   const { providers, isLoading, error } = useProviders(open ? country : undefined);
 
+  const [query, setQuery] = useState('');
+  const [knownProviders, setKnownProviders] = useState<Record<number, WatchProvider>>({});
+  const searchRef = useRef<HTMLInputElement>(null);
+  const searchId = useId();
+  const selectedId = useId();
+
+  // Keep catalogue details through country changes and closing/reopening the dialog.
+  // Older ID-only preferences remain usable even before we encounter their provider.
+  useEffect(() => {
+    if (providers.length === 0) return;
+    setKnownProviders((known) => ({
+      ...known,
+      ...Object.fromEntries(providers.map((provider) => [provider.id, provider])),
+    }));
+  }, [providers]);
+
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const matches = providers.filter((provider) =>
+    provider.name.toLocaleLowerCase().includes(normalizedQuery)
+  );
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) setQuery('');
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" aria-label={`My services (${services.length} selected)`}>
           <Tv className="text-primary" aria-hidden="true" />
@@ -50,7 +76,7 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country, onCountryChang
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-2xl">
+      <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader className="pr-10">
           <DialogTitle className="font-display">Your streaming services</DialogTitle>
           <DialogDescription>
@@ -64,6 +90,72 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country, onCountryChang
         <div className="flex items-center justify-between gap-2 text-sm">
           <span>Change country</span>
           <CountryPicker country={country} onChange={onCountryChange} />
+        </div>
+
+        {services.length > 0 && (
+          <section aria-labelledby={selectedId} className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <h3 id={selectedId} className="text-sm font-semibold">
+                Selected services ({services.length})
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  searchRef.current?.focus();
+                  clearServices();
+                }}
+              >
+                Clear all
+              </Button>
+            </div>
+            <ul className="flex max-h-28 flex-wrap gap-2 overflow-y-auto p-1">
+              {services.map((id) => {
+                const provider = knownProviders[id];
+                const name = provider?.name ?? `Unavailable service (ID ${id})`;
+                return (
+                  <li key={id} className="max-w-full">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      aria-label={`Remove ${name}`}
+                      onClick={() => {
+                        searchRef.current?.focus();
+                        toggleService(id);
+                      }}
+                      className="h-auto min-h-11 max-w-full whitespace-normal text-left"
+                    >
+                      {provider?.logoUrl && (
+                        <Image
+                          src={provider.logoUrl}
+                          alt=""
+                          width={24}
+                          height={24}
+                          className="size-6 rounded"
+                        />
+                      )}
+                      <span className="min-w-0 break-words">{name}</span>
+                      <X className="shrink-0" aria-hidden="true" />
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        <div className="space-y-2">
+          <label htmlFor={searchId} className="text-sm font-medium">
+            Search services
+          </label>
+          <Input
+            ref={searchRef}
+            id={searchId}
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search all services…"
+          />
         </div>
 
         {isLoading ? (
@@ -87,8 +179,16 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country, onCountryChang
           </p>
         ) : (
           <>
-            <ul className="-mx-1 grid max-h-[45vh] grid-cols-2 gap-2 overflow-y-auto px-1 sm:grid-cols-3">
-              {providers.slice(0, MAX_PROVIDERS).map((provider) => {
+            <p role="status" className="text-sm text-muted-foreground">
+              {matches.length === 0
+                ? 'No services match your search. Try another name.'
+                : `${matches.length} of ${providers.length} services`}
+            </p>
+            <ul
+              aria-label="Available services"
+              className="-mx-1 grid max-h-[35dvh] grid-cols-2 gap-2 overflow-y-auto px-1 sm:grid-cols-3"
+            >
+              {matches.map((provider) => {
                 const active = services.includes(provider.id);
                 return (
                   <li key={provider.id}>
@@ -122,13 +222,6 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country, onCountryChang
                 );
               })}
             </ul>
-            {services.length > 0 && (
-              <div className="flex justify-end">
-                <Button variant="ghost" size="sm" onClick={clearServices}>
-                  Clear all
-                </Button>
-              </div>
-            )}
           </>
         )}
       </DialogContent>

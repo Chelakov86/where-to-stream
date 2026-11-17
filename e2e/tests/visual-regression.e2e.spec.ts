@@ -45,9 +45,25 @@ test.describe('Visual Regression', () => {
 
   test('should match services dialog screenshot', async ({ homePage, page }) => {
     await homePage.openServices();
-    await expect(homePage.servicesDialog.getByRole('button', { name: 'Netflix' })).toBeVisible();
+    await expect(
+      homePage.servicesDialog.getByRole('button', { name: 'Netflix', exact: true })
+    ).toBeVisible();
     await settle(page);
     await expect(homePage.servicesDialog).toHaveScreenshot('services-dialog.png');
+  });
+
+  test('should match selected services dialog screenshot', async ({ homePage, page }) => {
+    await page.evaluate(() => localStorage.setItem('wts.services', '[8,99999]'));
+    await page.reload();
+    await homePage.openServices();
+    await expect(
+      homePage.servicesDialog.getByRole('button', { name: 'Remove Netflix', exact: true })
+    ).toBeVisible();
+    await expect(
+      homePage.servicesDialog.getByRole('button', { name: 'Remove Unavailable service (ID 99999)' })
+    ).toBeVisible();
+    await settle(page);
+    await expect(homePage.servicesDialog).toHaveScreenshot('services-selected.png');
   });
 
   test('should match empty services dialog screenshot', async ({ homePage, page }) => {

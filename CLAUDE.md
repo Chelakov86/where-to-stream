@@ -206,6 +206,7 @@ npm run test:all         # Run all tests (unit + E2E)
 2. **Create descriptive commit messages** following conventional commits style
 3. **Run tests before committing** to ensure nothing breaks
 4. **Format code** before committing (automatically enforced by ESLint+Prettier)
+5. **Complete the acceptance checks, ticket update, pull request, and code review** by default for implementation tasks. See [AGENTS.md](AGENTS.md) for the full completion workflow.
 
 ---
 
