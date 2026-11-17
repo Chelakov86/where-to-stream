@@ -87,6 +87,10 @@ mocks and starts the user in the United States (the stored country, unless a tes
 Tests mock every API response and image so they are fast and deterministic. Utilities live in
 `helpers/api-mock.ts`; handlers registered later take precedence over the defaults.
 
+Playwright clears `TMDB_API_KEY` for the server it starts so server-rendered title metadata uses
+its fallback without a live TMDB request. If you start your own server for the suite, run it with
+`TMDB_API_KEY=` as well.
+
 - `mockSearch(page, results?, { totalPages })`: browse, search and autocomplete (queries containing
   "nonexistent" return nothing)
 - `mockEmptySearch()`, `mockSearchError(page, status)`
