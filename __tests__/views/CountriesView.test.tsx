@@ -81,7 +81,7 @@ describe('CountriesView', () => {
     mockFetch({ ok: false, status: 500 });
     render(<CountriesView type="movie" id={550} />);
 
-    expect(await screen.findByText("Couldn't load availability.")).toBeInTheDocument();
+    expect(await screen.findByText('Please try again later.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 });

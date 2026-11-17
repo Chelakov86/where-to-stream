@@ -148,9 +148,10 @@ describe('route guard', () => {
       });
     });
 
-    it('returns a mapped status for TMDB errors', () => {
+    it('preserves not-found status at the shared boundary', async () => {
       const response = handleRouteError(new TmdbError(404, 'Not found'), 'test route');
-      expect(response.status).toBe(502);
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ error: 'Not found.' });
     });
   });
 });

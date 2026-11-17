@@ -78,7 +78,7 @@ describe('TitleView', () => {
     render(<TitleView type="movie" id={550} />);
 
     expect(
-      await screen.findByRole('heading', { name: "We couldn't load this title" })
+      await screen.findByRole('heading', { name: 'The service is temporarily unavailable' })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
@@ -95,7 +95,7 @@ describe('return navigation', () => {
     render(<TitleView type="movie" id={550} />);
     expect(
       await screen.findByRole('heading', {
-        name: ok ? 'Fight Club' : "We couldn't load this title",
+        name: ok ? 'Fight Club' : 'The service is temporarily unavailable',
       })
     ).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Back to search' })).toHaveAttribute(

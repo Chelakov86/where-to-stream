@@ -228,6 +228,16 @@ describe('GET /api/title/[type]/[id]', () => {
   });
 
   // --- Error Handling ---
+  it.each(['movie', 'tv'])('returns a real 404 contract for a missing %s title', async (type) => {
+    (type === 'movie' ? mockGetMovieDetails : mockGetTvDetails).mockRejectedValue(
+      new TmdbError(404, 'private upstream details')
+    );
+    const request = createMockRequest(type, '999999');
+    const response = await GET(request, { params: { type, id: '999999' } });
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'Not found.' });
+  });
+
   it('should return 502 if getMovieDetails fails', async () => {
     mockGetMovieDetails.mockRejectedValue(new TmdbError(500, 'TMDB Movie Details Error'));
     const response = await GET(createMockRequest('movie', '550'), {

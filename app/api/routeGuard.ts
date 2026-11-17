@@ -18,6 +18,7 @@ const INTERNAL_ERROR_MESSAGE = 'Internal Server Error';
 const RETRYABLE_STATUS_CODES = new Set([429, 503, 504]);
 
 const mapTmdbErrorToHttpStatus = (error: TmdbError): number => {
+  if (error.status === 404) return 404;
   if (RETRYABLE_STATUS_CODES.has(error.status)) {
     return 503;
   }
@@ -74,16 +75,19 @@ export function rateLimitHeaders(result: RateLimitResult, limit: number): Record
 
 /**
  * Translates any thrown error into a standardized response: TmdbError gets a
- * mapped status (503 for retryable, 502 otherwise), everything else gets 500.
+ * mapped status (404 for missing resources, 503 for retryable, 502 otherwise), everything else gets 500.
  * Logs both cases.
  */
 export function handleRouteError(error: unknown, context: string): Response {
   if (error instanceof TmdbError) {
     logger.error(`TMDB API error in ${context}`, { status: error.status, message: error.message });
-    return new Response(JSON.stringify({ error: TMDB_ERROR_MESSAGE }), {
-      status: mapTmdbErrorToHttpStatus(error),
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: error.status === 404 ? 'Not found.' : TMDB_ERROR_MESSAGE }),
+      {
+        status: mapTmdbErrorToHttpStatus(error),
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   logger.error(`Error in ${context}`, { error });

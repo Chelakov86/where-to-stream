@@ -7,6 +7,7 @@ import { ArrowLeft, Check, Pin } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import CountryFlag from '@/app/components/CountryFlag';
+import RequestError from '@/app/components/RequestError';
 import EmptyState from '@/app/components/EmptyState';
 import PageContainer from '@/app/components/PageContainer';
 import { Skeleton } from '@/app/components/Skeleton';
@@ -15,7 +16,7 @@ import { useActiveCountry, useMyServices, usePinnedCountries } from '@/app/hooks
 import { MediaType, OfferKind, TitleDetails } from '@/app/types';
 import { providersOnMyServices, rankCountries } from '@/app/utils/availability';
 import { pluralize } from '@/app/utils/format';
-import { titleHref } from '@/app/utils/searchPageState';
+import { safeSearchReturn, titleHref } from '@/app/utils/searchPageState';
 import { cn } from '@/app/utils/cn';
 
 interface CountriesViewProps {
@@ -41,7 +42,12 @@ const CountriesView: React.FC<CountriesViewProps> = ({ type, id }) => {
   const { pinned, togglePinned } = usePinnedCountries();
   const [filter, setFilter] = useState('');
   const [onlyMine, setOnlyMine] = useState(false);
-  const { data: title, error, reload } = useApiResource<TitleDetails>(`/api/title/${type}/${id}`);
+  const {
+    data: title,
+    error,
+    failure,
+    reload,
+  } = useApiResource<TitleDetails>(`/api/title/${type}/${id}`);
 
   const codes = useMemo(() => {
     if (!title) return [];
@@ -68,13 +74,15 @@ const CountriesView: React.FC<CountriesViewProps> = ({ type, id }) => {
         </Link>
 
         {error ? (
-          <EmptyState
-            className="mt-6"
-            tone="danger"
-            title="Couldn't load availability."
-            description={error}
-            action={<Button onClick={reload}>Try again</Button>}
-          />
+          <div className="mt-6">
+            <RequestError
+              failure={failure}
+              message={error}
+              reload={reload}
+              fallbackTitle="Couldn't load availability."
+              searchHref={safeSearchReturn(params?.get('returnTo'))}
+            />
+          </div>
         ) : !title ? (
           <div className="mt-6 space-y-3" role="status" aria-label="Loading availability">
             {Array.from({ length: 8 }).map((_, index) => (

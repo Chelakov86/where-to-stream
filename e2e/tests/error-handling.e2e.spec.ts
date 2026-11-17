@@ -15,7 +15,7 @@ test.describe('Error Handling', () => {
     await mockSearchError(page, 500);
     await homePage.goto();
 
-    await expect(homePage.errorAlert).toContainText("We couldn't reach the catalogue.");
+    await expect(homePage.errorAlert).toContainText('The service is temporarily unavailable');
 
     await page.unroute('**/api/search*');
     await mockSearch(page);
@@ -43,7 +43,7 @@ test.describe('Error Handling', () => {
     await countriesPage.goto('/title/movie/550/countries');
 
     await expect(page.getByRole('main').getByRole('alert')).toContainText(
-      "Couldn't load availability."
+      'The service is temporarily unavailable'
     );
   });
 
