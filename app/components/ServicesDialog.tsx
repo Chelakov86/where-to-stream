@@ -23,6 +23,7 @@ import { getCountryName } from '@/app/utils/countries';
 import { cn } from '@/app/utils/cn';
 
 interface ServicesDialogProps {
+  trigger?: React.ReactElement;
   country: string;
   onCountryChange: (code: string) => void;
 }
@@ -31,7 +32,7 @@ interface ServicesDialogProps {
  * Dialog for picking the streaming services the user subscribes to.
  * Providers are only fetched once the dialog is opened.
  */
-const ServicesDialog: React.FC<ServicesDialogProps> = ({ country, onCountryChange }) => {
+const ServicesDialog: React.FC<ServicesDialogProps> = ({ country, onCountryChange, trigger }) => {
   const [open, setOpen] = useState(false);
   const { services, toggleService, clearServices } = useMyServices();
   const { providers, isLoading, error } = useProviders(open ? country : undefined);
@@ -66,15 +67,17 @@ const ServicesDialog: React.FC<ServicesDialogProps> = ({ country, onCountryChang
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" aria-label={`My services (${services.length} selected)`}>
-          <Tv className="text-primary" aria-hidden="true" />
-          <span className="hidden sm:inline">My services</span>
-          {services.length > 0 && (
-            <span className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
-              {services.length}
-            </span>
-          )}
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" aria-label={`My services (${services.length} selected)`}>
+            <Tv className="text-primary" aria-hidden="true" />
+            <span className="hidden sm:inline">My services</span>
+            {services.length > 0 && (
+              <span className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
+                {services.length}
+              </span>
+            )}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader className="pr-10">
