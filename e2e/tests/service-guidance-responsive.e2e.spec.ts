@@ -11,10 +11,10 @@ for (const surface of ['search', 'countries'] as const) {
       if (input === 'touch') {
         await page.setViewportSize({ width: 393, height: 720 });
       }
-      await homePage.goto('country=GB&query=fight&page=2');
+      await homePage.goto('country=GB&q=fight&page=2');
       if (surface === 'countries') {
         await page.goto(
-          '/title/movie/550/countries?country=GB&returnTo=%2F%3Fquery%3Dfight%26page%3D2'
+          '/title/movie/550/countries?country=GB&returnTo=%2F%3Fq%3Dfight%26page%3D2'
         );
         await page.getByRole('textbox', { name: 'Filter countries' }).fill('United');
       }
