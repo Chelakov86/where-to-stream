@@ -1,5 +1,7 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
+test.use({ hasTouch: true });
+
 for (const surface of ['search', 'countries'] as const) {
   for (const input of ['keyboard', 'touch'] as const) {
     test(`${surface}: choose services using ${input} without losing context`, async ({
@@ -30,14 +32,18 @@ for (const surface of ['search', 'countries'] as const) {
         await opener.focus();
         await page.keyboard.press('Enter');
       } else {
-        const session = await page.context().newCDPSession(page);
-        await session.send('Emulation.setTouchEmulationEnabled', { enabled: true });
         await opener.tap();
       }
       const dialog = page.getByRole('dialog', { name: 'Your streaming services' });
       const provider = dialog.getByRole('button', { name: 'Netflix', exact: true });
-      await provider.click();
-      await page.keyboard.press('Escape');
+      if (input === 'keyboard') {
+        await provider.focus();
+        await page.keyboard.press('Space');
+        await page.keyboard.press('Escape');
+      } else {
+        await provider.tap();
+        await dialog.getByRole('button', { name: 'Close', exact: true }).tap();
+      }
       await expect(opener).toBeFocused();
       await expect(page).toHaveURL(originalUrl);
       await expect(filter).toBeEnabled();

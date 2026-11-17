@@ -114,7 +114,7 @@ describe('GET /api/title/[type]/[id]', () => {
   // --- Valid Requests ---
   it('returns movie details with cast, trailer and availability by country', async () => {
     const req = createMockRequest('movie', '550');
-    const response = await GET(req, { params: { type: 'movie', id: '550' } });
+    const response = await GET(req, { params: Promise.resolve({ type: 'movie', id: '550' }) });
     const json = await response.json();
 
     expect(response.status).toBe(200);
@@ -166,7 +166,7 @@ describe('GET /api/title/[type]/[id]', () => {
 
   it('returns series details with seasons and episodes', async () => {
     const response = await GET(createMockRequest('tv', '1399'), {
-      params: { type: 'tv', id: '1399' },
+      params: Promise.resolve({ type: 'tv', id: '1399' }),
     });
     const json = await response.json();
 
@@ -192,7 +192,7 @@ describe('GET /api/title/[type]/[id]', () => {
   it('reports an undetected country as null', async () => {
     mockDetectUserCountry.mockReturnValue('XX');
     const response = await GET(createMockRequest('movie', '550'), {
-      params: { type: 'movie', id: '550' },
+      params: Promise.resolve({ type: 'movie', id: '550' }),
     });
     expect((await response.json()).detectedCountry).toBeNull();
   });
@@ -200,7 +200,7 @@ describe('GET /api/title/[type]/[id]', () => {
   // --- Invalid Requests ---
   it('should return 400 for an invalid type parameter', async () => {
     const response = await GET(createMockRequest('unknown', '123'), {
-      params: { type: 'unknown', id: '123' },
+      params: Promise.resolve({ type: 'unknown', id: '123' }),
     });
 
     expect(response.status).toBe(400);
@@ -211,7 +211,7 @@ describe('GET /api/title/[type]/[id]', () => {
 
   it('should return 400 for a non-numeric ID parameter', async () => {
     const response = await GET(createMockRequest('movie', 'abc'), {
-      params: { type: 'movie', id: 'abc' },
+      params: Promise.resolve({ type: 'movie', id: 'abc' }),
     });
 
     expect(response.status).toBe(400);
@@ -220,7 +220,9 @@ describe('GET /api/title/[type]/[id]', () => {
   });
 
   it('should return 400 for a non-positive integer ID parameter', async () => {
-    const response = await GET(createMockRequest('tv', '0'), { params: { type: 'tv', id: '0' } });
+    const response = await GET(createMockRequest('tv', '0'), {
+      params: Promise.resolve({ type: 'tv', id: '0' }),
+    });
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'Invalid ID. Must be a positive integer.' });
@@ -233,7 +235,7 @@ describe('GET /api/title/[type]/[id]', () => {
       new TmdbError(404, 'private upstream details')
     );
     const request = createMockRequest(type, '999999');
-    const response = await GET(request, { params: { type, id: '999999' } });
+    const response = await GET(request, { params: Promise.resolve({ type, id: '999999' }) });
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: 'Not found.' });
   });
@@ -241,7 +243,7 @@ describe('GET /api/title/[type]/[id]', () => {
   it('should return 502 if getMovieDetails fails', async () => {
     mockGetMovieDetails.mockRejectedValue(new TmdbError(500, 'TMDB Movie Details Error'));
     const response = await GET(createMockRequest('movie', '550'), {
-      params: { type: 'movie', id: '550' },
+      params: Promise.resolve({ type: 'movie', id: '550' }),
     });
 
     expect(response.status).toBe(502);
@@ -251,7 +253,7 @@ describe('GET /api/title/[type]/[id]', () => {
   it('should return 503 if TMDB movie details are unavailable', async () => {
     mockGetMovieDetails.mockRejectedValue(new TmdbError(503, 'Service Unavailable'));
     const response = await GET(createMockRequest('movie', '550'), {
-      params: { type: 'movie', id: '550' },
+      params: Promise.resolve({ type: 'movie', id: '550' }),
     });
 
     expect(response.status).toBe(503);
@@ -261,7 +263,7 @@ describe('GET /api/title/[type]/[id]', () => {
   it('should return 502 if getTvWatchProviders fails', async () => {
     mockGetTvWatchProviders.mockRejectedValue(new TmdbError(500, 'TMDB TV Providers Error'));
     const response = await GET(createMockRequest('tv', '1399'), {
-      params: { type: 'tv', id: '1399' },
+      params: Promise.resolve({ type: 'tv', id: '1399' }),
     });
 
     expect(response.status).toBe(502);
@@ -271,7 +273,7 @@ describe('GET /api/title/[type]/[id]', () => {
   it('should return 500 if the provider data is malformed', async () => {
     mockGetMovieWatchProviders.mockResolvedValue(null);
     const response = await GET(createMockRequest('movie', '550'), {
-      params: { type: 'movie', id: '550' },
+      params: Promise.resolve({ type: 'movie', id: '550' }),
     });
 
     expect(response.status).toBe(500);

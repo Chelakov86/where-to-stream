@@ -38,7 +38,7 @@ import { detectUserCountry } from '@/app/utils/countryDetection';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ type: string; id: string }> | { type: string; id: string } }
+  { params }: { params: Promise<{ type: string; id: string }> }
 ) {
   return withRouteGuard(
     {
@@ -47,7 +47,7 @@ export async function GET(
       context: `title route (${req.nextUrl.pathname})`,
     },
     async (rateLimitResult) => {
-      const resolvedParams = await Promise.resolve(params);
+      const resolvedParams = await params;
       const { type, id } = resolvedParams;
 
       // 1. Validate type
