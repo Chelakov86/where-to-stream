@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Check, Pin } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Check, Pin } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import CountryFlag from '@/app/components/CountryFlag';
@@ -183,6 +183,27 @@ const CountriesView: React.FC<CountriesViewProps> = ({ type, id }) => {
                           ) : null
                         )}
                       </dl>
+
+                      {entry.watchLink ? (
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="mt-4 h-auto min-h-11 max-w-full flex-wrap whitespace-normal"
+                        >
+                          <a href={entry.watchLink} target="_blank" rel="noopener noreferrer">
+                            <span>
+                              View watch options on TMDB
+                              <span className="sr-only"> for {entry.countryName}</span>
+                            </span>
+                            <ArrowUpRight className="size-4" aria-hidden="true" />
+                            <span>(opens in a new tab)</span>
+                          </a>
+                        </Button>
+                      ) : (
+                        <p className="mt-4 text-sm text-muted-foreground">
+                          Watch options link unavailable for {entry.countryName}.
+                        </p>
+                      )}
                     </li>
                   );
                 })}
