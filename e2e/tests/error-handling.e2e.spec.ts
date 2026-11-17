@@ -74,3 +74,60 @@ test.describe('Error Handling', () => {
     );
   });
 });
+
+test('retries genres by keyboard without reloading catalogue or clearing selected filters', async ({
+  homePage,
+  page,
+}) => {
+  let genreRequests = 0;
+  let catalogueRequests = 0;
+  let finishGenres!: () => void;
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === '/api/search') catalogueRequests++;
+  });
+  await page.route('**/api/genres', async (route) => {
+    genreRequests++;
+    if (genreRequests === 1) {
+      await route.fulfill({ status: 502, json: { error: 'down' } });
+    } else {
+      await new Promise<void>((resolve) => {
+        finishGenres = resolve;
+      });
+      await route.fulfill({ json: { movie: [{ id: 28, name: 'Action' }], tv: [] } });
+    }
+  });
+  await homePage.goto('/?q=dune&type=movie&genre=28&rating=7&page=2&country=US');
+  await homePage.waitForResults();
+  await homePage.openFilters();
+  await expect(homePage.filtersPopover.getByRole('alert')).toContainText("We couldn't load genres");
+  const originalUrl = page.url();
+  const before = catalogueRequests;
+  const retry = homePage.filtersPopover.getByRole('button', { name: 'Retry genres' });
+  await retry.focus();
+  await page.keyboard.press('Enter');
+  await expect(homePage.filtersPopover.getByRole('status')).toHaveText('Loading genres…');
+  await expect.poll(() => genreRequests).toBe(2);
+  finishGenres();
+  await expect(homePage.filtersPopover.getByRole('button', { name: 'Action' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  await expect(homePage.filtersPopover.getByRole('button', { name: '7+' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  expect(page.url()).toBe(originalUrl);
+  expect(catalogueRequests).toBe(before);
+  await page.keyboard.press('Escape');
+  await expect(homePage.titleCards.first()).toBeVisible();
+});
+
+test('explains a successful empty genre response', async ({ homePage, page }) => {
+  await page.route('**/api/genres', (route) => route.fulfill({ json: { movie: [], tv: [] } }));
+  await homePage.goto();
+  await homePage.openFilters();
+  await expect(homePage.filtersPopover.getByRole('status')).toHaveText('No genres available.');
+  await expect(homePage.filtersPopover.getByRole('button', { name: 'Retry genres' })).toHaveCount(
+    0
+  );
+});
