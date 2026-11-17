@@ -7,6 +7,7 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/app/components/ui/popover';
 import { Switch } from '@/app/components/ui/switch';
+import ServiceFilterGuidance from '@/app/components/ServiceFilterGuidance';
 import SegmentedControl from '@/app/components/SegmentedControl';
 import { SearchType, SortOption } from '@/app/searchContract';
 import { Genre } from '@/app/types';
@@ -327,16 +328,15 @@ const FiltersBar: React.FC<FiltersBarProps> = ({
           id="only-mine"
           checked={state.mine && hasServices}
           disabled={!hasServices}
+          aria-describedby={!hasServices ? 'search-services-guidance' : undefined}
           onCheckedChange={(mine) => onChange({ mine })}
         />
-        <Label
-          htmlFor="only-mine"
-          className="cursor-pointer text-sm text-muted-foreground"
-          title={hasServices ? undefined : 'Pick your services first'}
-        >
+        <Label htmlFor="only-mine" className="cursor-pointer text-sm text-muted-foreground">
           Only my services
         </Label>
       </div>
+
+      <ServiceFilterGuidance hasServices={hasServices} id="search-services-guidance" />
 
       <div className="ml-auto">
         <Label htmlFor="sort" className="sr-only">

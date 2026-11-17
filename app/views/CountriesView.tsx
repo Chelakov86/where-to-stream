@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowUpRight, Check, Pin } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
+import ServiceFilterGuidance from '@/app/components/ServiceFilterGuidance';
 import CountryFlag from '@/app/components/CountryFlag';
 import RequestError from '@/app/components/RequestError';
 import EmptyState from '@/app/components/EmptyState';
@@ -42,6 +43,9 @@ const CountriesView: React.FC<CountriesViewProps> = ({ type, id }) => {
   const { pinned, togglePinned } = usePinnedCountries();
   const [filter, setFilter] = useState('');
   const [onlyMine, setOnlyMine] = useState(false);
+  useEffect(() => {
+    if (services.length === 0) setOnlyMine(false);
+  }, [services.length]);
   const {
     data: title,
     error,
@@ -58,7 +62,8 @@ const CountriesView: React.FC<CountriesViewProps> = ({ type, id }) => {
         !needle ||
         entry.countryName.toLowerCase().includes(needle) ||
         code.toLowerCase().includes(needle);
-      const matchesMine = !onlyMine || providersOnMyServices(entry, services).length > 0;
+      const matchesMine =
+        services.length === 0 || !onlyMine || providersOnMyServices(entry, services).length > 0;
       return matchesText && matchesMine;
     });
   }, [title, filter, onlyMine, pinned, country, services]);
@@ -111,14 +116,20 @@ const CountriesView: React.FC<CountriesViewProps> = ({ type, id }) => {
                 className="min-w-48 flex-1"
               />
               <Button
-                variant={onlyMine ? 'default' : 'outline'}
-                aria-pressed={onlyMine}
+                variant={onlyMine && services.length > 0 ? 'default' : 'outline'}
+                aria-pressed={onlyMine && services.length > 0}
                 disabled={services.length === 0}
+                aria-describedby={services.length === 0 ? 'countries-services-guidance' : undefined}
                 onClick={() => setOnlyMine((value) => !value)}
               >
                 On my services
               </Button>
             </div>
+
+            <ServiceFilterGuidance
+              hasServices={services.length > 0}
+              id="countries-services-guidance"
+            />
 
             {codes.length === 0 ? (
               <EmptyState className="mt-10" title="No countries match those filters." />

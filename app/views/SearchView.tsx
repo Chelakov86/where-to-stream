@@ -58,6 +58,12 @@ const SearchView: React.FC = () => {
     (patch: Partial<SearchPageState>) => navigate({ ...state, ...patch, page: 1 }),
     [navigate, state]
   );
+  useEffect(() => {
+    if (servicesReady && services.length === 0 && state.mine) {
+      navigate({ ...state, mine: false });
+    }
+  }, [servicesReady, services.length, state, navigate]);
+
   const setQuery = useCallback(
     (query: string) => {
       const next = serializeSearchPageState(
