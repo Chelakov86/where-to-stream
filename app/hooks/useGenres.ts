@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Genre } from '@/app/types';
 import { useFetchLifecycle } from '@/app/hooks/useFetchLifecycle';
 
@@ -13,8 +13,10 @@ export function useGenres() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const { run, isLoading, error, clearError } = useFetchLifecycle();
 
-  useEffect(() => {
-    run(async (signal) => {
+  const reload = useCallback(() => {
+    clearError();
+    setGenres([]);
+    return run(async (signal) => {
       const response = await fetch('/api/genres', { signal });
 
       if (!response.ok) {
@@ -31,17 +33,18 @@ export function useGenres() {
         new Map(allGenres.map((genre) => [genre.id, genre])).values()
       );
       setGenres(Array.isArray(uniqueGenres) ? uniqueGenres : []);
-    }).then((status) => {
-      if (status === 'error') {
-        setGenres([]);
-      }
     });
-  }, [run]);
+  }, [run, clearError]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
 
   return {
     genres,
     isLoading,
     error,
     clearError,
+    reload,
   };
 }

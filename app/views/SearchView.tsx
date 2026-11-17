@@ -34,7 +34,12 @@ const SearchView: React.FC = () => {
   const state = useMemo(() => parseSearchPageState(searchParams), [searchParams]);
   const { country, ready: countryReady } = useActiveCountry();
   const { services, ready: servicesReady } = useMyServices();
-  const { genres } = useGenres();
+  const {
+    genres,
+    isLoading: genresLoading,
+    error: genresError,
+    reload: reloadGenres,
+  } = useGenres();
 
   const navigate = useCallback(
     (next: SearchPageState, history: 'replace' | 'push' = 'replace') => {
@@ -128,6 +133,9 @@ const SearchView: React.FC = () => {
           <FiltersBar
             state={state}
             genres={genres}
+            genresLoading={genresLoading}
+            genresError={genresError}
+            onReloadGenres={reloadGenres}
             hasServices={services.length > 0}
             onChange={update}
           />

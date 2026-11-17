@@ -11,6 +11,7 @@ const renderBar = (overrides: Partial<SearchPageState> = {}, hasServices = false
   render(
     <FiltersBar
       state={{ ...DEFAULT_SEARCH_PAGE_STATE, ...overrides }}
+      onReloadGenres={jest.fn()}
       genres={mockGenres}
       hasServices={hasServices}
       onChange={onChange}
@@ -26,6 +27,7 @@ const renderLiveBar = (overrides: Partial<SearchPageState> = {}) => {
     return (
       <FiltersBar
         state={state}
+        onReloadGenres={jest.fn()}
         genres={mockGenres}
         hasServices={false}
         onChange={(patch) => {
@@ -193,7 +195,12 @@ describe('year drafts', () => {
   });
 
   it('resets rejected drafts and responds to external year values', async () => {
-    const props = { genres: mockGenres, hasServices: false, onChange: jest.fn() };
+    const props = {
+      onReloadGenres: jest.fn(),
+      genres: mockGenres,
+      hasServices: false,
+      onChange: jest.fn(),
+    };
     const { rerender } = render(
       <FiltersBar
         {...props}
@@ -216,5 +223,32 @@ describe('year drafts', () => {
     rerender(<FiltersBar {...props} state={DEFAULT_SEARCH_PAGE_STATE} />);
     expect(screen.getByLabelText('Year from')).toHaveValue('');
     expect(screen.getByLabelText('Year to')).toHaveValue('');
+  });
+});
+
+describe('genre request states', () => {
+  it('shows pending, failure, empty and loaded states without changing selected IDs', async () => {
+    const props = {
+      state: { ...DEFAULT_SEARCH_PAGE_STATE, genreIds: [28] },
+      genres: [],
+      hasServices: false,
+      onChange: jest.fn(),
+      onReloadGenres: jest.fn(),
+    };
+    const { rerender } = render(<FiltersBar {...props} genresLoading />);
+    await userEvent.click(screen.getByRole('button', { name: /Filters/ }));
+    expect(screen.getByRole('status')).toHaveTextContent('Loading genres');
+    rerender(<FiltersBar {...props} genresError="failed" />);
+    expect(screen.getByRole('alert')).toHaveTextContent("We couldn't load genres");
+    const retry = screen.getByRole('button', { name: 'Retry genres' });
+    retry.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(props.onReloadGenres).toHaveBeenCalledTimes(1);
+    rerender(<FiltersBar {...props} />);
+    expect(screen.getByRole('status')).toHaveTextContent('No genres available');
+    rerender(<FiltersBar {...props} genres={mockGenres} />);
+    expect(screen.getByRole('button', { name: 'Action' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(props.onChange).not.toHaveBeenCalled();
   });
 });

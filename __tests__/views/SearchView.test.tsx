@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import SearchView from '@/app/views/SearchView';
@@ -225,8 +225,53 @@ describe('SearchView', () => {
 
     const searchCalls = () =>
       fetchMock.mock.calls.filter(([url]) => String(url).startsWith('/api/search')).length;
+    const genreCalls = () => fetchMock.mock.calls.filter(([url]) => url === '/api/genres').length;
+    const genresBefore = genreCalls();
     const before = searchCalls();
     await userEvent.click(within(alert).getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(searchCalls()).toBe(before + 1));
+    expect(genreCalls()).toBe(genresBefore);
   });
+});
+
+it('recovers genres independently while preserving URL filters and catalogue results', async () => {
+  clearApiResourceCache();
+  localStorage.clear();
+  mockSearch = 'q=dune&type=movie&genre=28&rating=7&page=2&country=DE';
+  replace.mockClear();
+  push.mockClear();
+  let completeGenres!: (value: unknown) => void;
+  const genreReplies = [
+    Promise.resolve({ ok: false }),
+    new Promise((resolve) => {
+      completeGenres = resolve;
+    }),
+  ];
+  const fetchMock = jest.fn(async (url: string) => {
+    if (url === '/api/genres') return genreReplies.shift();
+    return { ok: true, json: async () => ({ page: 2, totalPages: 3, totalResults: 50, results }) };
+  });
+  global.fetch = fetchMock as unknown as typeof fetch;
+  render(<SearchView />);
+  await screen.findByRole('link', { name: /Reacher/ });
+  await userEvent.click(screen.getByRole('button', { name: /Filters/ }));
+  expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't load genres");
+  const catalogueCalls = () =>
+    fetchMock.mock.calls.filter(([url]) => url.startsWith('/api/search')).length;
+  const before = catalogueCalls();
+  await userEvent.click(screen.getByRole('button', { name: 'Retry genres' }));
+  expect(screen.getByRole('status')).toHaveTextContent('Loading genres');
+  await act(async () =>
+    completeGenres({ ok: true, json: async () => ({ movie: mockGenres, tv: [] }) })
+  );
+  expect(await screen.findByRole('button', { name: 'Action' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  expect(screen.getByRole('button', { name: '7+' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByText('Page 2 of 3')).toBeInTheDocument();
+  expect(catalogueCalls()).toBe(before);
+  expect(fetchMock.mock.calls.filter(([url]) => url === '/api/genres')).toHaveLength(2);
+  expect(replace).not.toHaveBeenCalled();
+  expect(push).not.toHaveBeenCalled();
 });

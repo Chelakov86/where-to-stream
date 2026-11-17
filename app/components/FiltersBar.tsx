@@ -17,6 +17,9 @@ import { cn } from '@/app/utils/cn';
 interface FiltersBarProps {
   state: SearchPageState;
   genres: Genre[];
+  genresLoading?: boolean;
+  genresError?: string | null;
+  onReloadGenres: () => void;
   hasServices: boolean;
   onChange: (patch: Partial<SearchPageState>) => void;
 }
@@ -166,7 +169,15 @@ const YearRange: React.FC<
  * Filter controls for the search page: media type, genre/year/rating/language
  * popover, "only my services" switch, and sort order.
  */
-const FiltersBar: React.FC<FiltersBarProps> = ({ state, genres, hasServices, onChange }) => {
+const FiltersBar: React.FC<FiltersBarProps> = ({
+  state,
+  genres,
+  genresLoading = false,
+  genresError = null,
+  onReloadGenres,
+  hasServices,
+  onChange,
+}) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const activeCount = activeFilterCount(state);
   const browsing = !state.query;
@@ -200,30 +211,49 @@ const FiltersBar: React.FC<FiltersBarProps> = ({ state, genres, hasServices, onC
         <PopoverContent align="start" className="w-80 space-y-4">
           <fieldset>
             <legend className={labelClass}>Genres</legend>
-            <div className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
-              {sortedGenres.map((genre) => {
-                const on = state.genreIds.includes(genre.id);
-                return (
-                  <Button
-                    key={genre.id}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    aria-pressed={on}
-                    onClick={() =>
-                      onChange({
-                        genreIds: on
-                          ? state.genreIds.filter((id) => id !== genre.id)
-                          : [...state.genreIds, genre.id],
-                      })
-                    }
-                    className={cn(chipClass(on), 'rounded-full')}
-                  >
-                    {genre.name}
-                  </Button>
-                );
-              })}
-            </div>
+            {genresLoading ? (
+              <p role="status" className="mt-2 text-sm text-muted-foreground">
+                Loading genres…
+              </p>
+            ) : genresError ? (
+              <div className="mt-2 space-y-2">
+                <p role="alert" className="text-sm text-destructive">
+                  We couldn't load genres. Your selected filters are still applied.
+                </p>
+                <Button type="button" variant="outline" size="sm" onClick={onReloadGenres}>
+                  Retry genres
+                </Button>
+              </div>
+            ) : sortedGenres.length === 0 ? (
+              <p role="status" className="mt-2 text-sm text-muted-foreground">
+                No genres available.
+              </p>
+            ) : (
+              <div className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
+                {sortedGenres.map((genre) => {
+                  const on = state.genreIds.includes(genre.id);
+                  return (
+                    <Button
+                      key={genre.id}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      aria-pressed={on}
+                      onClick={() =>
+                        onChange({
+                          genreIds: on
+                            ? state.genreIds.filter((id) => id !== genre.id)
+                            : [...state.genreIds, genre.id],
+                        })
+                      }
+                      className={cn(chipClass(on), 'rounded-full')}
+                    >
+                      {genre.name}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
           </fieldset>
 
           <YearRange
