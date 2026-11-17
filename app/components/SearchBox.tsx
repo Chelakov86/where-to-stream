@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { History, Loader2, Search, X } from 'lucide-react';
@@ -44,6 +44,8 @@ const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, country, returnT
   const [activeIndex, setActiveIndex] = useState(-1);
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const [popup, setPopup] = useState({ above: false, maxHeight: 384 });
   const { autocompleteSuggestions, isLoading, handleAutocompleteRequest, clearAutocomplete } =
     useAutocomplete();
   const { history } = useSearchHistory();
@@ -78,6 +80,54 @@ const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, country, returnT
         .map((item) => ({ ...item, key: `recent-${item.type}-${item.id}` }))
     : autocompleteSuggestions.map((item) => ({ ...item, key: `${item.type}-${item.id}` }));
   const expanded = open && options.length > 0;
+
+  useLayoutEffect(() => {
+    if (!expanded) return;
+    const updateBounds = (event?: Event) => {
+      if (event?.target === listRef.current) return;
+      const box = boxRef.current;
+      if (!box) return;
+      const rect = box.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const top = viewport?.offsetTop ?? 0;
+      const bottom = top + (viewport?.height ?? window.innerHeight);
+      // Leave an 8px gap at both the input and visible viewport edges.
+      const below = Math.max(0, bottom - rect.bottom - 16);
+      const above = Math.max(0, rect.top - top - 16);
+      const placeAbove = below < 192 && above > below;
+      setPopup({ above: placeAbove, maxHeight: Math.min(384, placeAbove ? above : below) });
+    };
+    updateBounds();
+    const observer = new ResizeObserver(() => updateBounds());
+    if (boxRef.current) observer.observe(boxRef.current);
+    window.addEventListener('resize', updateBounds);
+    window.addEventListener('scroll', updateBounds, true);
+    window.visualViewport?.addEventListener('resize', updateBounds);
+    window.visualViewport?.addEventListener('scroll', updateBounds);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateBounds);
+      window.removeEventListener('scroll', updateBounds, true);
+      window.visualViewport?.removeEventListener('resize', updateBounds);
+      window.visualViewport?.removeEventListener('scroll', updateBounds);
+    };
+  }, [expanded]);
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!expanded || !list) return;
+    if (activeIndex < 0) {
+      list.scrollTop = 0;
+      return;
+    }
+    const option = list.children[activeIndex];
+    if (!option) return;
+    // Scroll only the list; scrollIntoView can also move the page/input.
+    const bounds = list.getBoundingClientRect();
+    const active = option.getBoundingClientRect();
+    if (active.top < bounds.top) list.scrollTop -= bounds.top - active.top;
+    else if (active.bottom > bounds.bottom) list.scrollTop += active.bottom - bounds.bottom;
+  }, [activeIndex, expanded, options.length, popup.maxHeight, popup.above]);
 
   const openTitle = (option: Option) => {
     // A delayed search navigation must not replace the selected title route.
@@ -119,6 +169,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, country, returnT
         setOpen(false);
         break;
       case 'Escape':
+        event.preventDefault();
         setOpen(false);
         setActiveIndex(-1);
         break;
@@ -176,17 +227,21 @@ const SearchBox: React.FC<SearchBoxProps> = ({ value, onChange, country, returnT
 
       <div
         className={cn(
-          'absolute z-30 mt-2 w-full overflow-hidden rounded-lg border border-border bg-popover p-1.5 shadow-xl',
+          'absolute z-50 flex w-full flex-col overflow-hidden rounded-lg border border-border bg-popover p-1.5 shadow-xl',
+          popup.above ? 'bottom-full mb-2' : 'top-full mt-2',
           !expanded && 'hidden'
         )}
+        style={{ maxHeight: popup.maxHeight }}
       >
         {showingRecent && (
-          <p className="px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="shrink-0 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Recently viewed
           </p>
         )}
         <ul
+          ref={listRef}
           id={LISTBOX_ID}
+          className="min-h-0 overflow-y-auto overscroll-contain"
           role="listbox"
           aria-label={showingRecent ? 'Recently viewed titles' : 'Title suggestions'}
         >
