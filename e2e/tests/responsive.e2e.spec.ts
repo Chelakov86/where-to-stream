@@ -1,4 +1,6 @@
 import { test, expect } from '../fixtures/test-fixtures';
+import { mockTitleDetails } from '../helpers/api-mock';
+import { sampleTitleDetails, WATCH_LINK } from '../helpers/test-data';
 
 const viewports = [
   { name: 'mobile', width: 375, height: 667 },
@@ -7,6 +9,89 @@ const viewports = [
 ];
 
 test.describe('Responsive Design', () => {
+  test('opens country watch options and retains comparison context', async ({
+    countriesPage,
+    page,
+    context,
+    isMobile,
+  }) => {
+    await page.setViewportSize({ width: isMobile ? 320 : 900, height: 667 });
+    await page.addInitScript(() => localStorage.setItem('wts.services', '[8]'));
+    const usLink = `${WATCH_LINK}?locale=US`;
+    const deLink = `${WATCH_LINK}?locale=DE`;
+    await mockTitleDetails(page, {
+      ...sampleTitleDetails,
+      availability: {
+        US: { ...sampleTitleDetails.availability.US, watchLink: usLink },
+        DE: { ...sampleTitleDetails.availability.DE, watchLink: deLink },
+        GB: { ...sampleTitleDetails.availability.GB, watchLink: undefined },
+      },
+    });
+    // Keep external navigation deterministic; the app only promises the supplied destination.
+    await context.route('https://www.themoviedb.org/**', (route) =>
+      route.fulfill({ contentType: 'text/html', body: '<h1>TMDB watch options</h1>' })
+    );
+    const returnTo = '/?q=fight&type=movie&page=2&country=US';
+    await page.goto(
+      `/title/movie/550/countries?country=US&returnTo=${encodeURIComponent(returnTo)}`
+    );
+    await expect(countriesPage.heading).toHaveText('Fight Club: availability by country');
+    const originalUrl = page.url();
+    await expect(
+      countriesPage.card('Germany').getByRole('link', { name: /View watch options on TMDB/ })
+    ).toHaveAttribute('href', deLink);
+    const uk = countriesPage.card('United Kingdom');
+    await expect(uk.getByText('Watch options link unavailable for United Kingdom.')).toBeVisible();
+    await expect(uk.getByRole('link')).toHaveCount(0);
+    await expect(uk).toContainText('Netflix');
+
+    const pin = countriesPage.pinButton('United Kingdom');
+    if (isMobile) await pin.tap();
+    else {
+      await pin.focus();
+      await page.keyboard.press('Enter');
+    }
+    const pins = await page.evaluate(() => localStorage.getItem('wts.pinnedCountries'));
+    await countriesPage.filterInput.fill('United');
+    await countriesPage.onMyServicesButton.click();
+    const link = page.getByRole('link', {
+      name: 'View watch options on TMDB for United States (opens in a new tab)',
+    });
+    await expect(link).toHaveAttribute('href', usLink);
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    await link.scrollIntoViewIfNeeded();
+    const bounds = await link.boundingBox();
+    expect(bounds!.height).toBeGreaterThanOrEqual(44);
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(isMobile ? 320 : 900);
+    if (!isMobile) {
+      // Tab from the independent pin control to the watch-options link.
+      await countriesPage.pinButton('United States').focus();
+      await page.keyboard.press('Tab');
+      await expect(link).toBeFocused();
+    }
+    const scroll = await page.evaluate(() => window.scrollY);
+    const popupPromise = page.waitForEvent('popup');
+    if (isMobile) await link.tap();
+    else await page.keyboard.press('Enter');
+    const popup = await popupPromise;
+    await expect(popup).toHaveURL(usLink);
+    await expect(popup.getByRole('heading')).toHaveText('TMDB watch options');
+    await popup.close();
+    await page.bringToFront();
+
+    await expect(page).toHaveURL(originalUrl);
+    await expect(countriesPage.filterInput).toHaveValue('United');
+    await expect(countriesPage.onMyServicesButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(countriesPage.countryNames).toHaveText(['United States', 'United Kingdom']);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scroll);
+    expect(await page.evaluate(() => localStorage.getItem('wts.country'))).toBe('"US"');
+    expect(await page.evaluate(() => localStorage.getItem('wts.pinnedCountries'))).toBe(pins);
+    await countriesPage.backLink.click();
+    await page.getByRole('link', { name: 'Back to search' }).click();
+    await expect(page).toHaveURL(returnTo);
+  });
+
   test('searches the full service catalogue and manages selections across countries', async ({
     homePage,
     page,
