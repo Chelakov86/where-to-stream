@@ -55,6 +55,8 @@ export default defineConfig({
   /* Run your local production server before starting the tests */
   webServer: {
     command: 'npm run build && npx cross-env PORT=3001 npm run start',
+    // Browser mocks cannot intercept server-side requests for title metadata.
+    env: { TMDB_API_KEY: '' },
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,
