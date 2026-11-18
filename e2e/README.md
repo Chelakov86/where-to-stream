@@ -132,15 +132,22 @@ Screenshots and videos are captured on failure and saved in `test-results/`. Use
 
 ## CI/CD Integration
 
-The suite runs on GitHub Actions (`.github/workflows/playwright.yml`) only when dispatched manually,
-e.g. `gh workflow run playwright.yml --ref <branch>`; it does not run on push or pull requests.
+- **Production build** runs `npm ci` and `npm run build` for every PR targeting `main`. Select
+  the **Production build** check from the **PR Build** workflow for branch protection.
+- **Visual regression** runs the existing screenshot spec across desktop, tablet, and mobile on
+  PRs to `main` that change the app (including styles and fonts), public assets, E2E files
+  (including baselines), or relevant build and test configuration. Because the workflow uses path
+  filters, leave this check optional in branch protection so PRs outside those paths can merge.
+- **Full E2E suite** is available via manual dispatch from the **Playwright E2E** workflow, for
+  example `gh workflow run playwright.yml --ref <branch>`.
 
-The workflow:
+The Playwright workflow uploads the HTML report as `playwright-report`. On failure, the
+`test-results` artifact contains failure screenshots and comparison images for screenshot
+mismatches, along with any captured videos and traces. Find both artifacts on the Actions run
+summary. They are retained for 14 days.
 
-1. Installs dependencies (cached)
-2. Installs the Playwright Chromium browser (cached)
-3. Builds the app and runs all E2E tests (cached build)
-4. Uploads test reports and failure artifacts
+Review expected, actual, and diff images before updating baselines. Commit and review intended
+screenshot changes in the same PR as the UI change that produced them.
 
 ## Test Coverage
 
