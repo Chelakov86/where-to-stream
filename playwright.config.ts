@@ -27,6 +27,12 @@ export default defineConfig({
 
   /* Baselines must not depend on the runner's operating system. */
   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}-{projectName}{ext}',
+  expect: {
+    toHaveScreenshot: {
+      // Ubuntu and Debian differed by up to 178 pixels on unchanged screenshots in PR #59.
+      maxDiffPixels: 200,
+    },
+  },
 
   /* Configure projects for the Chromium engine across viewports. */
   projects: [

@@ -149,6 +149,9 @@ summary. They are retained for 14 days.
 Review expected, actual, and diff images before updating baselines. Commit and review intended
 screenshot changes in the same PR as the UI change that produced them.
 
+Screenshot comparisons allow up to 200 differing pixels per image. The same baselines differed
+by up to 178 pixels between local Debian and hosted Ubuntu in [PR #59](https://github.com/Chelakov86/where-to-stream/pull/59).
+
 ## Test Coverage
 
 - **Search**: popular titles by country, search-as-you-type, shared URLs, pagination, no results
