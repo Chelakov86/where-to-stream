@@ -19,7 +19,7 @@ const SavedView: React.FC = () => {
 
   return (
     <main>
-      <PageContainer className="pb-20 pt-8">
+      <PageContainer className="pb-20 pt-32">
         <h1 className="font-display text-2xl font-semibold">Saved titles</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Kept locally on this device — no account needed.
