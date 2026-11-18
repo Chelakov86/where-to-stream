@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+Issues and specs for this repo live as GitHub issues. Prefer `gh`. If it is unavailable or an operation fails with a proxy or permission error, use the connected GitHub tools for that operation and mention the fallback.
 
 ## Conventions
 
@@ -12,6 +12,29 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 - **Close**: `gh issue close <number> --comment "..."`
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
+
+## Triage device-only validation
+
+If a validation check requires a device or browser that cannot be used during implementation, file
+and link a follow-up from the source issue during triage. Link back to the source issue and any
+audit tracker. Record the required device, OS or browser, reproduction steps, evidence to capture
+(for example, the tested revision and a screen recording), and whether the follow-up blocks audit
+acceptance. [Issue #36](https://github.com/Chelakov86/where-to-stream/issues/36) and its
+[real-device follow-up #56](https://github.com/Chelakov86/where-to-stream/issues/56) show how to
+keep the physical software-keyboard check visible alongside verified browser emulation.
+
+## Merge review
+
+Before merging, compare each source issue criterion with the PR's final evidence. Update the
+source issue with verified checkboxes and links to the relevant tests, results, or artifacts. Keep
+pending criteria unchecked and link the follow-up beside each pending item. Update the audit
+tracker when the follow-up affects its acceptance status.
+
+- [Issue #34](https://github.com/Chelakov86/where-to-stream/issues/34#acceptance-verification) now
+  records the four criteria verified in [PR #50](https://github.com/Chelakov86/where-to-stream/pull/50).
+- [Issue #36](https://github.com/Chelakov86/where-to-stream/issues/36#remaining-manual-validation)
+  records the emulation evidence and leaves the physical software-keyboard criterion unchecked.
+  The closed audit carries that check forward in [#56](https://github.com/Chelakov86/where-to-stream/issues/56).
 
 ## Pull requests as a triage surface
 

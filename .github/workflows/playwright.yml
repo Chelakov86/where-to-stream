@@ -2,13 +2,33 @@ name: Playwright E2E
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'public/**'
+      - 'e2e/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'playwright.config.ts'
+      - 'next.config.js'
+      - 'postcss.config.js'
+      - 'tailwind.config.ts'
+      - 'tsconfig.json'
+      - '.github/workflows/playwright.yml'
+
+permissions:
+  contents: read
 
 jobs:
   e2e:
+    name: ${{ github.event_name == 'pull_request' && 'Visual regression' || 'Full E2E suite' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -34,7 +54,12 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run Playwright tests
+      - name: Run visual regression tests
+        if: github.event_name == 'pull_request'
+        run: npm run test:e2e -- e2e/tests/visual-regression.e2e.spec.ts
+
+      - name: Run full Playwright suite
+        if: github.event_name == 'workflow_dispatch'
         run: npm run test:e2e
 
       - name: Upload HTML report
